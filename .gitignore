@@ -1,0 +1,21 @@
+# Backups & Archives
+*.zip
+*.rar
+*.tar.gz
+
+# Uploads folder (ignore uploaded files but keep the folder structure)
+uploads/*
+!uploads/.gitkeep
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDEs and editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

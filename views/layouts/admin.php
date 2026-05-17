@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quản trị - <?php echo isset($title) ? $title : APP_NAME; ?></title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        .sidebar { 
+            min-height: 100vh; 
+            background: #212529; 
+        }
+        .sidebar a { 
+            color: #adb5bd; 
+            text-decoration: none; 
+            padding: 12px 20px; 
+            display: block; 
+            transition: 0.3s;
+        }
+        .sidebar a:hover, .sidebar a.active { 
+            background: #343a40; 
+            color: #fff;
+            border-left: 3px solid #0d6efd;
+        }
+        .main-content {
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-md-2 sidebar text-white">
+                <div class="p-4 border-bottom border-secondary text-center">
+                    <h5 class="mb-0 fw-bold">Admin Panel</h5>
+                    <small class="text-muted">NTKNTK</small>
+                </div>
+                <nav class="mt-3">
+                    <a href="<?php echo APP_URL; ?>/admin/dashboard" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/dashboard') !== false ? 'active' : ''; ?>"><i class="bi bi-speedometer2 me-2"></i> Tổng quan</a>
+                    <a href="<?php echo APP_URL; ?>/admin/menus" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/menus') !== false ? 'active' : ''; ?>"><i class="bi bi-list-nested me-2"></i> Menu</a>
+                    <a href="<?php echo APP_URL; ?>/admin/posts" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/posts') !== false ? 'active' : ''; ?>"><i class="bi bi-file-text me-2"></i> Bài viết</a>
+                    <a href="<?php echo APP_URL; ?>/admin/courses" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/courses') !== false ? 'active' : ''; ?>"><i class="bi bi-journal-bookmark me-2"></i> Khóa học</a>
+                    <a href="<?php echo APP_URL; ?>/admin/enrollments" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/enrollments') !== false ? 'active' : ''; ?>"><i class="bi bi-cart-check me-2"></i> Duyệt đăng ký</a>
+                    <a href="<?php echo APP_URL; ?>/admin/students" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/students') !== false ? 'active' : ''; ?>"><i class="bi bi-people me-2"></i> Học viên</a>
+                    <a href="<?php echo APP_URL; ?>/admin/media" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/media') !== false ? 'active' : ''; ?>"><i class="bi bi-images me-2"></i> Thư viện Media</a>
+                    <a href="<?php echo APP_URL; ?>/admin/users" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/users') !== false ? 'active' : ''; ?>"><i class="bi bi-shield-lock me-2"></i> Phân quyền & TK</a>
+                    <a href="<?php echo APP_URL; ?>/admin/consults" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/consults') !== false ? 'active' : ''; ?> d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-headset me-2"></i> Đăng ký Tư vấn</span>
+                        <?php
+                        try {
+                            $__newConsults = Database::getInstance()->getConnection()->query("SELECT COUNT(*) FROM consultation_requests WHERE status='new'")->fetchColumn();
+                            if ($__newConsults > 0) echo '<span class="badge bg-danger rounded-pill">' . $__newConsults . '</span>';
+                        } catch(Exception $e) {}
+                        ?>
+                    </a>
+                    <hr class="border-secondary my-3 mx-3">
+                    <a href="<?php echo APP_URL; ?>/"><i class="bi bi-box-arrow-left me-2"></i> Về trang chủ</a>
+                </nav>
+                <!-- Admin Profile -->
+                <div class="dropdown p-3 border-top border-secondary">
+                    <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" data-bs-toggle="dropdown">
+                        <?php if (!empty($_SESSION['avatar'])): ?>
+                            <img src="<?php echo APP_URL . '/' . $_SESSION['avatar']; ?>" alt="" width="32" height="32" class="rounded-circle me-2 object-fit-cover">
+                        <?php else: ?>
+                            <img src="https://ui-avatars.com/api/?name=<?php echo urlencode($_SESSION['full_name']); ?>&background=random" alt="" width="32" height="32" class="rounded-circle me-2">
+                        <?php endif; ?>
+                        <strong><?php echo htmlspecialchars($_SESSION['full_name'] ?? 'Admin'); ?></strong>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Main Content -->
+            <div class="col-md-10 main-content">
+                <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom shadow-sm px-4 py-3">
+                    <div class="container-fluid">
+                        <span class="navbar-brand mb-0 h1 fs-5"><?php echo isset($title) ? $title : 'Dashboard'; ?></span>
+                        <div class="ms-auto d-flex align-items-center">
+                            <a href="<?php echo APP_URL; ?>/logout" class="btn btn-sm btn-outline-danger">Đăng xuất</a>
+                        </div>
+                    </div>
+                </nav>
+                <div class="p-4">
+                    <!-- Alert Message Area (Flash messages) -->
+                    <?php if (isset($_SESSION['success'])): ?>
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <?php echo $_SESSION['success']; unset($_SESSION['success']); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (isset($_SESSION['error'])): ?>
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- View Content -->
+                    <?php echo $content; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
