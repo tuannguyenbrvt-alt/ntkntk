@@ -132,10 +132,10 @@
                                 onmouseover="this.style.color='#c9a84c'" onmouseout="this.style.color='#8b949e'">0397
                                 883 255</a></li>
                         <li style="display:flex;align-items:center;gap:9px;"><span style="color:#c9a84c;">📧</span><a
-                                href="mailto:contact@ntkntk.com"
+                                href="mailto:tuannguyen.brvt@gmail.com"
                                 style="color:#8b949e;text-decoration:none;font-size:.88rem;"
                                 onmouseover="this.style.color='#c9a84c'"
-                                onmouseout="this.style.color='#8b949e'">contact@ntkntk.com</a></li>
+                                onmouseout="this.style.color='#8b949e'">tuannguyen.brvt@gmail.com</a></li>
                         <li style="display:flex;align-items:center;gap:9px;"><span style="color:#c9a84c;">⏰</span><span
                                 style="color:#8b949e;font-size:.88rem;">Thứ 2 – Thứ 7: 7:30 – 20:30</span></li>
                     </ul>
