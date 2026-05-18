@@ -10,15 +10,17 @@ class AdminAssignmentController extends Controller {
         $lesson_id = $_POST['lesson_id'] ?? 0;
         $course_id = $_POST['course_id'] ?? 0;
         $type      = in_array($_POST['type'] ?? '', ['essay','file']) ? $_POST['type'] : 'essay';
+        $folder_id = trim($_POST['drive_folder_id'] ?? '');
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("INSERT INTO assignments (lesson_id, title, description, type, max_score, due_date) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$lesson_id, $_POST['title'] ?? 'Bai tap', $_POST['description'] ?? '', $type, (float)($_POST['max_score'] ?? 10), !empty($_POST['due_date']) ? $_POST['due_date'] : null]);
+        $stmt = $db->prepare("INSERT INTO assignments (lesson_id, title, description, type, max_score, due_date, drive_folder_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$lesson_id, $_POST['title'] ?? 'Bai tap', $_POST['description'] ?? '', $type, (float)($_POST['max_score'] ?? 10), !empty($_POST['due_date']) ? $_POST['due_date'] : null, $folder_id ?: null]);
         $asgn_id = $db->lastInsertId();
         $itemType = ($type === 'essay') ? 'assignment_essay' : 'assignment_file';
         $db->prepare("INSERT INTO lesson_items (lesson_id, type, content) VALUES (?, ?, ?)")->execute([$lesson_id, $itemType, $asgn_id]);
         $_SESSION['success'] = 'Da tao bai tap thanh cong!';
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
+
 
     public function delete() {
         $id = $_POST['id'] ?? 0; $course_id = $_POST['course_id'] ?? 0;

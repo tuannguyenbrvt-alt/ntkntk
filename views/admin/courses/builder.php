@@ -383,6 +383,19 @@
         }
         btn.closest('form').submit();
     }
+
+    function toggleDriveFolderField() {
+        let type = document.getElementById('asgn_type').value;
+        let div  = document.getElementById('drive_folder_div');
+        let inp  = document.getElementById('drive_folder_id_input');
+        if (type === 'file') {
+            div.classList.remove('d-none');
+            inp.required = true;
+        } else {
+            div.classList.add('d-none');
+            inp.required = false;
+        }
+    }
 </script>
 
 <!-- Modal: Them Bai tap (Tu luan / Nop file) -->
@@ -400,7 +413,7 @@
                     <div class="col-md-8"><label class="form-label fw-semibold">Tieu de bai tap *</label><input type="text" name="title" class="form-control" required placeholder="Bai tap cuoi chuong 1..."></div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Loai bai tap</label>
-                        <select name="type" class="form-select">
+                        <select name="type" class="form-select" id="asgn_type" onchange="toggleDriveFolderField()">
                             <option value="essay">📝 Tu luan (nhap van ban)</option>
                             <option value="file">📁 Nop file (Google Drive)</option>
                         </select>
@@ -408,7 +421,14 @@
                     <div class="col-12"><label class="form-label fw-semibold">Mo ta / De bai</label><textarea name="description" class="form-control" rows="4" placeholder="Hay viet bai luan ve chu de..."></textarea></div>
                     <div class="col-md-4"><label class="form-label fw-semibold">Diem toi da</label><input type="number" name="max_score" class="form-control" value="10" min="1" step="0.5"></div>
                     <div class="col-md-8"><label class="form-label fw-semibold">Han nop (tuy chon)</label><input type="datetime-local" name="due_date" class="form-control"></div>
+                    <!-- Folder ID chi hien khi chon loai Nop file -->
+                    <div class="col-12 d-none" id="drive_folder_div">
+                        <label class="form-label fw-semibold"><i class="bi bi-google text-primary me-1"></i>Google Drive Folder ID *</label>
+                        <input type="text" name="drive_folder_id" id="drive_folder_id_input" class="form-control font-monospace" placeholder="1AbCdEfGhIjKlMnOpQrStUvWxYz...">
+                        <div class="form-text"><i class="bi bi-info-circle text-info me-1"></i>Lay Folder ID tu URL cua thu muc Google Drive: <code>https://drive.google.com/drive/folders/<strong>[ID_o_day]</strong></code>. Thu muc phai duoc chia se voi email Service Account.</div>
+                    </div>
                 </div>
+
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huy</button>
