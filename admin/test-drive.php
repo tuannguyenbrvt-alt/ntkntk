@@ -1,17 +1,24 @@
 <?php
 /**
  * Script kiem tra cau hinh Google Drive
- * Truy cap: yourdomain.com/admin/test-drive
+ * Truy cap: yourdomain.com/admin/test-drive.php
  * XOA file nay sau khi da test xong!
  */
+
+// Bat hien thi loi de de debug
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
+
 // Bao ve - chi admin moi xem duoc
 if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], ['super_admin', 'admin'])) {
     die('<h3 style="color:red">Khong co quyen truy cap. Vui long dang nhap Admin truoc.</h3>');
 }
 
-require_once __DIR__ . '/config/config.php';
-require_once __DIR__ . '/helpers/GoogleDriveHelper.php';
+// Load config (dinh nghia ROOT_PATH, APP_URL, ...)
+require_once __DIR__ . '/../config/config.php';
 
 $steps = [];
 
