@@ -12,7 +12,7 @@ class GoogleDriveHelper {
         $now   = time();
         $claim = [
             'iss'   => $sa['client_email'],
-            'scope' => 'https://www.googleapis.com/auth/drive.file',
+            'scope' => 'https://www.googleapis.com/auth/drive', // Full access de nhin thay folder duoc share
             'aud'   => 'https://oauth2.googleapis.com/token',
             'iat'   => $now,
             'exp'   => $now + 3600,
