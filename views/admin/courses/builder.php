@@ -53,8 +53,10 @@
                                                         </strong>
                                                         <div class="d-flex gap-1 flex-wrap justify-content-end">
                                                             <button class="btn btn-sm btn-outline-warning" onclick="showEditLessonModal(<?php echo $lesson['id']; ?>, '<?php echo addslashes(htmlspecialchars($lesson['title'])); ?>', <?php echo $lesson['is_free_preview']; ?>)"><i class="bi bi-pencil"></i> Sửa</button>
-                                                            <button class="btn btn-sm btn-outline-info" onclick="showItemModal(<?php echo $lesson['id']; ?>)"><i class="bi bi-file-earmark-plus"></i> Thêm Nội dung</button>
+                                                            <button class="btn btn-sm btn-outline-info" onclick="showItemModal(<?php echo $lesson['id']; ?>)"><i class="bi bi-file-earmark-plus"></i> Nội dung</button>
                                                             <button class="btn btn-sm btn-outline-secondary" onclick="showAttachmentModal(<?php echo $lesson['id']; ?>)"><i class="bi bi-paperclip"></i> Đính kèm</button>
+                                                            <a href="<?php echo APP_URL; ?>/admin/quizzes/create?lesson_id=<?php echo $lesson['id']; ?>&course_id=<?php echo $course['id']; ?>" class="btn btn-sm btn-outline-warning"><i class="bi bi-trophy"></i> Trắc nghiệm</a>
+                                                            <button class="btn btn-sm btn-outline-success" onclick="showAddAssignmentModal(<?php echo $lesson['id']; ?>)"><i class="bi bi-journal-check"></i> Bài tập</button>
                                                             <form action="<?php echo APP_URL; ?>/admin/courses/content/deleteLesson" method="POST" class="d-inline" onsubmit="return confirm('Xóa Bài học này?');">
                                                                 <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
                                                                 <input type="hidden" name="id" value="<?php echo $lesson['id']; ?>">
@@ -63,7 +65,6 @@
                                                         </div>
                                                     </div>
 
-                                                    <!-- Content Items -->
                                                     <?php if(!empty($lesson['items'])): ?>
                                                         <div class="ps-3 border-start border-2 border-info mt-2 mb-2">
                                                             <?php foreach($lesson['items'] as $item): ?>
@@ -73,12 +74,23 @@
                                                                             <i class="bi bi-youtube text-danger me-2"></i><span class="badge bg-danger me-1">Video</span>
                                                                         <?php elseif($item['type'] == 'pdf'): ?>
                                                                             <i class="bi bi-file-pdf text-danger me-2"></i><span class="badge bg-warning text-dark me-1">PDF</span>
+                                                                        <?php elseif($item['type'] == 'quiz'): ?>
+                                                                            <i class="bi bi-trophy text-warning me-2"></i><span class="badge bg-warning text-dark me-1">Trac nghiem</span>
+                                                                            <a href="<?php echo APP_URL; ?>/admin/quizzes/questions?quiz_id=<?php echo $item['content']; ?>&course_id=<?php echo $course['id']; ?>" class="btn btn-xs btn-outline-warning btn-sm ms-1" style="padding:2px 6px;font-size:.7rem;">Quan ly</a>
+                                                                        <?php elseif($item['type'] == 'assignment_essay'): ?>
+                                                                            <i class="bi bi-journal-text text-success me-2"></i><span class="badge bg-success me-1">BT Tu luan</span>
+                                                                            <a href="<?php echo APP_URL; ?>/admin/assignments/submissions?assignment_id=<?php echo $item['content']; ?>&course_id=<?php echo $course['id']; ?>" class="btn btn-sm btn-outline-success ms-1" style="padding:2px 6px;font-size:.7rem;">Xem bai nop</a>
+                                                                        <?php elseif($item['type'] == 'assignment_file'): ?>
+                                                                            <i class="bi bi-cloud-upload text-info me-2"></i><span class="badge bg-info me-1">BT Nop file</span>
+                                                                            <a href="<?php echo APP_URL; ?>/admin/assignments/submissions?assignment_id=<?php echo $item['content']; ?>&course_id=<?php echo $course['id']; ?>" class="btn btn-sm btn-outline-info ms-1" style="padding:2px 6px;font-size:.7rem;">Xem bai nop</a>
                                                                         <?php else: ?>
-                                                                            <i class="bi bi-file-text text-primary me-2"></i><span class="badge bg-primary me-1">Văn bản</span>
+                                                                            <i class="bi bi-file-text text-primary me-2"></i><span class="badge bg-primary me-1">Van ban</span>
                                                                         <?php endif; ?>
+                                                                        <?php if(!in_array($item['type'], ['quiz','assignment_essay','assignment_file'])): ?>
                                                                         <small class="text-muted text-truncate d-inline-block" style="max-width:280px; vertical-align:bottom;"><?php echo htmlspecialchars(strip_tags($item['content'])); ?></small>
+                                                                        <?php endif; ?>
                                                                     </span>
-                                                                    <form action="<?php echo APP_URL; ?>/admin/courses/content/deleteItem" method="POST" class="d-inline" onsubmit="return confirm('Xóa nội dung này?');">
+                                                                    <form action="<?php echo APP_URL; ?>/admin/courses/content/deleteItem" method="POST" class="d-inline" onsubmit="return confirm('Xoa noi dung nay?');">
                                                                         <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
                                                                         <input type="hidden" name="id" value="<?php echo $item['id']; ?>">
                                                                         <button type="submit" class="btn btn-sm btn-light text-danger"><i class="bi bi-x-circle"></i></button>
@@ -332,6 +344,7 @@
         showModal('addItemModal');
     }
     function showAttachmentModal(lessonId) { document.getElementById('attachment_lesson_id').value = lessonId; showModal('addAttachmentModal'); }
+    function showAddAssignmentModal(lessonId) { document.getElementById('asgn_lesson_id').value = lessonId; showModal('addAssignmentModal'); }
 
     // Edit modals
     function showEditPartModal(id, title)    { document.getElementById('edit_part_id').value = id; document.getElementById('edit_part_title').value = title; showModal('editPartModal'); }
@@ -355,10 +368,8 @@
     }
 
     function switchToPdfModal() {
-        // Lấy lesson_id từ form hiện tại và chuyển sang modal PDF
         let lessonId = document.getElementById('item_lesson_id').value;
         document.getElementById('pdf_lesson_id').value = lessonId;
-        // Đóng modal cũ, mở modal PDF
         bootstrap.Modal.getInstance(document.getElementById('addItemModal')).hide();
         setTimeout(function() { showModal('addPdfModal'); }, 300);
     }
@@ -373,3 +384,36 @@
         btn.closest('form').submit();
     }
 </script>
+
+<!-- Modal: Them Bai tap (Tu luan / Nop file) -->
+<div class="modal fade" id="addAssignmentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <form action="<?php echo APP_URL; ?>/admin/assignments/store" method="POST" class="modal-content">
+            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+            <input type="hidden" name="lesson_id" id="asgn_lesson_id">
+            <div class="modal-header bg-success bg-opacity-10">
+                <h5 class="modal-title"><i class="bi bi-journal-check text-success me-2"></i>Tao Bai tap moi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-8"><label class="form-label fw-semibold">Tieu de bai tap *</label><input type="text" name="title" class="form-control" required placeholder="Bai tap cuoi chuong 1..."></div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Loai bai tap</label>
+                        <select name="type" class="form-select">
+                            <option value="essay">📝 Tu luan (nhap van ban)</option>
+                            <option value="file">📁 Nop file (Google Drive)</option>
+                        </select>
+                    </div>
+                    <div class="col-12"><label class="form-label fw-semibold">Mo ta / De bai</label><textarea name="description" class="form-control" rows="4" placeholder="Hay viet bai luan ve chu de..."></textarea></div>
+                    <div class="col-md-4"><label class="form-label fw-semibold">Diem toi da</label><input type="number" name="max_score" class="form-control" value="10" min="1" step="0.5"></div>
+                    <div class="col-md-8"><label class="form-label fw-semibold">Han nop (tuy chon)</label><input type="datetime-local" name="due_date" class="form-control"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Huy</button>
+                <button type="submit" class="btn btn-success"><i class="bi bi-save me-1"></i>Tao bai tap</button>
+            </div>
+        </form>
+    </div>
+</div>

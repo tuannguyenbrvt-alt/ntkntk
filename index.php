@@ -129,5 +129,39 @@ $router->get('/admin/consults', 'AdminConsultController@index');
 $router->post('/admin/consults/update-status', 'AdminConsultController@updateStatus');
 $router->post('/admin/consults/delete', 'AdminConsultController@delete');
 
+// Admin - Quiz management
+$router->get('/admin/quizzes', 'AdminQuizController@index');
+$router->get('/admin/quizzes/create', 'AdminQuizController@create');
+$router->post('/admin/quizzes/store', 'AdminQuizController@store');
+$router->get('/admin/quizzes/questions', 'AdminQuizController@questions');
+$router->post('/admin/quizzes/storeQuestion', 'AdminQuizController@storeQuestion');
+$router->post('/admin/quizzes/addFromBank', 'AdminQuizController@addFromBank');
+$router->post('/admin/quizzes/removeQuestion', 'AdminQuizController@removeQuestion');
+$router->post('/admin/quizzes/delete', 'AdminQuizController@delete');
+$router->get('/admin/quizzes/results', 'AdminQuizController@results');
+
+// Admin - Assignment management
+$router->post('/admin/assignments/store', 'AdminAssignmentController@store');
+$router->post('/admin/assignments/delete', 'AdminAssignmentController@delete');
+$router->get('/admin/assignments/submissions', 'AdminAssignmentController@submissions');
+$router->get('/admin/assignments/grade', 'AdminAssignmentController@grade');
+$router->post('/admin/assignments/storeGrade', 'AdminAssignmentController@storeGrade');
+
+// Student - Quiz
+$router->get('/quiz/take', 'QuizController@take');
+$router->post('/quiz/submit', 'QuizController@submit');
+$router->get('/quiz/result', 'QuizController@result');
+
+// Student - Assignment
+$router->post('/assignment/submitEssay', 'AssignmentController@submitEssay');
+$router->post('/assignment/submitFile', 'AssignmentController@submitFile');
+$router->get('/assignment/result', 'AssignmentController@result');
+
+// Progress & Lookup
+$router->get('/progress', 'ProgressController@dashboard');
+$router->get('/progress/lookup', 'ProgressController@lookup');
+$router->post('/progress/lookupResult', 'ProgressController@lookupResult');
+
+
 // Dispatch Router
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);
