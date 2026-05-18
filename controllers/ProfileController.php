@@ -20,11 +20,11 @@ class ProfileController extends Controller {
         $enrolledCourses = $stmtCourses->fetchAll();
 
         foreach ($enrolledCourses as &$course) {
-            $stmtLessons = $db->prepare("SELECT COUNT(li.id) FROM lesson_items li JOIN lessons l ON li.lesson_id = l.id JOIN chapters ch ON ch.id = l.chapter_id JOIN course_parts cp ON cp.id = ch.part_id WHERE cp.course_id = ?");
+            $stmtLessons = $db->prepare("SELECT COUNT(li.id) FROM lesson_items li JOIN course_lessons l ON li.lesson_id = l.id JOIN course_chapters ch ON ch.id = l.chapter_id JOIN course_parts cp ON cp.id = ch.part_id WHERE cp.course_id = ?");
             $stmtLessons->execute([$course['id']]);
             $totalLessons = (int)$stmtLessons->fetchColumn();
 
-            $stmtProgress = $db->prepare("SELECT COUNT(*) FROM course_progress WHERE student_id = ? AND course_id = ?");
+            $stmtProgress = $db->prepare("SELECT COUNT(cp_prog.id) FROM course_progress cp_prog JOIN course_lessons l ON cp_prog.lesson_id = l.id JOIN course_chapters ch ON ch.id = l.chapter_id JOIN course_parts cp ON cp.id = ch.part_id WHERE cp_prog.student_id = ? AND cp_prog.is_completed = 1 AND cp.course_id = ?");
             $stmtProgress->execute([$user_id, $course['id']]);
             $doneLessons = (int)$stmtProgress->fetchColumn();
 
