@@ -5,13 +5,43 @@
  */
 class GoogleDriveHelper {
 
-    private static function getAccessToken($serviceAccountJson) {
-        $sa = json_decode($serviceAccountJson, true);
-        if (!$sa) throw new Exception('Service Account JSON khong hop le.');
+    private static function getAccessToken($credentialsJson) {
+        $creds = json_decode($credentialsJson, true);
+        if (!$creds) throw new Exception('Credentials JSON khong hop le.');
+
+        // Kiem tra xem day la OAuth Refresh Token hay Service Account
+        if (isset($creds['refresh_token'])) {
+            // Dung OAuth Refresh Token
+            $ch = curl_init('https://oauth2.googleapis.com/token');
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => http_build_query([
+                    'client_id'     => $creds['client_id'],
+                    'client_secret' => $creds['client_secret'],
+                    'refresh_token' => $creds['refresh_token'],
+                    'grant_type'    => 'refresh_token',
+                ]),
+                CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
+                CURLOPT_TIMEOUT        => 30,
+            ]);
+            $res  = curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+
+            if ($code !== 200) throw new Exception('Khong the lay access token tu Refresh Token: ' . $res);
+            $data = json_decode($res, true);
+            return $data['access_token'];
+        }
+
+        // Dung Service Account (nhu cu)
+        if (!isset($creds['client_email']) || !isset($creds['private_key'])) {
+            throw new Exception('Thieu truong client_email hoac private_key.');
+        }
 
         $now   = time();
         $claim = [
-            'iss'   => $sa['client_email'],
+            'iss'   => $creds['client_email'],
             'scope' => 'https://www.googleapis.com/auth/drive', // Full access de nhin thay folder duoc share
             'aud'   => 'https://oauth2.googleapis.com/token',
             'iat'   => $now,
@@ -24,7 +54,7 @@ class GoogleDriveHelper {
         $payload = rtrim(strtr($payload, '+/', '-_'), '=');
 
         $data = $header . '.' . $payload;
-        $key  = $sa['private_key'];
+        $key  = $creds['private_key'];
 
         if (!openssl_sign($data, $sig, $key, 'SHA256')) {
             throw new Exception('Khong the ky JWT bang private key.');
@@ -47,7 +77,7 @@ class GoogleDriveHelper {
         $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
-        if ($code !== 200) throw new Exception('Khong the lay access token: ' . $res);
+        if ($code !== 200) throw new Exception('Khong the lay access token tu Service Account: ' . $res);
         $data = json_decode($res, true);
         return $data['access_token'];
     }
@@ -126,13 +156,19 @@ class GoogleDriveHelper {
     }
 
     /**
-     * Doc noi dung file Service Account tu config/
+     * Doc noi dung file Credentials tu config/ (uu tien OAuth, sau do Service Account)
      */
-    public static function loadServiceAccount() {
-        $path = ROOT_PATH . '/config/google-service-account.json';
-        if (!file_exists($path)) {
-            throw new Exception('Chua cau hinh Google Drive Service Account. Vui long upload file google-service-account.json vao thu muc config/.');
+    public static function loadCredentials() {
+        $oauthPath = ROOT_PATH . '/config/google-oauth.json';
+        if (file_exists($oauthPath)) {
+            return file_get_contents($oauthPath);
         }
-        return file_get_contents($path);
+
+        $saPath = ROOT_PATH . '/config/google-service-account.json';
+        if (file_exists($saPath)) {
+            return file_get_contents($saPath);
+        }
+
+        throw new Exception('Chua cau hinh Google Drive. Vui long cai dat qua admin/setup-drive-oauth.php hoac upload service-account.json.');
     }
 }

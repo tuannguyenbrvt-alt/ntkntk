@@ -23,80 +23,34 @@ require_once __DIR__ . '/../config/config.php';
 $steps = [];
 
 // =====================================================
-// BUOC 1: Kiem tra file Service Account ton tai
+// BUOC 1 & 2: Kiem tra cau hinh va lay Credentials
 // =====================================================
-$saPath = ROOT_PATH . '/config/google-service-account.json';
-if (file_exists($saPath)) {
-    $steps[] = ['ok', 'File google-service-account.json ton tai tai: ' . $saPath];
-    $saContent = file_get_contents($saPath);
-} else {
-    $steps[] = ['fail', 'KHONG TIM THAY file: ' . $saPath . ' — Hay upload file JSON len thu muc config/'];
-    $saContent = null;
-}
-
-// =====================================================
-// BUOC 2: Kiem tra JSON hop le
-// =====================================================
-if ($saContent) {
-    $sa = json_decode($saContent, true);
-    if ($sa && isset($sa['client_email'], $sa['private_key'], $sa['type'])) {
-        $steps[] = ['ok', 'JSON hop le. Service Account Email: <strong>' . htmlspecialchars($sa['client_email']) . '</strong>'];
-        $steps[] = ['ok', 'Loai key: ' . htmlspecialchars($sa['type'])];
+$credsContent = null;
+try {
+    $credsContent = GoogleDriveHelper::loadCredentials();
+    $creds = json_decode($credsContent, true);
+    if (isset($creds['refresh_token'])) {
+        $steps[] = ['ok', 'Su dung che do OAuth2 (refresh_token). Tai khoan: ' . htmlspecialchars($creds['client_id'] ?? 'An danh')];
     } else {
-        $steps[] = ['fail', 'JSON khong hop le hoac thieu truong client_email / private_key'];
-        $sa = null;
+        $steps[] = ['ok', 'Su dung che do Service Account. Email: <strong>' . htmlspecialchars($creds['client_email'] ?? '') . '</strong>'];
     }
-} else {
-    $sa = null;
+} catch (Exception $e) {
+    $steps[] = ['fail', 'LOI CAU HINH: ' . $e->getMessage()];
+    $creds = null;
 }
 
 // =====================================================
-// BUOC 3: Thu lay Access Token tu Google OAuth2
+// BUOC 3: Thu lay Access Token tu Google API
 // =====================================================
 $token = null;
-if ($sa) {
+if ($creds) {
     try {
-        // Dung reflection de goi private method (chi de test)
-        $now   = time();
-        $claim = [
-            'iss'   => $sa['client_email'],
-            'scope' => 'https://www.googleapis.com/auth/drive', // Full access de nhin thay folder duoc share
-            'aud'   => 'https://oauth2.googleapis.com/token',
-            'iat'   => $now,
-            'exp'   => $now + 3600,
-        ];
-        $header  = rtrim(strtr(base64_encode(json_encode(['alg'=>'RS256','typ'=>'JWT'])), '+/','-_'), '=');
-        $payload = rtrim(strtr(base64_encode(json_encode($claim)), '+/','-_'), '=');
-        $data    = $header . '.' . $payload;
-
-        if (!openssl_sign($data, $sig, $sa['private_key'], 'SHA256')) {
-            throw new Exception('openssl_sign that bai. OpenSSL co the chua duoc cai tren server nay.');
-        }
-        $jwt = $data . '.' . rtrim(strtr(base64_encode($sig), '+/','-_'), '=');
-
-        $ch = curl_init('https://oauth2.googleapis.com/token');
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => http_build_query(['grant_type'=>'urn:ietf:params:oauth:grant-type:jwt-bearer','assertion'=>$jwt]),
-            CURLOPT_HTTPHEADER     => ['Content-Type: application/x-www-form-urlencoded'],
-            CURLOPT_TIMEOUT        => 30,
-            CURLOPT_SSL_VERIFYPEER => true,
-        ]);
-        $res  = curl_exec($ch);
-        $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlErr = curl_error($ch);
-        curl_close($ch);
-
-        if ($curlErr) throw new Exception('cURL Error: ' . $curlErr);
-        if ($code !== 200) throw new Exception('HTTP ' . $code . ': ' . $res);
-
-        $tokenData = json_decode($res, true);
-        if (!isset($tokenData['access_token'])) throw new Exception('Khong nhan duoc access_token: ' . $res);
-
-        $token = $tokenData['access_token'];
-        $steps[] = ['ok', 'Lay Access Token thanh cong! (het han sau 1 gio)'];
-
+        // Dung ReflectionMethod de goi private method getAccessToken tu GoogleDriveHelper
+        $method = new ReflectionMethod('GoogleDriveHelper', 'getAccessToken');
+        $method->setAccessible(true);
+        $token = $method->invoke(null, $credsContent);
+        
+        $steps[] = ['ok', 'Lay Access Token thanh cong!'];
     } catch (Exception $e) {
         $steps[] = ['fail', 'Lay Access Token THAT BAI: ' . $e->getMessage()];
     }
@@ -143,7 +97,7 @@ if ($token && !empty($folderId)) {
     if ($code === 200 && isset($folderInfo['id'])) {
         $steps[] = ['ok', 'Thu muc Drive tim thay: <strong>' . htmlspecialchars($folderInfo['name']) . '</strong> (ID: ' . $folderId . ')'];
     } else {
-        $steps[] = ['fail', 'Khong tim thay thu muc ID: ' . $folderId . '. Kiem tra lai: (1) Folder ID dung chua? (2) Da chia se thu muc voi ' . htmlspecialchars($sa['client_email'] ?? '') . ' chua?<br>Response: ' . htmlspecialchars($res)];
+        $steps[] = ['fail', 'Khong tim thay thu muc ID: ' . $folderId . '. Kiem tra lai: (1) Folder ID dung chua? (2) Da chia se quyen Edit chua?<br>Response: ' . htmlspecialchars($res)];
     }
 } elseif ($token) {
     $steps[] = ['info', 'Chua kiem tra Folder ID. Them ?folder_id=YOUR_FOLDER_ID vao URL de kiem tra.'];

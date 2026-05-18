@@ -64,12 +64,15 @@ class AssignmentController extends Controller {
         }
 
         // Kiem tra cau hinh Google Drive
-        $saPath = ROOT_PATH . '/config/google-service-account.json';
-        if (!file_exists($saPath)) {
-            $_SESSION['error'] = 'He thong chua cau hinh Google Drive. Vui long lien he quan tri vien.';
+        try {
+            require_once ROOT_PATH . '/helpers/GoogleDriveHelper.php';
+            $creds = GoogleDriveHelper::loadCredentials();
+        } catch (Exception $e) {
+            $_SESSION['error'] = $e->getMessage();
             $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
             return;
         }
+
         if (empty($folder_id)) {
             $_SESSION['error'] = 'Bai tap nay chua co Google Drive Folder ID. Vui long lien he giao vien.';
             $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
@@ -77,10 +80,8 @@ class AssignmentController extends Controller {
         }
 
         // Upload len Google Drive
-        require_once ROOT_PATH . '/helpers/GoogleDriveHelper.php';
         try {
-            $sa = file_get_contents($saPath);
-            $result = GoogleDriveHelper::uploadFile($file['tmp_name'], $file['name'], $folder_id, $sa);
+            $result = GoogleDriveHelper::uploadFile($file['tmp_name'], $file['name'], $folder_id, $creds);
         } catch (Exception $e) {
             // Hien thi loi cu the de debug
             $errMsg = $e->getMessage();
