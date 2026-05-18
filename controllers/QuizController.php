@@ -97,7 +97,7 @@ class QuizController extends Controller {
             'attempt'   => $attempt,
             'questions' => $questions,
             'savedMap'  => $savedMap,
-        ), 'main');
+        ), 'quiz'); // Layout rieng, khong co navbar/footer
     }
 
     // Nop bai va cham diem tu dong

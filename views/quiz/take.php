@@ -1,30 +1,11 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<title><?php echo htmlspecialchars($quiz['title']); ?> — Lam bai</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
-<style>
-body{background:#0f0f1a;color:#e0e0e0;font-family:'Inter',sans-serif;}
-.quiz-card{background:#1a1a2e;border:1px solid #2d2d44;border-radius:12px;padding:1.5rem;}
-.option-label{display:block;padding:.75rem 1rem;border:2px solid #2d2d44;border-radius:8px;cursor:pointer;transition:all .2s;margin-bottom:.5rem;}
-.option-label:hover{border-color:#4e9af1;background:#1e2a3a;}
-input[type=radio]:checked+.option-label{border-color:#4e9af1;background:#1e2a3a;}
-#timer{font-size:1.4rem;font-weight:700;color:#ffd700;}
-.sticky-top-bar{position:sticky;top:0;z-index:100;background:#12122a;border-bottom:1px solid #2d2d44;padding:.75rem 0;}
-</style>
-</head>
-<body>
 <div class="sticky-top-bar">
     <div class="container d-flex justify-content-between align-items-center">
-        <h6 class="mb-0 text-white"><?php echo htmlspecialchars($quiz['title']); ?></h6>
+        <h6 class="mb-0 text-white"><i class="bi bi-trophy text-warning me-2"></i><?php echo htmlspecialchars($quiz['title']); ?></h6>
         <div class="d-flex align-items-center gap-3">
             <?php if($quiz['time_limit_minutes'] > 0): ?>
             <div><i class="bi bi-clock text-warning me-1"></i><span id="timer">--:--</span></div>
             <?php endif; ?>
-            <span class="badge bg-info"><?php echo count($questions); ?> cau hoi</span>
+            <span class="badge bg-info"><?php echo count($questions); ?> câu hỏi</span>
         </div>
     </div>
 </div>
@@ -40,47 +21,71 @@ input[type=radio]:checked+.option-label{border-color:#4e9af1;background:#1e2a3a;
         <?php foreach($questions as $i => $q): ?>
         <div class="quiz-card mb-4" id="q<?php echo $i+1; ?>">
             <div class="d-flex justify-content-between mb-3">
-                <span class="badge bg-primary fs-6">Cau <?php echo $i+1; ?></span>
+                <span class="badge bg-primary" style="font-size:.95rem;">Câu <?php echo $i+1; ?></span>
             </div>
-            <p class="fw-semibold fs-5 mb-4"><?php echo htmlspecialchars($q['question_text']); ?></p>
+            <p class="fw-semibold mb-4" style="font-size:1.1rem;"><?php echo nl2br(htmlspecialchars($q['question_text'])); ?></p>
             <?php foreach($q['options'] as $opt): ?>
             <div>
-                <input type="radio" name="answers[<?php echo $q['qb_id']; ?>]" id="opt<?php echo $opt['id']; ?>" value="<?php echo $opt['id']; ?>" class="d-none" <?php echo (isset($savedMap[$q['qb_id']]) && $savedMap[$q['qb_id']] == $opt['id']) ? 'checked' : ''; ?>>
-                <label for="opt<?php echo $opt['id']; ?>" class="option-label"><?php echo htmlspecialchars($opt['option_text']); ?></label>
+                <input type="radio"
+                       name="answers[<?php echo (int)$q['qb_id']; ?>]"
+                       id="opt<?php echo (int)$opt['id']; ?>"
+                       value="<?php echo (int)$opt['id']; ?>"
+                       class="d-none"
+                       <?php echo (isset($savedMap[$q['qb_id']]) && $savedMap[$q['qb_id']] == $opt['id']) ? 'checked' : ''; ?>>
+                <label for="opt<?php echo (int)$opt['id']; ?>" class="option-label"><?php echo htmlspecialchars($opt['option_text']); ?></label>
             </div>
             <?php endforeach; ?>
         </div>
         <?php endforeach; ?>
 
-        <div class="d-flex justify-content-between mt-4">
-            <a href="javascript:history.back()" class="btn btn-outline-secondary">Quay lai</a>
-            <button type="submit" class="btn btn-success btn-lg px-5" onclick="return confirm('Nop bai? Ban khong the thay doi sau khi nop.')" id="submitBtn">
-                <i class="bi bi-send-check me-2"></i>Nop bai
+        <?php if(empty($questions)): ?>
+        <div class="quiz-card text-center py-5">
+            <i class="bi bi-exclamation-triangle text-warning" style="font-size:3rem;"></i>
+            <h5 class="mt-3 text-white-50">Đề thi chưa có câu hỏi nào.</h5>
+        </div>
+        <?php endif; ?>
+
+        <div class="d-flex justify-content-between mt-4 pb-5">
+            <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Quay lại
+            </a>
+            <?php if(!empty($questions)): ?>
+            <button type="submit" class="btn btn-success btn-lg px-5"
+                    onclick="return confirm('Nộp bài? Bạn không thể thay đổi sau khi nộp.')"
+                    id="submitBtn">
+                <i class="bi bi-send-check me-2"></i>Nộp bài
             </button>
+            <?php endif; ?>
         </div>
     </form>
 </div>
 
 <script>
 <?php if($quiz['time_limit_minutes'] > 0): ?>
-    let endTime = Date.now() + <?php echo $quiz['time_limit_minutes'] * 60000; ?>;
-    const timer = document.getElementById('timer');
-    const iv = setInterval(() => {
-        let rem = Math.floor((endTime - Date.now()) / 1000);
-        if (rem <= 0) { clearInterval(iv); document.getElementById('quizForm').submit(); return; }
-        timer.textContent = Math.floor(rem/60).toString().padStart(2,'0') + ':' + (rem%60).toString().padStart(2,'0');
-        if (rem <= 60) timer.style.color = '#ff4444';
-    }, 500);
+var endTime = Date.now() + <?php echo (int)$quiz['time_limit_minutes'] * 60000; ?>;
+var timerEl = document.getElementById('timer');
+var iv = setInterval(function() {
+    var rem = Math.floor((endTime - Date.now()) / 1000);
+    if (rem <= 0) { clearInterval(iv); document.getElementById('quizForm').submit(); return; }
+    timerEl.textContent = Math.floor(rem/60).toString().padStart(2,'0') + ':' + (rem%60).toString().padStart(2,'0');
+    if (rem <= 60) timerEl.style.color = '#ff4444';
+}, 500);
 <?php endif; ?>
 
-// Highlight selected options
-document.querySelectorAll('input[type=radio]').forEach(r => {
+// Highlight dap an duoc chon
+document.querySelectorAll('input[type=radio]').forEach(function(r) {
     r.addEventListener('change', function() {
-        document.querySelectorAll(`input[name="${this.name}"]`).forEach(x => x.nextElementSibling.style.borderColor = '#2d2d44');
+        var name = this.name;
+        document.querySelectorAll('input[name="' + name + '"]').forEach(function(x) {
+            x.nextElementSibling.style.borderColor = '#2d2d44';
+            x.nextElementSibling.style.background  = '';
+        });
         this.nextElementSibling.style.borderColor = '#4e9af1';
-        this.nextElementSibling.style.background = '#1e2a3a';
+        this.nextElementSibling.style.background  = '#1e2a3a';
     });
-    if (r.checked) { r.nextElementSibling.style.borderColor = '#4e9af1'; r.nextElementSibling.style.background = '#1e2a3a'; }
+    if (r.checked) {
+        r.nextElementSibling.style.borderColor = '#4e9af1';
+        r.nextElementSibling.style.background  = '#1e2a3a';
+    }
 });
 </script>
-</body></html>
