@@ -3,8 +3,11 @@
     <h5 class="fw-bold"><i class="bi bi-inbox text-warning me-2"></i>Bai nop: <?php echo htmlspecialchars($assignment['title']); ?></h5>
     <a href="<?php echo APP_URL; ?>/admin/courses/builder?id=<?php echo $course_id; ?>" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Quay lai</a>
 </div>
-<?php $pending = array_filter($submissions, fn($s) => $s['status'] === 'pending'); ?>
-<?php if(count($pending) > 0): ?><div class="alert alert-warning"><i class="bi bi-bell-fill me-2"></i>Co <strong><?php echo count($pending); ?></strong> bai chua duoc cham diem!</div><?php endif; ?>
+<?php
+$pending = 0;
+foreach ($submissions as $s) { if ($s['status'] === 'pending') $pending++; }
+?>
+<?php if($pending > 0): ?><div class="alert alert-warning"><i class="bi bi-bell-fill me-2"></i>Co <strong><?php echo $pending; ?></strong> bai chua duoc cham diem!</div><?php endif; ?>
 <div class="card border-0 shadow-sm">
     <div class="card-body">
         <?php if(empty($submissions)): ?>
