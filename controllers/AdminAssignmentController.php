@@ -55,6 +55,49 @@ class AdminAssignmentController extends Controller {
         $db = Database::getInstance()->getConnection();
         $db->prepare("UPDATE assignment_submissions SET score=?, feedback=?, status='graded', graded_at=NOW(), graded_by=? WHERE id=?")->execute([(float)($_POST['score'] ?? 0), $_POST['feedback'] ?? '', $_SESSION['user_id'], $sub_id]);
         $_SESSION['success'] = 'Da cham diem thanh cong!';
-        $this->redirect('/admin/assignments/submissions?assignment_id='.$assignment_id.'&course_id='.$course_id);
+        // Neu den tu trang pending, tra ve pending
+        if (!empty($_POST['from_pending'])) {
+            $this->redirect('/admin/assignments/pending');
+        } else {
+            $this->redirect('/admin/assignments/submissions?assignment_id='.$assignment_id.'&course_id='.$course_id);
+        }
+    }
+
+    public function pending() {
+        $db = Database::getInstance()->getConnection();
+        $userId = $_SESSION['user_id'];
+        $role   = $_SESSION['role'];
+
+        $query = "
+            SELECT s.*, 
+                   u.full_name as student_name, 
+                   a.title as assignment_title, 
+                   a.type as assignment_type,
+                   c.title as course_title,
+                   c.id as course_id
+            FROM assignment_submissions s
+            JOIN users u ON s.student_id = u.id
+            JOIN assignments a ON s.assignment_id = a.id
+            JOIN course_lessons cl ON a.lesson_id = cl.id
+            JOIN course_chapters cc ON cl.chapter_id = cc.id
+            JOIN course_parts cp ON cc.part_id = cp.id
+            JOIN courses c ON cp.course_id = c.id
+            WHERE s.status = 'pending'
+        ";
+
+        if ($role !== 'super_admin') {
+            $query .= " AND c.author_id = ?";
+        }
+        $query .= " ORDER BY s.submitted_at ASC";
+
+        $stmt = $db->prepare($query);
+        if ($role !== 'super_admin') {
+            $stmt->execute([$userId]);
+        } else {
+            $stmt->execute();
+        }
+        $pendingSubs = $stmt->fetchAll();
+
+        $this->render('admin/assignments/pending', ['title' => 'Chấm bài tập', 'pendingSubs' => $pendingSubs], 'admin');
     }
 }

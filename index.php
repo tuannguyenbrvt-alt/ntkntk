@@ -144,6 +144,7 @@ $router->get('/admin/quizzes/results', 'AdminQuizController@results');
 $router->post('/admin/assignments/store', 'AdminAssignmentController@store');
 $router->post('/admin/assignments/delete', 'AdminAssignmentController@delete');
 $router->get('/admin/assignments/submissions', 'AdminAssignmentController@submissions');
+$router->get('/admin/assignments/pending', 'AdminAssignmentController@pending');
 $router->get('/admin/assignments/grade', 'AdminAssignmentController@grade');
 $router->post('/admin/assignments/storeGrade', 'AdminAssignmentController@storeGrade');
 

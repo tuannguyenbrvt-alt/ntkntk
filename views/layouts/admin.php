@@ -45,6 +45,29 @@
                     <a href="<?php echo APP_URL; ?>/admin/courses" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/courses') !== false ? 'active' : ''; ?>"><i class="bi bi-journal-bookmark me-2"></i> Khóa học</a>
                     <a href="<?php echo APP_URL; ?>/admin/enrollments" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/enrollments') !== false ? 'active' : ''; ?>"><i class="bi bi-cart-check me-2"></i> Duyệt đăng ký</a>
                     <a href="<?php echo APP_URL; ?>/admin/students" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/students') !== false ? 'active' : ''; ?>"><i class="bi bi-people me-2"></i> Học viên</a>
+                    <a href="<?php echo APP_URL; ?>/admin/assignments/pending" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/assignments') !== false ? 'active' : ''; ?> d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-ui-checks me-2"></i> Chấm bài tập</span>
+                        <?php
+                        try {
+                            $db = Database::getInstance()->getConnection();
+                            $q = "SELECT COUNT(*) FROM assignment_submissions s 
+                                  JOIN assignments a ON s.assignment_id = a.id 
+                                  JOIN course_lessons cl ON a.lesson_id = cl.id 
+                                  JOIN course_chapters cc ON cl.chapter_id = cc.id 
+                                  JOIN course_parts cp ON cc.part_id = cp.id 
+                                  JOIN courses c ON cp.course_id = c.id 
+                                  WHERE s.status = 'pending'";
+                            if ($_SESSION['role'] !== 'super_admin') {
+                                $stmt = $db->prepare($q . " AND c.author_id = ?");
+                                $stmt->execute([$_SESSION['user_id']]);
+                                $__pendingAsgn = $stmt->fetchColumn();
+                            } else {
+                                $__pendingAsgn = $db->query($q)->fetchColumn();
+                            }
+                            if ($__pendingAsgn > 0) echo '<span class="badge bg-danger rounded-pill">' . $__pendingAsgn . '</span>';
+                        } catch(Exception $e) {}
+                        ?>
+                    </a>
                     <a href="<?php echo APP_URL; ?>/admin/media" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/media') !== false ? 'active' : ''; ?>"><i class="bi bi-images me-2"></i> Thư viện Media</a>
                     <a href="<?php echo APP_URL; ?>/admin/users" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/users') !== false ? 'active' : ''; ?>"><i class="bi bi-shield-lock me-2"></i> Phân quyền & TK</a>
                     <a href="<?php echo APP_URL; ?>/admin/consults" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/consults') !== false ? 'active' : ''; ?> d-flex align-items-center justify-content-between">

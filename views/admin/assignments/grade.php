@@ -1,9 +1,15 @@
 <div class="container py-4" style="max-width:760px;">
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h5 class="fw-bold"><i class="bi bi-pen text-danger me-2"></i>Chấm điểm: <strong><?php echo htmlspecialchars($sub['full_name']); ?></strong></h5>
-    <a href="<?php echo APP_URL; ?>/admin/assignments/submissions?assignment_id=<?php echo $sub['assignment_id']; ?>&course_id=<?php echo $course_id; ?>" class="btn btn-secondary btn-sm">
-        <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
-    </a>
+    <?php if(!empty($_GET['from_pending'])): ?>
+        <a href="<?php echo APP_URL; ?>/admin/assignments/pending" class="btn btn-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách chờ chấm
+        </a>
+    <?php else: ?>
+        <a href="<?php echo APP_URL; ?>/admin/assignments/submissions?assignment_id=<?php echo $sub['assignment_id']; ?>&course_id=<?php echo $course_id; ?>" class="btn btn-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Quay lại danh sách
+        </a>
+    <?php endif; ?>
 </div>
 
 <!-- Bai lam cua hoc vien -->
@@ -65,6 +71,9 @@
             <input type="hidden" name="sub_id" value="<?php echo $sub['id']; ?>">
             <input type="hidden" name="assignment_id" value="<?php echo $sub['assignment_id']; ?>">
             <input type="hidden" name="course_id" value="<?php echo $course_id; ?>">
+            <?php if(!empty($_GET['from_pending'])): ?>
+                <input type="hidden" name="from_pending" value="1">
+            <?php endif; ?>
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Điểm số (tối đa: <strong><?php echo $sub['max_score']; ?></strong>)</label>
