@@ -14,6 +14,17 @@ class AdminCourseContentController extends Controller {
         $stmt->execute([$course_id, $title]);
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
+    public function updatePart() {
+        $id = $_POST['id'] ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $title = trim($_POST['title'] ?? '');
+        if ($title) {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("UPDATE course_parts SET title = ? WHERE id = ?");
+            $stmt->execute([$title, $id]);
+        }
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
     public function deletePart() {
         $id = $_POST['id'] ?? 0;
         $course_id = $_POST['course_id'] ?? 0;
@@ -30,6 +41,17 @@ class AdminCourseContentController extends Controller {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("INSERT INTO course_chapters (part_id, title) VALUES (?, ?)");
         $stmt->execute([$part_id, $title]);
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
+    public function updateChapter() {
+        $id = $_POST['id'] ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $title = trim($_POST['title'] ?? '');
+        if ($title) {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("UPDATE course_chapters SET title = ? WHERE id = ?");
+            $stmt->execute([$title, $id]);
+        }
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
     public function deleteChapter() {
@@ -49,6 +71,18 @@ class AdminCourseContentController extends Controller {
         $db = Database::getInstance()->getConnection();
         $stmt = $db->prepare("INSERT INTO course_lessons (chapter_id, title, is_free_preview) VALUES (?, ?, ?)");
         $stmt->execute([$chapter_id, $title, $is_free_preview]);
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
+    public function updateLesson() {
+        $id = $_POST['id'] ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $title = trim($_POST['title'] ?? '');
+        $is_free_preview = isset($_POST['is_free_preview']) ? 1 : 0;
+        if ($title) {
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("UPDATE course_lessons SET title = ?, is_free_preview = ? WHERE id = ?");
+            $stmt->execute([$title, $is_free_preview, $id]);
+        }
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
     public function deleteLesson() {

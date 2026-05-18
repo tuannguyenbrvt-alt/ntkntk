@@ -13,6 +13,10 @@
                 <div class="card-header bg-white d-flex justify-content-between align-items-center p-3">
                     <h5 class="mb-0 fw-bold"><i class="bi bi-folder2-open text-warning me-2"></i> Phần: <?php echo htmlspecialchars($part['title']); ?></h5>
                     <div>
+                        <button class="btn btn-sm btn-outline-warning me-1"
+                            onclick="showEditPartModal(<?php echo $part['id']; ?>, '<?php echo addslashes(htmlspecialchars($part['title'])); ?>')">
+                            <i class="bi bi-pencil"></i> Sửa
+                        </button>
                         <button class="btn btn-sm btn-outline-primary me-2" onclick="showChapterModal(<?php echo $part['id']; ?>)"><i class="bi bi-plus"></i> Thêm Chương</button>
                         <form action="<?php echo APP_URL; ?>/admin/courses/content/deletePart" method="POST" class="d-inline" onsubmit="return confirm('Xóa toàn bộ nội dung Phần này?');">
                             <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
@@ -34,6 +38,10 @@
                                 <div id="collapseChap<?php echo $chapter['id']; ?>" class="accordion-collapse collapse" data-bs-parent="#accordionPart<?php echo $part['id']; ?>">
                                     <div class="accordion-body bg-light p-2">
                                         <div class="mb-2 text-end">
+                                            <button class="btn btn-sm btn-outline-warning me-1"
+                                                onclick="showEditChapterModal(<?php echo $chapter['id']; ?>, '<?php echo addslashes(htmlspecialchars($chapter['title'])); ?>')">
+                                                <i class="bi bi-pencil"></i> Sửa chương
+                                            </button>
                                             <button class="btn btn-sm btn-success" onclick="showLessonModal(<?php echo $chapter['id']; ?>)"><i class="bi bi-plus"></i> Thêm Bài học</button>
                                             <form action="<?php echo APP_URL; ?>/admin/courses/content/deleteChapter" method="POST" class="d-inline ms-1" onsubmit="return confirm('Xóa Chương này?');">
                                                 <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
@@ -41,14 +49,22 @@
                                                 <button type="submit" class="btn btn-sm btn-danger px-2 py-1"><i class="bi bi-trash"></i></button>
                                             </form>
                                         </div>
-                                        
+
                                         <!-- Loop Lessons -->
                                         <ul class="list-group">
                                             <?php foreach($chapter['lessons'] as $lesson): ?>
                                                 <li class="list-group-item">
                                                     <div class="d-flex justify-content-between align-items-center mb-2">
-                                                        <strong class="text-dark"><i class="bi bi-play-circle text-danger me-2"></i> Bài: <?php echo htmlspecialchars($lesson['title']); ?> <?php if($lesson['is_free_preview']) echo '<span class="badge bg-success ms-2">Học thử</span>'; ?></strong>
+                                                        <strong class="text-dark">
+                                                            <i class="bi bi-play-circle text-danger me-2"></i>
+                                                            Bài: <?php echo htmlspecialchars($lesson['title']); ?>
+                                                            <?php if($lesson['is_free_preview']) echo '<span class="badge bg-success ms-2">Học thử</span>'; ?>
+                                                        </strong>
                                                         <div>
+                                                            <button class="btn btn-sm btn-outline-warning me-1"
+                                                                onclick="showEditLessonModal(<?php echo $lesson['id']; ?>, '<?php echo addslashes(htmlspecialchars($lesson['title'])); ?>', <?php echo $lesson['is_free_preview']; ?>)">
+                                                                <i class="bi bi-pencil"></i> Sửa
+                                                            </button>
                                                             <button class="btn btn-sm btn-outline-info" onclick="showItemModal(<?php echo $lesson['id']; ?>)"><i class="bi bi-file-earmark-plus"></i> Thêm Nội dung</button>
                                                             <form action="<?php echo APP_URL; ?>/admin/courses/content/deleteLesson" method="POST" class="d-inline ms-1" onsubmit="return confirm('Xóa Bài học này?');">
                                                                 <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
@@ -104,7 +120,7 @@
     <div class="modal-dialog">
         <form action="<?php echo APP_URL; ?>/admin/courses/content/storePart" method="POST" class="modal-content">
             <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
-            <div class="modal-header"><h5 class="modal-title">Thêm Phần</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-folder-plus text-warning me-2"></i>Thêm Phần</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
                 <div class="mb-3">
                     <label>Tiêu đề Phần</label>
@@ -116,13 +132,37 @@
     </div>
 </div>
 
+<!-- Modal Edit Part -->
+<div class="modal fade" id="editPartModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="<?php echo APP_URL; ?>/admin/courses/content/updatePart" method="POST" class="modal-content">
+            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+            <input type="hidden" name="id" id="edit_part_id">
+            <div class="modal-header bg-warning bg-opacity-10">
+                <h5 class="modal-title"><i class="bi bi-pencil-square text-warning me-2"></i>Sửa Phần</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tiêu đề Phần</label>
+                    <input type="text" name="title" id="edit_part_title" class="form-control" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-warning text-white"><i class="bi bi-save me-1"></i>Lưu thay đổi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Modal Add Chapter -->
 <div class="modal fade" id="addChapterModal" tabindex="-1">
     <div class="modal-dialog">
         <form action="<?php echo APP_URL; ?>/admin/courses/content/storeChapter" method="POST" class="modal-content">
             <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
             <input type="hidden" name="part_id" id="chapter_part_id">
-            <div class="modal-header"><h5 class="modal-title">Thêm Chương</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-journal-plus text-primary me-2"></i>Thêm Chương</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
                 <div class="mb-3">
                     <label>Tiêu đề Chương</label>
@@ -134,13 +174,37 @@
     </div>
 </div>
 
+<!-- Modal Edit Chapter -->
+<div class="modal fade" id="editChapterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="<?php echo APP_URL; ?>/admin/courses/content/updateChapter" method="POST" class="modal-content">
+            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+            <input type="hidden" name="id" id="edit_chapter_id">
+            <div class="modal-header bg-warning bg-opacity-10">
+                <h5 class="modal-title"><i class="bi bi-pencil-square text-warning me-2"></i>Sửa Chương</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tiêu đề Chương</label>
+                    <input type="text" name="title" id="edit_chapter_title" class="form-control" required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-warning text-white"><i class="bi bi-save me-1"></i>Lưu thay đổi</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <!-- Modal Add Lesson -->
 <div class="modal fade" id="addLessonModal" tabindex="-1">
     <div class="modal-dialog">
         <form action="<?php echo APP_URL; ?>/admin/courses/content/storeLesson" method="POST" class="modal-content">
             <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
             <input type="hidden" name="chapter_id" id="lesson_chapter_id">
-            <div class="modal-header"><h5 class="modal-title">Thêm Bài học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-header"><h5 class="modal-title"><i class="bi bi-play-circle text-success me-2"></i>Thêm Bài học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
                 <div class="mb-3">
                     <label>Tiêu đề Bài</label>
@@ -152,6 +216,34 @@
                 </div>
             </div>
             <div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu</button></div>
+        </form>
+    </div>
+</div>
+
+<!-- Modal Edit Lesson -->
+<div class="modal fade" id="editLessonModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="<?php echo APP_URL; ?>/admin/courses/content/updateLesson" method="POST" class="modal-content">
+            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+            <input type="hidden" name="id" id="edit_lesson_id">
+            <div class="modal-header bg-warning bg-opacity-10">
+                <h5 class="modal-title"><i class="bi bi-pencil-square text-warning me-2"></i>Sửa Bài học</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Tiêu đề Bài học</label>
+                    <input type="text" name="title" id="edit_lesson_title" class="form-control" required>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="is_free_preview" id="edit_lesson_free" value="1">
+                    <label class="form-check-label" for="edit_lesson_free">Cho phép học thử (Miễn phí)</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-warning text-white"><i class="bi bi-save me-1"></i>Lưu thay đổi</button>
+            </div>
         </form>
     </div>
 </div>
@@ -171,17 +263,14 @@
                         <option value="text">Văn bản / Tài liệu (HTML)</option>
                     </select>
                 </div>
-                
                 <div class="mb-3" id="video_input_div">
                     <label>Link Video (Youtube/Vimeo/Google Drive MP4)</label>
                     <input type="text" id="video_url" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
                 </div>
-                
                 <div class="mb-3 d-none" id="text_input_div">
                     <label>Nội dung Văn bản</label>
                     <textarea id="editor_item" class="form-control"></textarea>
                 </div>
-                
                 <!-- Hidden input chứa nội dung thật gửi lên -->
                 <textarea name="content" id="real_content" class="d-none"></textarea>
             </div>
@@ -203,24 +292,46 @@
     function showModal(id) {
         new bootstrap.Modal(document.getElementById(id)).show();
     }
-    
+
+    // ── ADD MODALS ──────────────────────────────────────────────
     function showChapterModal(partId) {
         document.getElementById('chapter_part_id').value = partId;
         showModal('addChapterModal');
     }
-    
+
     function showLessonModal(chapterId) {
         document.getElementById('lesson_chapter_id').value = chapterId;
         showModal('addLessonModal');
     }
-    
+
     function showItemModal(lessonId) {
         document.getElementById('item_lesson_id').value = lessonId;
         document.getElementById('video_url').value = '';
         if(tinymce.get('editor_item')) tinymce.get('editor_item').setContent('');
         showModal('addItemModal');
     }
-    
+
+    // ── EDIT MODALS ─────────────────────────────────────────────
+    function showEditPartModal(id, title) {
+        document.getElementById('edit_part_id').value = id;
+        document.getElementById('edit_part_title').value = title;
+        showModal('editPartModal');
+    }
+
+    function showEditChapterModal(id, title) {
+        document.getElementById('edit_chapter_id').value = id;
+        document.getElementById('edit_chapter_title').value = title;
+        showModal('editChapterModal');
+    }
+
+    function showEditLessonModal(id, title, isFree) {
+        document.getElementById('edit_lesson_id').value = id;
+        document.getElementById('edit_lesson_title').value = title;
+        document.getElementById('edit_lesson_free').checked = (isFree == 1);
+        showModal('editLessonModal');
+    }
+
+    // ── ITEM FORM ────────────────────────────────────────────────
     function toggleContentInput() {
         let type = document.getElementById('item_type').value;
         if(type === 'video') {
@@ -231,7 +342,7 @@
             document.getElementById('text_input_div').classList.remove('d-none');
         }
     }
-    
+
     function submitItemForm(btn) {
         let type = document.getElementById('item_type').value;
         if(type === 'video') {
