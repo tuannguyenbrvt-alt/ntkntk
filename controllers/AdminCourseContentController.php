@@ -95,25 +95,38 @@ class AdminCourseContentController extends Controller {
     }
 
     public function storeItem() {
-        $lesson_id  = $_POST['lesson_id']  ?? 0;
-        $course_id  = $_POST['course_id']  ?? 0;
-        $type       = $_POST['type']       ?? 'text';
-        $content    = '';
-
-        require_once ROOT_PATH . '/helpers/UploadHelper.php';
+        $lesson_id = $_POST['lesson_id'] ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $type      = $_POST['type']      ?? 'text';
+        $content   = '';
 
         if ($type === 'pdf') {
-            // PDF: upload file and store path as content
             if (!isset($_FILES['pdf_file']) || $_FILES['pdf_file']['error'] === UPLOAD_ERR_NO_FILE) {
-                $_SESSION['error'] = 'Vui lòng chọn file PDF.';
+                $_SESSION['error'] = 'Vui long chon file PDF.';
                 $this->redirect('/admin/courses/builder?id=' . $course_id);
                 return;
             }
-            try {
-                $result  = UploadHelper::uploadFile($_FILES['pdf_file'], 'uploads/course_pdfs/', ['pdf'], 50);
-                $content = $result['path'];
-            } catch (Exception $e) {
-                $_SESSION['error'] = $e->getMessage();
+            $file = $_FILES['pdf_file'];
+            if ($file['error'] !== UPLOAD_ERR_OK) {
+                $_SESSION['error'] = 'Loi upload file. Ma loi: ' . $file['error'];
+                $this->redirect('/admin/courses/builder?id=' . $course_id);
+                return;
+            }
+            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            if ($ext !== 'pdf') {
+                $_SESSION['error'] = 'Chi chap nhan file PDF.';
+                $this->redirect('/admin/courses/builder?id=' . $course_id);
+                return;
+            }
+            $uploadDir = ROOT_PATH . '/uploads/course_pdfs/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0755, true);
+            }
+            $filename = uniqid() . '-' . time() . '.pdf';
+            if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+                $content = 'uploads/course_pdfs/' . $filename;
+            } else {
+                $_SESSION['error'] = 'Loi luu file PDF len may chu.';
                 $this->redirect('/admin/courses/builder?id=' . $course_id);
                 return;
             }
@@ -142,34 +155,48 @@ class AdminCourseContentController extends Controller {
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
 
-    // ── ATTACHMENTS ──────────────────────────────────────────────────────────
+    // -- ATTACHMENTS --
     public function storeAttachment() {
         $lesson_id = $_POST['lesson_id'] ?? 0;
         $course_id = $_POST['course_id'] ?? 0;
 
         if (!isset($_FILES['attachment_file']) || $_FILES['attachment_file']['error'] === UPLOAD_ERR_NO_FILE) {
-            $_SESSION['error'] = 'Vui lòng chọn file đính kèm.';
+            $_SESSION['error'] = 'Vui long chon file dinh kem.';
             $this->redirect('/admin/courses/builder?id=' . $course_id);
             return;
         }
-
-        require_once ROOT_PATH . '/helpers/UploadHelper.php';
-        try {
-            $result = UploadHelper::uploadFile(
-                $_FILES['attachment_file'],
-                'uploads/attachments/',
-                ['pdf','doc','docx','xls','xlsx','ppt','pptx','zip','rar','txt','mp3','mp4','png','jpg','jpeg'],
-                100
-            );
-        } catch (Exception $e) {
-            $_SESSION['error'] = $e->getMessage();
+        $file = $_FILES['attachment_file'];
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $_SESSION['error'] = 'Loi upload. Ma loi: ' . $file['error'];
             $this->redirect('/admin/courses/builder?id=' . $course_id);
             return;
         }
+        $allowed = ['pdf','doc','docx','xls','xlsx','ppt','pptx','zip','rar','txt','mp3','mp4','png','jpg','jpeg'];
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        if (!in_array($ext, $allowed)) {
+            $_SESSION['error'] = 'Dinh dang file khong duoc phep.';
+            $this->redirect('/admin/courses/builder?id=' . $course_id);
+            return;
+        }
+        $uploadDir = ROOT_PATH . '/uploads/attachments/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0755, true);
+        }
+        $filename = uniqid() . '-' . time() . '.' . $ext;
+        if (!move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+            $_SESSION['error'] = 'Loi luu file len may chu.';
+            $this->redirect('/admin/courses/builder?id=' . $course_id);
+            return;
+        }
+        // Tinh kich thuoc file
+        $bytes = $file['size'];
+        if ($bytes >= 1048576)      $size = round($bytes/1048576, 1) . ' MB';
+        elseif ($bytes >= 1024)     $size = round($bytes/1024, 1) . ' KB';
+        else                        $size = $bytes . ' B';
 
         $db   = Database::getInstance()->getConnection();
         $stmt = $db->prepare("INSERT INTO lesson_attachments (lesson_id, name, file_path, file_size) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$lesson_id, $result['name'], $result['path'], $result['size']]);
+        $stmt->execute([$lesson_id, $file['name'], 'uploads/attachments/' . $filename, $size]);
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
 
@@ -187,3 +214,4 @@ class AdminCourseContentController extends Controller {
         $stmt->execute([$id]);
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
+}
