@@ -1,11 +1,16 @@
 # Backups & Archives
 *.zip
-*.rar
 *.tar.gz
 
-# Uploads folder (ignore uploaded files but keep the folder structure)
-uploads/*
+# Uploads folder - Bỏ qua các file thật được upload, nhưng GIỮ lại cấu trúc thư mục
+uploads/**
 !uploads/.gitkeep
+!uploads/courses/
+!uploads/courses/.gitkeep
+!uploads/course_pdfs/
+!uploads/course_pdfs/.gitkeep
+!uploads/attachments/
+!uploads/attachments/.gitkeep
 
 # Operating System Files
 .DS_Store
