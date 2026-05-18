@@ -63,6 +63,8 @@ $router->post('/admin/courses/content/updateLesson', 'AdminCourseContentControll
 $router->post('/admin/courses/content/deleteLesson', 'AdminCourseContentController@deleteLesson');
 $router->post('/admin/courses/content/storeItem', 'AdminCourseContentController@storeItem');
 $router->post('/admin/courses/content/deleteItem', 'AdminCourseContentController@deleteItem');
+$router->post('/admin/courses/content/storeAttachment', 'AdminCourseContentController@storeAttachment');
+$router->post('/admin/courses/content/deleteAttachment', 'AdminCourseContentController@deleteAttachment');
 
 // Admin Enrollment Routes
 $router->get('/admin/enrollments', 'EnrollmentController@adminIndex');

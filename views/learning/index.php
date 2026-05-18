@@ -8,19 +8,19 @@
                     
                     <?php foreach($current_items as $item): ?>
                         <?php if($item['type'] == 'video'): ?>
-                            <!-- Nhúng Video -->
+                            <!-- Video -->
                             <?php 
                                 $url = $item['content'];
                                 $embed_url = '';
                                 if(strpos($url, 'youtube.com') !== false || strpos($url, 'youtu.be') !== false) {
-                                    preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/\s]{11})%i', $url, $match);
+                                    preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ \s]{11})%i', $url, $match);
                                     $youtube_id = $match[1] ?? '';
                                     $embed_url = "https://www.youtube.com/embed/{$youtube_id}";
                                 } elseif(strpos($url, 'vimeo.com') !== false) {
                                     $vimeo_id = substr(parse_url($url, PHP_URL_PATH), 1);
                                     $embed_url = "https://player.vimeo.com/video/{$vimeo_id}";
                                 } else {
-                                    $embed_url = $url; // Trường hợp URL iframe tĩnh
+                                    $embed_url = $url;
                                 }
                             ?>
                             <?php if($embed_url): ?>
@@ -28,12 +28,24 @@
                                     <iframe src="<?php echo $embed_url; ?>" title="Video player" allowfullscreen></iframe>
                                 </div>
                             <?php else: ?>
-                                <div class="alert alert-warning text-dark">Link video không được hỗ trợ nội tuyến. (<a href="<?php echo $url; ?>" target="_blank" class="text-primary"><?php echo $url; ?></a>)</div>
+                                <div class="alert alert-warning text-dark">Link video không được hỗ trợ. (<a href="<?php echo $url; ?>" target="_blank" class="text-primary"><?php echo $url; ?></a>)</div>
                             <?php endif; ?>
                         <?php elseif($item['type'] == 'text'): ?>
-                            <!-- Nhúng Text -->
-                            <div class="bg-white text-dark p-4 rounded shadow-sm mb-4" style="font-size: 1.1rem; line-height:1.8;">
+                            <!-- Text/HTML -->
+                            <div class="bg-white text-dark p-4 rounded shadow-sm mb-4" style="font-size:1.1rem;line-height:1.8;">
                                 <?php echo $item['content']; ?>
+                            </div>
+                        <?php elseif($item['type'] == 'pdf'): ?>
+                            <!-- PDF Viewer -->
+                            <div class="mb-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-file-pdf text-danger fs-4 me-2"></i>
+                                    <span class="fw-semibold text-white">Tài liệu PDF</span>
+                                    <a href="<?php echo APP_URL . '/' . $item['content']; ?>" target="_blank" class="btn btn-sm btn-outline-light ms-3"><i class="bi bi-box-arrow-up-right me-1"></i>Mở trong tab mới</a>
+                                </div>
+                                <div class="rounded overflow-hidden border border-secondary" style="height:75vh;">
+                                    <iframe src="<?php echo APP_URL . '/' . $item['content']; ?>" width="100%" height="100%" style="border:none;"></iframe>
+                                </div>
                             </div>
                         <?php endif; ?>
                     <?php endforeach; ?>
@@ -42,6 +54,26 @@
                         <div class="text-center py-5">
                             <i class="bi bi-camera-video-off display-1 text-white-50"></i>
                             <h4 class="mt-3 text-white-50">Bài học này chưa được cập nhật nội dung.</h4>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Attachments panel -->
+                    <?php if(!empty($current_attachments)): ?>
+                        <div class="mt-4 p-3 rounded" style="background:#1a1a2e;border:1px solid #2d2d44;">
+                            <h6 class="text-white mb-3"><i class="bi bi-paperclip text-success me-2"></i>Tài liệu đính kèm</h6>
+                            <div class="row g-2">
+                                <?php foreach($current_attachments as $att): ?>
+                                    <div class="col-md-6">
+                                        <a href="<?php echo APP_URL . '/' . $att['file_path']; ?>" download="<?php echo htmlspecialchars($att['name']); ?>" class="d-flex align-items-center gap-2 p-2 rounded text-decoration-none" style="background:#111;border:1px solid #333;transition:background .2s;" onmouseover="this.style.background='#1e3a2f'" onmouseout="this.style.background='#111'">
+                                            <i class="bi bi-file-earmark-arrow-down fs-4 text-success flex-shrink-0"></i>
+                                            <div style="overflow:hidden;">
+                                                <div class="text-white small fw-semibold text-truncate"><?php echo htmlspecialchars($att['name']); ?></div>
+                                                <div class="text-muted" style="font-size:.78rem;"><?php echo htmlspecialchars($att['file_size']); ?></div>
+                                            </div>
+                                        </a>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     <?php endif; ?>
                     

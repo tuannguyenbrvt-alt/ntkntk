@@ -95,21 +95,95 @@ class AdminCourseContentController extends Controller {
     }
 
     public function storeItem() {
-        $lesson_id = $_POST['lesson_id'] ?? 0;
-        $course_id = $_POST['course_id'] ?? 0;
-        $type = $_POST['type'] ?? 'text';
-        $content = $_POST['content'] ?? '';
-        $db = Database::getInstance()->getConnection();
+        $lesson_id  = $_POST['lesson_id']  ?? 0;
+        $course_id  = $_POST['course_id']  ?? 0;
+        $type       = $_POST['type']       ?? 'text';
+        $content    = '';
+
+        require_once ROOT_PATH . '/helpers/UploadHelper.php';
+
+        if ($type === 'pdf') {
+            // PDF: upload file and store path as content
+            if (!isset($_FILES['pdf_file']) || $_FILES['pdf_file']['error'] === UPLOAD_ERR_NO_FILE) {
+                $_SESSION['error'] = 'Vui lòng chọn file PDF.';
+                $this->redirect('/admin/courses/builder?id=' . $course_id);
+                return;
+            }
+            try {
+                $result  = UploadHelper::uploadFile($_FILES['pdf_file'], 'uploads/course_pdfs/', ['pdf'], 50);
+                $content = $result['path'];
+            } catch (Exception $e) {
+                $_SESSION['error'] = $e->getMessage();
+                $this->redirect('/admin/courses/builder?id=' . $course_id);
+                return;
+            }
+        } else {
+            $content = $_POST['content'] ?? '';
+        }
+
+        $db   = Database::getInstance()->getConnection();
         $stmt = $db->prepare("INSERT INTO lesson_items (lesson_id, type, content) VALUES (?, ?, ?)");
         $stmt->execute([$lesson_id, $type, $content]);
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
     public function deleteItem() {
-        $id = $_POST['id'] ?? 0;
+        $id        = $_POST['id']        ?? 0;
         $course_id = $_POST['course_id'] ?? 0;
-        $db = Database::getInstance()->getConnection();
+        $db        = Database::getInstance()->getConnection();
+        // Delete physical PDF file if exists
+        $s = $db->prepare("SELECT type, content FROM lesson_items WHERE id = ?");
+        $s->execute([$id]);
+        $item = $s->fetch();
+        if ($item && $item['type'] === 'pdf' && file_exists(ROOT_PATH . '/' . $item['content'])) {
+            @unlink(ROOT_PATH . '/' . $item['content']);
+        }
         $stmt = $db->prepare("DELETE FROM lesson_items WHERE id = ?");
         $stmt->execute([$id]);
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
-}
+
+    // ── ATTACHMENTS ──────────────────────────────────────────────────────────
+    public function storeAttachment() {
+        $lesson_id = $_POST['lesson_id'] ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+
+        if (!isset($_FILES['attachment_file']) || $_FILES['attachment_file']['error'] === UPLOAD_ERR_NO_FILE) {
+            $_SESSION['error'] = 'Vui lòng chọn file đính kèm.';
+            $this->redirect('/admin/courses/builder?id=' . $course_id);
+            return;
+        }
+
+        require_once ROOT_PATH . '/helpers/UploadHelper.php';
+        try {
+            $result = UploadHelper::uploadFile(
+                $_FILES['attachment_file'],
+                'uploads/attachments/',
+                ['pdf','doc','docx','xls','xlsx','ppt','pptx','zip','rar','txt','mp3','mp4','png','jpg','jpeg'],
+                100
+            );
+        } catch (Exception $e) {
+            $_SESSION['error'] = $e->getMessage();
+            $this->redirect('/admin/courses/builder?id=' . $course_id);
+            return;
+        }
+
+        $db   = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("INSERT INTO lesson_attachments (lesson_id, name, file_path, file_size) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$lesson_id, $result['name'], $result['path'], $result['size']]);
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
+
+    public function deleteAttachment() {
+        $id        = $_POST['id']        ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $db        = Database::getInstance()->getConnection();
+        $s         = $db->prepare("SELECT file_path FROM lesson_attachments WHERE id = ?");
+        $s->execute([$id]);
+        $row = $s->fetch();
+        if ($row && file_exists(ROOT_PATH . '/' . $row['file_path'])) {
+            @unlink(ROOT_PATH . '/' . $row['file_path']);
+        }
+        $stmt = $db->prepare("DELETE FROM lesson_attachments WHERE id = ?");
+        $stmt->execute([$id]);
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }

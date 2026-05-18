@@ -47,6 +47,7 @@ class LearningController extends Controller {
         $current_lesson_id = $_GET['lesson_id'] ?? 0;
         $current_lesson = null;
         $current_items = [];
+        $current_attachments = [];
         $is_completed = false;
 
         if ($current_lesson_id > 0) {
@@ -57,12 +58,20 @@ class LearningController extends Controller {
             $stmtItems = $db->prepare("SELECT * FROM lesson_items WHERE lesson_id = ? ORDER BY sort_order ASC, id ASC");
             $stmtItems->execute([$current_lesson_id]);
             $current_items = $stmtItems->fetchAll();
+
+            $stmtAtt = $db->prepare("SELECT * FROM lesson_attachments WHERE lesson_id = ? ORDER BY id ASC");
+            $stmtAtt->execute([$current_lesson_id]);
+            $current_attachments = $stmtAtt->fetchAll();
         } else {
             if (!empty($parts[0]['chapters'][0]['lessons'][0])) {
                 $current_lesson = $parts[0]['chapters'][0]['lessons'][0];
                 $stmtItems = $db->prepare("SELECT * FROM lesson_items WHERE lesson_id = ? ORDER BY sort_order ASC, id ASC");
                 $stmtItems->execute([$current_lesson['id']]);
                 $current_items = $stmtItems->fetchAll();
+
+                $stmtAtt = $db->prepare("SELECT * FROM lesson_attachments WHERE lesson_id = ? ORDER BY id ASC");
+                $stmtAtt->execute([$current_lesson['id']]);
+                $current_attachments = $stmtAtt->fetchAll();
             }
         }
 
@@ -73,12 +82,13 @@ class LearningController extends Controller {
         }
 
         $this->render('learning/index', [
-            'title' => 'Phòng học: ' . $course['title'],
-            'course' => $course,
-            'parts' => $parts,
-            'current_lesson' => $current_lesson,
-            'current_items' => $current_items,
-            'is_completed' => $is_completed
+            'title'               => 'Phòng học: ' . $course['title'],
+            'course'              => $course,
+            'parts'               => $parts,
+            'current_lesson'      => $current_lesson,
+            'current_items'       => $current_items,
+            'current_attachments' => $current_attachments,
+            'is_completed'        => $is_completed
         ], 'main');
     }
     

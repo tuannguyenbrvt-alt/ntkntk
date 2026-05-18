@@ -109,7 +109,7 @@ CREATE TABLE `course_lessons` (
 CREATE TABLE `lesson_items` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `lesson_id` int(11) NOT NULL,
-  `type` enum('video','text','document','quiz') NOT NULL,
+  `type` enum('video','text','pdf','document','quiz') NOT NULL,
   `content` longtext NOT NULL,
   `sort_order` int(11) NOT NULL DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
@@ -117,6 +117,18 @@ CREATE TABLE `lesson_items` (
   PRIMARY KEY (`id`),
   KEY `lesson_id` (`lesson_id`),
   CONSTRAINT `lesson_items_ibfk_1` FOREIGN KEY (`lesson_id`) REFERENCES `course_lessons` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE `lesson_attachments` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `lesson_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL COMMENT 'Original filename shown to user',
+  `file_path` varchar(500) NOT NULL COMMENT 'Relative server path e.g. uploads/attachments/xxx.pdf',
+  `file_size` varchar(50) DEFAULT NULL COMMENT 'Human-readable size e.g. 2.5 MB',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `lesson_id` (`lesson_id`),
+  CONSTRAINT `lesson_attachments_ibfk_1` FOREIGN KEY (`lesson_id`) REFERENCES `course_lessons` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `enrollments` (

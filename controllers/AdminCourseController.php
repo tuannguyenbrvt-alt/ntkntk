@@ -177,6 +177,10 @@ class AdminCourseController extends Controller {
                     $stmtItems = $db->prepare("SELECT * FROM lesson_items WHERE lesson_id = ? ORDER BY sort_order ASC, id ASC");
                     $stmtItems->execute([$lesson['id']]);
                     $lesson['items'] = $stmtItems->fetchAll();
+
+                    $stmtAttach = $db->prepare("SELECT * FROM lesson_attachments WHERE lesson_id = ? ORDER BY id ASC");
+                    $stmtAttach->execute([$lesson['id']]);
+                    $lesson['attachments'] = $stmtAttach->fetchAll();
                 }
             }
         }
