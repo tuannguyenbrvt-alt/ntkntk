@@ -47,6 +47,144 @@
                                     <iframe src="<?php echo APP_URL . '/' . $item['content']; ?>" width="100%" height="100%" style="border:none;"></iframe>
                                 </div>
                             </div>
+
+                        <?php elseif($item['type'] == 'quiz'): ?>
+                            <!-- QUIZ -->
+                            <?php
+                            $quiz_id = (int)$item['content'];
+                            $db = Database::getInstance()->getConnection();
+                            $qz = $db->prepare("SELECT * FROM quizzes WHERE id=?"); $qz->execute([$quiz_id]); $quiz_info = $qz->fetch();
+                            if ($quiz_info):
+                                // Ket qua lan lam gan nhat
+                                $la = $db->prepare("SELECT * FROM quiz_attempts WHERE quiz_id=? AND student_id=? ORDER BY id DESC LIMIT 1");
+                                $la->execute([$quiz_id, $_SESSION['user_id']]); $last_attempt = $la->fetch();
+                                // So lan da lam
+                                $cnt_a = $db->prepare("SELECT COUNT(*) FROM quiz_attempts WHERE quiz_id=? AND student_id=? AND submitted_at IS NOT NULL");
+                                $cnt_a->execute([$quiz_id, $_SESSION['user_id']]); $attempt_count = (int)$cnt_a->fetchColumn();
+                                $can_retry = ($quiz_info['max_attempts'] == 0 || $attempt_count < $quiz_info['max_attempts']);
+                            ?>
+                            <div class="mb-4 p-4 rounded" style="background:#1a1a2e;border:2px solid #f0b429;">
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div style="font-size:2.5rem;">🏆</div>
+                                    <div>
+                                        <h5 class="text-white fw-bold mb-1"><?php echo htmlspecialchars($quiz_info['title']); ?></h5>
+                                        <div class="d-flex gap-3 text-muted small">
+                                            <?php if($quiz_info['time_limit_minutes'] > 0): ?>
+                                                <span><i class="bi bi-clock me-1"></i><?php echo $quiz_info['time_limit_minutes']; ?> phút</span>
+                                            <?php endif; ?>
+                                            <span><i class="bi bi-bar-chart me-1"></i>Điểm qua: <?php echo $quiz_info['pass_score']; ?>%</span>
+                                            <?php if($quiz_info['max_attempts'] > 0): ?>
+                                                <span><i class="bi bi-arrow-repeat me-1"></i><?php echo $attempt_count; ?>/<?php echo $quiz_info['max_attempts']; ?> lượt</span>
+                                            <?php endif; ?>
+                                        </div>
+                                        <?php if($quiz_info['description']): ?>
+                                            <p class="text-white-50 small mt-1 mb-0"><?php echo htmlspecialchars($quiz_info['description']); ?></p>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <?php if($last_attempt && $last_attempt['submitted_at']): ?>
+                                    <!-- Da lam xong it nhat 1 lan -->
+                                    <div class="p-3 rounded mb-3" style="background:<?php echo $last_attempt['passed'] ? '#0d2e0d' : '#2e0d0d'; ?>">
+                                        <span class="fw-bold" style="color:<?php echo $last_attempt['passed'] ? '#4caf50' : '#f44336'; ?>">
+                                            <?php echo $last_attempt['passed'] ? '✅ Đạt' : '❌ Chưa đạt'; ?> — Điểm gần nhất: <strong><?php echo $last_attempt['score']; ?>%</strong>
+                                        </span>
+                                        <a href="<?php echo APP_URL; ?>/quiz/result?attempt_id=<?php echo $last_attempt['id']; ?>" class="btn btn-sm btn-outline-light ms-3">Xem kết quả chi tiết</a>
+                                    </div>
+                                <?php endif; ?>
+
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <?php if($last_attempt && !$last_attempt['submitted_at']): ?>
+                                        <a href="<?php echo APP_URL; ?>/quiz/take?quiz_id=<?php echo $quiz_id; ?>" class="btn btn-warning fw-bold">
+                                            <i class="bi bi-play-fill me-1"></i>Tiếp tục làm bài
+                                        </a>
+                                    <?php elseif($can_retry): ?>
+                                        <a href="<?php echo APP_URL; ?>/quiz/take?quiz_id=<?php echo $quiz_id; ?>" class="btn btn-warning fw-bold">
+                                            <i class="bi bi-play-fill me-1"></i><?php echo $attempt_count > 0 ? 'Làm lại bài' : 'Bắt đầu làm bài'; ?>
+                                        </a>
+                                    <?php else: ?>
+                                        <button class="btn btn-secondary" disabled>Đã hết lượt làm bài</button>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
+
+                        <?php elseif($item['type'] == 'assignment_essay' || $item['type'] == 'assignment_file'): ?>
+                            <!-- ASSIGNMENT -->
+                            <?php
+                            $asgn_id = (int)$item['content'];
+                            $db = Database::getInstance()->getConnection();
+                            $as = $db->prepare("SELECT * FROM assignments WHERE id=?"); $as->execute([$asgn_id]); $asgn_info = $as->fetch();
+                            if ($asgn_info):
+                                $sub = $db->prepare("SELECT * FROM assignment_submissions WHERE assignment_id=? AND student_id=?");
+                                $sub->execute([$asgn_id, $_SESSION['user_id']]); $my_sub = $sub->fetch();
+                            ?>
+                            <div class="mb-4 p-4 rounded" style="background:#1a1a2e;border:2px solid <?php echo $asgn_info['type']==='essay' ? '#28a745' : '#17a2b8'; ?>;">
+                                <div class="d-flex align-items-center gap-3 mb-3">
+                                    <div style="font-size:2.5rem;"><?php echo $asgn_info['type']==='essay' ? '📝' : '📁'; ?></div>
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <?php if($asgn_info['type']==='essay'): ?>
+                                                <span class="badge bg-success">Tự luận</span>
+                                            <?php else: ?>
+                                                <span class="badge bg-info">Nộp file</span>
+                                            <?php endif; ?>
+                                            <h5 class="text-white fw-bold mb-0"><?php echo htmlspecialchars($asgn_info['title']); ?></h5>
+                                        </div>
+                                        <div class="d-flex gap-3 text-muted small mt-1">
+                                            <span><i class="bi bi-award me-1"></i>Điểm tối đa: <?php echo $asgn_info['max_score']; ?></span>
+                                            <?php if($asgn_info['due_date']): ?>
+                                                <span><i class="bi bi-calendar me-1"></i>Hạn nộp: <?php echo date('d/m/Y H:i', strtotime($asgn_info['due_date'])); ?></span>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <?php if($asgn_info['description']): ?>
+                                    <div class="p-3 rounded mb-3 text-white-50 small" style="background:#111;border-left:3px solid #444;"><?php echo nl2br(htmlspecialchars($asgn_info['description'])); ?></div>
+                                <?php endif; ?>
+
+                                <?php if($my_sub && $my_sub['status'] === 'graded'): ?>
+                                    <!-- Da cham diem -->
+                                    <div class="p-3 rounded mb-3" style="background:#0d2e0d;border:1px solid #28a745;">
+                                        <div class="text-success fw-bold">✅ Đã được chấm điểm: <span class="fs-5"><?php echo $my_sub['score']; ?>/<?php echo $asgn_info['max_score']; ?></span></div>
+                                        <?php if($my_sub['feedback']): ?>
+                                            <div class="text-white-50 small mt-2"><i class="bi bi-chat-quote me-1"></i>Nhận xét: <?php echo htmlspecialchars($my_sub['feedback']); ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php elseif($my_sub): ?>
+                                    <div class="alert alert-warning py-2"><i class="bi bi-hourglass me-2"></i>Đã nộp bài — Đang chờ giáo viên chấm điểm.</div>
+                                <?php endif; ?>
+
+                                <?php if(!$my_sub || $my_sub['status'] === 'pending'): ?>
+                                    <?php if($asgn_info['type'] === 'essay'): ?>
+                                        <form method="POST" action="<?php echo APP_URL; ?>/assignment/submitEssay">
+                                            <input type="hidden" name="assignment_id" value="<?php echo $asgn_id; ?>">
+                                            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+                                            <input type="hidden" name="lesson_id" value="<?php echo $current_lesson['id']; ?>">
+                                            <textarea name="content" class="form-control mb-3" rows="8" style="background:#111;color:#eee;border-color:#444;" placeholder="Nhập bài làm của bạn tại đây..." required><?php echo htmlspecialchars($my_sub['content'] ?? ''); ?></textarea>
+                                            <button type="submit" class="btn btn-success"><i class="bi bi-send me-1"></i><?php echo $my_sub ? 'Cập nhật bài làm' : 'Nộp bài'; ?></button>
+                                        </form>
+                                    <?php else: ?>
+                                        <form method="POST" action="<?php echo APP_URL; ?>/assignment/submitFile" enctype="multipart/form-data">
+                                            <input type="hidden" name="assignment_id" value="<?php echo $asgn_id; ?>">
+                                            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+                                            <input type="hidden" name="lesson_id" value="<?php echo $current_lesson['id']; ?>">
+                                            <input type="hidden" name="drive_folder_id" value="<?php echo htmlspecialchars($asgn_info['drive_folder_id'] ?? ''); ?>">
+                                            <?php if($my_sub && $my_sub['file_name']): ?>
+                                                <div class="text-white-50 small mb-2"><i class="bi bi-file-check me-1 text-info"></i>File đã nộp trước: <?php echo htmlspecialchars($my_sub['file_name']); ?></div>
+                                            <?php endif; ?>
+                                            <div class="input-group mb-3">
+                                                <input type="file" name="submission_file" class="form-control" style="background:#111;color:#eee;border-color:#444;" required>
+                                                <button type="submit" class="btn btn-info text-white"><i class="bi bi-cloud-upload me-1"></i><?php echo $my_sub ? 'Nộp lại' : 'Nộp file'; ?></button>
+                                            </div>
+                                            <small class="text-muted">Tối đa 50MB. File sẽ được lưu trên Google Drive.</small>
+                                        </form>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </div>
+                            <?php endif; ?>
+
                         <?php endif; ?>
                     <?php endforeach; ?>
                     
