@@ -218,10 +218,10 @@
     </div>
 </div>
 
-<!-- Add Item (Video / Text / PDF) -->
+<!-- Add Item: Video / Text (form thông thường, không cần enctype) -->
 <div class="modal fade" id="addItemModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <form action="<?php echo APP_URL; ?>/admin/courses/content/storeItem" method="POST" enctype="multipart/form-data" class="modal-content">
+        <form action="<?php echo APP_URL; ?>/admin/courses/content/storeItem" method="POST" class="modal-content">
             <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
             <input type="hidden" name="lesson_id" id="item_lesson_id">
             <div class="modal-header"><h5 class="modal-title"><i class="bi bi-file-earmark-plus text-info me-2"></i>Thêm Nội dung bài học</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
@@ -229,37 +229,61 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Loại nội dung</label>
                     <select name="type" class="form-select" id="item_type" onchange="toggleContentInput()">
-                        <option value="video"><i class="bi bi-youtube"></i> Video (Link Youtube / Vimeo)</option>
-                        <option value="text">Văn bản / Tài liệu (HTML)</option>
-                        <option value="pdf"><i class="bi bi-file-pdf"></i> File PDF (xem trực tiếp)</option>
+                        <option value="video">🎬 Video (Link Youtube / Vimeo)</option>
+                        <option value="text">📝 Văn bản / Tài liệu (HTML)</option>
+                        <option value="pdf">📄 File PDF (xem trực tiếp)</option>
                     </select>
                 </div>
-
                 <!-- Video -->
                 <div class="mb-3" id="video_input_div">
                     <label class="form-label">Link Video (Youtube / Vimeo / Google Drive MP4)</label>
                     <input type="text" id="video_url" class="form-control" placeholder="https://www.youtube.com/watch?v=...">
                 </div>
-
                 <!-- Text -->
                 <div class="mb-3 d-none" id="text_input_div">
                     <label class="form-label">Nội dung Văn bản</label>
                     <textarea id="editor_item" class="form-control"></textarea>
                 </div>
-
-                <!-- PDF -->
-                <div class="mb-3 d-none" id="pdf_input_div">
-                    <label class="form-label fw-semibold">Tải lên file PDF <span class="text-muted fw-normal">(tối đa 50MB)</span></label>
-                    <input type="file" name="pdf_file" id="pdf_file_input" class="form-control" accept=".pdf">
-                    <div class="form-text"><i class="bi bi-info-circle text-info me-1"></i>Học viên sẽ xem PDF trực tiếp trên trình duyệt trong bài học.</div>
+                <!-- PDF notice -->
+                <div class="mb-3 d-none" id="pdf_notice_div">
+                    <div class="alert alert-info d-flex align-items-center gap-2 mb-0">
+                        <i class="bi bi-info-circle-fill fs-5"></i>
+                        <span>Để upload file PDF, vui lòng nhấn nút <strong>Upload PDF</strong> bên dưới. Cửa sổ này sẽ đóng và mở form upload chuyên dụng.</span>
+                    </div>
                 </div>
-
-                <!-- Hidden content for video/text -->
+                <!-- Hidden textarea cho video/text -->
                 <textarea name="content" id="real_content" class="d-none"></textarea>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                <button type="button" onclick="submitItemForm(this)" class="btn btn-primary"><i class="bi bi-save me-1"></i>Lưu Nội dung</button>
+                <button type="button" id="pdf_switch_btn" class="btn btn-warning text-white d-none" onclick="switchToPdfModal()"><i class="bi bi-file-pdf me-1"></i>Upload PDF</button>
+                <button type="button" id="item_submit_btn" onclick="submitItemForm(this)" class="btn btn-primary"><i class="bi bi-save me-1"></i>Lưu Nội dung</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Add Item: PDF riêng biệt (dùng enctype multipart/form-data) -->
+<div class="modal fade" id="addPdfModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="<?php echo APP_URL; ?>/admin/courses/content/storeItem" method="POST" enctype="multipart/form-data" class="modal-content">
+            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+            <input type="hidden" name="lesson_id" id="pdf_lesson_id">
+            <input type="hidden" name="type" value="pdf">
+            <div class="modal-header bg-warning bg-opacity-10">
+                <h5 class="modal-title"><i class="bi bi-file-pdf text-danger me-2"></i>Upload File PDF</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Chọn file PDF <span class="text-muted fw-normal">(tối đa 50MB)</span></label>
+                    <input type="file" name="pdf_file" class="form-control" accept=".pdf" required>
+                    <div class="form-text"><i class="bi bi-info-circle text-info me-1"></i>Học viên sẽ xem PDF trực tiếp trên trình duyệt trong bài học.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-danger"><i class="bi bi-upload me-1"></i>Tải lên PDF</button>
             </div>
         </form>
     </div>
@@ -324,19 +348,26 @@
         let type = document.getElementById('item_type').value;
         document.getElementById('video_input_div').classList.toggle('d-none', type !== 'video');
         document.getElementById('text_input_div').classList.toggle('d-none', type !== 'text');
-        document.getElementById('pdf_input_div').classList.toggle('d-none', type !== 'pdf');
+        document.getElementById('pdf_notice_div').classList.toggle('d-none', type !== 'pdf');
+        // Show/hide buttons
+        document.getElementById('pdf_switch_btn').classList.toggle('d-none', type !== 'pdf');
+        document.getElementById('item_submit_btn').classList.toggle('d-none', type === 'pdf');
+    }
+
+    function switchToPdfModal() {
+        // Lấy lesson_id từ form hiện tại và chuyển sang modal PDF
+        let lessonId = document.getElementById('item_lesson_id').value;
+        document.getElementById('pdf_lesson_id').value = lessonId;
+        // Đóng modal cũ, mở modal PDF
+        bootstrap.Modal.getInstance(document.getElementById('addItemModal')).hide();
+        setTimeout(function() { showModal('addPdfModal'); }, 300);
     }
 
     function submitItemForm(btn) {
         let type = document.getElementById('item_type').value;
-        if (type === 'pdf') {
-            // PDF: let the form submit normally with multipart
-            btn.closest('form').submit();
-            return;
-        }
         if (type === 'video') {
             document.getElementById('real_content').value = document.getElementById('video_url').value;
-        } else {
+        } else if (type === 'text') {
             document.getElementById('real_content').value = tinymce.get('editor_item').getContent();
         }
         btn.closest('form').submit();
