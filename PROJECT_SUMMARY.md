@@ -40,6 +40,12 @@ Do dự án được refactor nhiều lần, cần đặc biệt lưu ý tên ch
 ## 5. Định hướng cho phiên làm việc tiếp theo
 - **Kiểm tra độ ổn định:** Do hệ thống vừa cập nhật các thay đổi liên quan đến cấu trúc bài học và nộp bài, nên test lại luồng (Học sinh mua khóa học -> Làm bài -> Giáo viên chấm bài).
 - **Phát triển tính năng mới:** Tuỳ thuộc vào yêu cầu của bạn, có thể bổ sung chức năng Chứng chỉ (Certificate generation), Thống kê doanh thu, hoặc Email thông báo.
+- **Nâng cấp Hệ thống Tài khoản:**
+  - Thêm trường "Nhập lại mật khẩu" (Confirm Password) vào form đăng ký.
+  - Nghiên cứu tích hợp tính năng Đăng nhập/Đăng ký trực tiếp qua tài khoản Google (Gmail).
+- **Nâng cấp Báo cáo Học tập (Hồ sơ học tập):**
+  - Cập nhật thêm bảng tổng hợp kết quả chi tiết: Thống kê tổng số bài tập của mỗi loại (Tự luận/Nộp file), sinh viên đã làm được bao nhiêu bài, tổng điểm đạt được là bao nhiêu.
+  - Mở rộng chức năng Tra cứu: Cho phép xem kết quả học tập kể cả khi không cần đăng nhập, chỉ yêu cầu nhập đúng Tên đăng nhập và Số điện thoại.
 
 ---
 *(Lần cập nhật cuối: 18/05/2026)*
