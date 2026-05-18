@@ -37,7 +37,7 @@ class AssignmentController extends Controller {
         $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
     }
 
-    // Hoc vien nop file - luu local truoc, upload Drive sau neu co cau hinh
+    // Hoc vien nop file - CHI upload len Google Drive
     public function submitFile() {
         $assignment_id = (int)($_POST['assignment_id'] ?? 0);
         $course_id     = (int)($_POST['course_id']     ?? 0);
@@ -63,66 +63,56 @@ class AssignmentController extends Controller {
             return;
         }
 
-        // --- Buoc 1: Luu file local truoc (dam bao khong mat bai) ---
-        $uploadDir = ROOT_PATH . '/uploads/submissions/';
-        if (!is_dir($uploadDir)) { @mkdir($uploadDir, 0755, true); }
-
-        $safeExt   = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-        $localName = 'sub_' . $_SESSION['user_id'] . '_' . $assignment_id . '_' . time() . '.' . $safeExt;
-        $localPath = $uploadDir . $localName;
-        $localUrl  = null;
-        $driveUrl  = null;
-        $driveId   = null;
-
-        if (move_uploaded_file($file['tmp_name'], $localPath)) {
-            $localUrl = 'uploads/submissions/' . $localName; // Duong dan tuong doi
-        } else {
-            $_SESSION['error'] = 'Khong the luu file. Vui long thu lai.';
+        // Kiem tra cau hinh Google Drive
+        $saPath = ROOT_PATH . '/config/google-service-account.json';
+        if (!file_exists($saPath)) {
+            $_SESSION['error'] = 'He thong chua cau hinh Google Drive. Vui long lien he quan tri vien.';
+            $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
+            return;
+        }
+        if (empty($folder_id)) {
+            $_SESSION['error'] = 'Bai tap nay chua co Google Drive Folder ID. Vui long lien he giao vien.';
             $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
             return;
         }
 
-        // --- Buoc 2: Thu upload len Google Drive (neu co cau hinh) ---
-        $driveConfigFile = ROOT_PATH . '/config/google-service-account.json';
-        if (!empty($folder_id) && file_exists($driveConfigFile)) {
-            try {
-                require_once ROOT_PATH . '/helpers/GoogleDriveHelper.php';
-                $sa = file_get_contents($driveConfigFile);
-                $driveResult = GoogleDriveHelper::uploadFile($localPath, $file['name'], $folder_id, $sa);
-                $driveUrl = $driveResult['url'];
-                $driveId  = $driveResult['id'];
-                // Xoa file local sau khi upload Drive thanh cong
-                @unlink($localPath);
-                $localUrl = null;
-            } catch (Exception $e) {
-                // Drive that bai - giu file local, khong loi voi hoc vien
-                // Ghi log de admin biet
-                error_log('[GoogleDrive] Upload that bai cho assignment #' . $assignment_id . ': ' . $e->getMessage());
+        // Upload len Google Drive
+        require_once ROOT_PATH . '/helpers/GoogleDriveHelper.php';
+        try {
+            $sa = file_get_contents($saPath);
+            $result = GoogleDriveHelper::uploadFile($file['tmp_name'], $file['name'], $folder_id, $sa);
+        } catch (Exception $e) {
+            // Hien thi loi cu the de debug
+            $errMsg = $e->getMessage();
+            if (strpos($errMsg, 'openssl') !== false) {
+                $_SESSION['error'] = 'Loi: Server khong ho tro OpenSSL. Lien he hosting de bat openssl.';
+            } elseif (strpos($errMsg, 'HTTP 403') !== false || strpos($errMsg, '403') !== false) {
+                $_SESSION['error'] = 'Loi 403: Service Account chua co quyen vao thu muc Drive. Hay chia se thu muc voi email Service Account va cap quyen Editor.';
+            } elseif (strpos($errMsg, 'HTTP 404') !== false || strpos($errMsg, '404') !== false) {
+                $_SESSION['error'] = 'Loi 404: Khong tim thay thu muc Drive (Folder ID sai). Kiem tra lai Folder ID.';
+            } elseif (strpos($errMsg, 'curl') !== false || strpos($errMsg, 'cURL') !== false) {
+                $_SESSION['error'] = 'Loi ket noi mang. Server khong the ket noi Google API. Kiem tra lien ket internet cua hosting.';
+            } else {
+                $_SESSION['error'] = 'Loi upload Google Drive: ' . $errMsg;
             }
+            $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
+            return;
         }
 
-        // --- Buoc 3: Luu submission vao DB (du co Drive hay khong) ---
+        // Luu submission vao DB
         $exists = $db->prepare("SELECT id FROM assignment_submissions WHERE assignment_id=? AND student_id=?");
         $exists->execute([$assignment_id, $_SESSION['user_id']]);
         $row = $exists->fetch();
 
-        // Xac dinh URL hien thi: uu tien Drive, fallback local
-        $displayUrl  = $driveUrl  ?? ($localUrl  ? (defined('APP_URL') ? APP_URL . '/' . $localUrl : $localUrl) : null);
-        $displayId   = $driveId   ?? $localUrl;  // Luu local path lam ID de tim lai
-
         if ($row) {
             $db->prepare("UPDATE assignment_submissions SET file_name=?, file_drive_url=?, file_drive_id=?, status='pending', submitted_at=NOW(), score=NULL, feedback=NULL WHERE id=?")
-               ->execute([$file['name'], $displayUrl, $displayId, $row['id']]);
+               ->execute([$file['name'], $result['url'], $result['id'], $row['id']]);
         } else {
             $db->prepare("INSERT INTO assignment_submissions (assignment_id, student_id, file_name, file_drive_url, file_drive_id) VALUES (?,?,?,?,?)")
-               ->execute([$assignment_id, $_SESSION['user_id'], $file['name'], $displayUrl, $displayId]);
+               ->execute([$assignment_id, $_SESSION['user_id'], $file['name'], $result['url'], $result['id']]);
         }
 
-        if ($driveUrl) {
-            $_SESSION['success'] = 'Da nop file thanh cong len Google Drive!';
-        } else {
-            $_SESSION['success'] = 'Da nop file thanh cong! (Luu tren server)';
-        }
+        $_SESSION['success'] = 'Da nop file thanh cong len Google Drive! Giao vien se cham diem som.';
         $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
     }
 
