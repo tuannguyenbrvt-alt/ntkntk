@@ -12,6 +12,9 @@ define('DB_USER', 'ntknt9be30ca_nmt');
 define('DB_PASS', '123451212');
 define('DB_CHARSET', 'utf8mb4');
 
+// Cấu hình mã bảo mật API để đăng bài tự động
+define('API_SECRET_KEY', 'ntkntk_secure_api_key_8b9f1a2c3d4e5f6a');
+
 // Cấu hình đường dẫn hệ thống
 define('ROOT_PATH', dirname(__DIR__));
 define('UPLOAD_PATH', ROOT_PATH . '/uploads');

@@ -109,6 +109,9 @@ $router->post('/profile/updatePassword', 'ProfileController@updatePassword');
 $router->get('/blog', 'PostController@index');
 $router->get('/post', 'PostController@show');
 
+// API Routes
+$router->post('/api/posts/create', 'PostApiController@create');
+
 // Static Pages
 $router->get('/page', 'PageController@show');
 
