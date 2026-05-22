@@ -194,4 +194,91 @@ class PostApiController extends Controller {
             ]);
         }
     }
+
+    public function uploadMedia() {
+        // Trả về định dạng JSON
+        header('Content-Type: application/json; charset=utf-8');
+
+        // Hỗ trợ cả JSON input hoặc POST form thông thường
+        $inputData = [];
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+
+        if (stripos($contentType, 'application/json') !== false) {
+            $rawInput = file_get_contents('php://input');
+            $inputData = json_decode($rawInput, true) ?? [];
+        } else {
+            $inputData = $_POST;
+        }
+
+        // 1. Xác thực API Key
+        $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? ($inputData['api_key'] ?? '');
+        if (empty($apiKey) || $apiKey !== API_SECRET_KEY) {
+            http_response_code(403);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Xác thực không hợp lệ. API Key không chính xác.'
+            ]);
+            return;
+        }
+
+        $destinationFolder = 'uploads/media/';
+        $absoluteDestFolder = ROOT_PATH . '/' . $destinationFolder;
+
+        if (!file_exists($absoluteDestFolder)) {
+            mkdir($absoluteDestFolder, 0755, true);
+        }
+
+        $mediaPath = null;
+        $filename = null;
+
+        // A. Tải ảnh lên trực tiếp qua $_FILES['file'] hoặc $_FILES['image']
+        $uploadedFile = $_FILES['file'] ?? ($_FILES['image'] ?? null);
+        if ($uploadedFile && $uploadedFile['error'] === UPLOAD_ERR_OK) {
+            $ext = strtolower(pathinfo($uploadedFile['name'], PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                $ext = 'png';
+            }
+            $filename = uniqid('img_') . '_' . time() . '.' . $ext;
+            if (move_uploaded_file($uploadedFile['tmp_name'], $absoluteDestFolder . $filename)) {
+                $mediaPath = $destinationFolder . $filename;
+            }
+        }
+        // B. Tải ảnh bằng chuỗi Base64
+        elseif (!empty($inputData['image_base64'])) {
+            try {
+                $base64Data = $inputData['image_base64'];
+                if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $typeMatch)) {
+                    $imageType = strtolower($typeMatch[1]);
+                } else {
+                    $imageType = 'png';
+                }
+
+                $decodedData = base64_decode(preg_replace('/^data:image\/\w+;base64,/', '', $base64Data));
+                if ($decodedData !== false) {
+                    $filename = uniqid('img_') . '_' . time() . '.' . $imageType;
+                    if (file_put_contents($absoluteDestFolder . $filename, $decodedData)) {
+                        $mediaPath = $destinationFolder . $filename;
+                    }
+                }
+            } catch (Exception $e) {
+                // Tiếp tục xử lý
+            }
+        }
+
+        if ($mediaPath) {
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Upload ảnh thành công!',
+                'url' => APP_URL . '/' . $mediaPath,
+                'path' => $mediaPath
+            ]);
+        } else {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Không thể tải ảnh lên. Dữ liệu ảnh không hợp lệ hoặc lỗi ghi file.'
+            ]);
+        }
+    }
 }

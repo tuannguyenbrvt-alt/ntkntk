@@ -111,6 +111,7 @@ $router->get('/post', 'PostController@show');
 
 // API Routes
 $router->post('/api/posts/create', 'PostApiController@create');
+$router->post('/api/media/upload', 'PostApiController@uploadMedia');
 
 // Static Pages
 $router->get('/page', 'PageController@show');
