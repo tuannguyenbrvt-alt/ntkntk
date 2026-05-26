@@ -25,6 +25,8 @@ $router->post('/login', 'AuthController@postLogin');
 $router->get('/register', 'AuthController@register');
 $router->post('/register', 'AuthController@postRegister');
 $router->get('/logout', 'AuthController@logout');
+$router->get('/auth/google', 'AuthController@googleRedirect');
+$router->get('/auth/google/callback', 'AuthController@googleCallback');
 
 // Admin Routes
 $router->get('/admin/dashboard', 'DashboardController@index');

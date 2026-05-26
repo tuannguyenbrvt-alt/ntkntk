@@ -24,3 +24,7 @@ desktop.ini
 *.ntvs*
 *.njsproj
 *.sln
+
+# Security and Credentials
+config/secrets.php
+config/google-oauth.json

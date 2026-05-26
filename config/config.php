@@ -5,6 +5,22 @@
 define('APP_NAME', 'Trung Tâm Ngoại Ngữ Tin Học Nguyễn Minh');
 define('APP_URL', 'https://ntkntk.com'); // Thay đổi khi deploy: https://ntkntk.com
 
+// Nạp các cấu hình bảo mật / bí mật từ file secrets.php (không tracked bởi Git) nếu có
+if (file_exists(__DIR__ . '/secrets.php')) {
+    include_once __DIR__ . '/secrets.php';
+}
+
+// Cấu hình Google Login OAuth2 mặc định (Thay thế bằng Client ID / Secret thật trong secrets.php)
+if (!defined('GOOGLE_CLIENT_ID')) {
+    define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID_PLACEHOLDER');
+}
+if (!defined('GOOGLE_CLIENT_SECRET')) {
+    define('GOOGLE_CLIENT_SECRET', 'YOUR_GOOGLE_CLIENT_SECRET_PLACEHOLDER');
+}
+if (!defined('GOOGLE_REDIRECT_URI')) {
+    define('GOOGLE_REDIRECT_URI', APP_URL . '/auth/google/callback');
+}
+
 // Cấu hình Database
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'ntknt9be30ca_ntkntk');
