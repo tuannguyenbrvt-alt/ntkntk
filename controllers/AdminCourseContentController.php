@@ -135,15 +135,71 @@ class AdminCourseContentController extends Controller {
         }
 
         $db   = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("INSERT INTO lesson_items (lesson_id, type, content) VALUES (?, ?, ?)");
-        $stmt->execute([$lesson_id, $type, $content]);
+        
+        $orderQuery = $db->prepare("SELECT IFNULL(MAX(sort_order), -1) + 1 FROM lesson_items WHERE lesson_id = ?");
+        $orderQuery->execute([$lesson_id]);
+        $nextOrder = (int)$orderQuery->fetchColumn();
+        
+        $stmt = $db->prepare("INSERT INTO lesson_items (lesson_id, type, content, sort_order) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$lesson_id, $type, $content, $nextOrder]);
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
+
+    public function updateItem() {
+        $id        = $_POST['id']        ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $type      = $_POST['type']      ?? 'text';
+        $content   = '';
+        
+        $db = Database::getInstance()->getConnection();
+        
+        if ($type === 'pdf') {
+            if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] === UPLOAD_ERR_OK) {
+                $file = $_FILES['pdf_file'];
+                $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+                if ($ext !== 'pdf') {
+                    $_SESSION['error'] = 'Chi chap nhan file PDF.';
+                    $this->redirect('/admin/courses/builder?id=' . $course_id);
+                    return;
+                }
+                $uploadDir = ROOT_PATH . '/uploads/course_pdfs/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                $filename = uniqid() . '-' . time() . '.pdf';
+                if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
+                    $s = $db->prepare("SELECT content FROM lesson_items WHERE id = ?");
+                    $s->execute([$id]);
+                    $old = $s->fetchColumn();
+                    if ($old && file_exists(ROOT_PATH . '/' . $old)) {
+                        @unlink(ROOT_PATH . '/' . $old);
+                    }
+                    $content = 'uploads/course_pdfs/' . $filename;
+                } else {
+                    $_SESSION['error'] = 'Loi luu file PDF len may chu.';
+                    $this->redirect('/admin/courses/builder?id=' . $course_id);
+                    return;
+                }
+            } else {
+                $s = $db->prepare("SELECT content FROM lesson_items WHERE id = ?");
+                $s->execute([$id]);
+                $content = $s->fetchColumn();
+            }
+        } else {
+            $content = $_POST['content'] ?? '';
+        }
+        
+        $stmt = $db->prepare("UPDATE lesson_items SET content = ? WHERE id = ?");
+        $stmt->execute([$content, $id]);
+        
+        $_SESSION['success'] = 'Cap nhat noi dung thanh cong!';
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
+
     public function deleteItem() {
         $id        = $_POST['id']        ?? 0;
         $course_id = $_POST['course_id'] ?? 0;
         $db        = Database::getInstance()->getConnection();
-        // Delete physical PDF file if exists
         $s = $db->prepare("SELECT type, content FROM lesson_items WHERE id = ?");
         $s->execute([$id]);
         $item = $s->fetch();
@@ -152,6 +208,52 @@ class AdminCourseContentController extends Controller {
         }
         $stmt = $db->prepare("DELETE FROM lesson_items WHERE id = ?");
         $stmt->execute([$id]);
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
+
+    public function reorderItem() {
+        $id        = $_POST['id']        ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $direction = $_POST['direction'] ?? '';
+        
+        $db = Database::getInstance()->getConnection();
+        
+        $s = $db->prepare("SELECT lesson_id, sort_order FROM lesson_items WHERE id = ?");
+        $s->execute([$id]);
+        $curr = $s->fetch();
+        if (!$curr) {
+            $this->redirect('/admin/courses/builder?id=' . $course_id);
+            return;
+        }
+        
+        $lesson_id = $curr['lesson_id'];
+        
+        $all = $db->prepare("SELECT id FROM lesson_items WHERE lesson_id = ? ORDER BY sort_order ASC, id ASC");
+        $all->execute([$lesson_id]);
+        $rows = $all->fetchAll();
+        
+        $curr_index = -1;
+        foreach ($rows as $index => $row) {
+            $db->prepare("UPDATE lesson_items SET sort_order = ? WHERE id = ?")->execute([$index, $row['id']]);
+            if ($row['id'] == $id) {
+                $curr_index = $index;
+            }
+        }
+        
+        if ($direction === 'up' && $curr_index > 0) {
+            $target_index = $curr_index - 1;
+            $target_id = $rows[$target_index]['id'];
+            
+            $db->prepare("UPDATE lesson_items SET sort_order = ? WHERE id = ?")->execute([$target_index, $id]);
+            $db->prepare("UPDATE lesson_items SET sort_order = ? WHERE id = ?")->execute([$curr_index, $target_id]);
+        } elseif ($direction === 'down' && $curr_index < count($rows) - 1) {
+            $target_index = $curr_index + 1;
+            $target_id = $rows[$target_index]['id'];
+            
+            $db->prepare("UPDATE lesson_items SET sort_order = ? WHERE id = ?")->execute([$target_index, $id]);
+            $db->prepare("UPDATE lesson_items SET sort_order = ? WHERE id = ?")->execute([$curr_index, $target_id]);
+        }
+        
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
 

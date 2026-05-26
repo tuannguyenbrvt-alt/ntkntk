@@ -23,7 +23,7 @@
             <div class="d-flex justify-content-between mb-3">
                 <span class="badge bg-primary" style="font-size:.95rem;">Câu <?php echo $i+1; ?></span>
             </div>
-            <p class="fw-semibold mb-4" style="font-size:1.1rem;"><?php echo nl2br(htmlspecialchars($q['question_text'])); ?></p>
+            <div class="fw-semibold mb-4 text-white-50" style="font-size:1.1rem;"><?php echo $q['question_text']; ?></div>
             <?php foreach($q['options'] as $opt): ?>
             <div>
                 <input type="radio"
@@ -32,7 +32,7 @@
                        value="<?php echo (int)$opt['id']; ?>"
                        class="d-none"
                        <?php echo (isset($savedMap[$q['qb_id']]) && $savedMap[$q['qb_id']] == $opt['id']) ? 'checked' : ''; ?>>
-                <label for="opt<?php echo (int)$opt['id']; ?>" class="option-label"><?php echo htmlspecialchars($opt['option_text']); ?></label>
+                <label for="opt<?php echo (int)$opt['id']; ?>" class="option-label text-start" style="display:block;"><?php echo $opt['option_text']; ?></label>
             </div>
             <?php endforeach; ?>
         </div>

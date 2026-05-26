@@ -21,6 +21,29 @@ class AdminAssignmentController extends Controller {
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
 
+    public function update() {
+        $id        = $_POST['id']        ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $title     = $_POST['title']     ?? 'Bai tap';
+        $desc      = $_POST['description'] ?? '';
+        $type      = in_array($_POST['type'] ?? '', ['essay','file']) ? $_POST['type'] : 'essay';
+        $max_score = (float)($_POST['max_score'] ?? 10);
+        $due_date  = !empty($_POST['due_date']) ? $_POST['due_date'] : null;
+        $folder_id = trim($_POST['drive_folder_id'] ?? '');
+        
+        $db = Database::getInstance()->getConnection();
+        
+        $stmt = $db->prepare("UPDATE assignments SET title = ?, description = ?, type = ?, max_score = ?, due_date = ?, drive_folder_id = ? WHERE id = ?");
+        $stmt->execute([$title, $desc, $type, $max_score, $due_date, $folder_id ?: null, $id]);
+        
+        $itemType = ($type === 'essay') ? 'assignment_essay' : 'assignment_file';
+        $db->prepare("UPDATE lesson_items SET type = ? WHERE (type = 'assignment_essay' OR type = 'assignment_file') AND content = ?")
+           ->execute([$itemType, $id]);
+        
+        $_SESSION['success'] = 'Cap nhat bai tap thanh cong!';
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
+
 
     public function delete() {
         $id = $_POST['id'] ?? 0; $course_id = $_POST['course_id'] ?? 0;

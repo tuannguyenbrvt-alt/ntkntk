@@ -62,7 +62,9 @@ $router->post('/admin/courses/content/storeLesson', 'AdminCourseContentControlle
 $router->post('/admin/courses/content/updateLesson', 'AdminCourseContentController@updateLesson');
 $router->post('/admin/courses/content/deleteLesson', 'AdminCourseContentController@deleteLesson');
 $router->post('/admin/courses/content/storeItem', 'AdminCourseContentController@storeItem');
+$router->post('/admin/courses/content/updateItem', 'AdminCourseContentController@updateItem');
 $router->post('/admin/courses/content/deleteItem', 'AdminCourseContentController@deleteItem');
+$router->post('/admin/courses/content/reorderItem', 'AdminCourseContentController@reorderItem');
 $router->post('/admin/courses/content/storeAttachment', 'AdminCourseContentController@storeAttachment');
 $router->post('/admin/courses/content/deleteAttachment', 'AdminCourseContentController@deleteAttachment');
 
@@ -139,6 +141,7 @@ $router->get('/admin/quizzes/create', 'AdminQuizController@create');
 $router->post('/admin/quizzes/store', 'AdminQuizController@store');
 $router->get('/admin/quizzes/questions', 'AdminQuizController@questions');
 $router->post('/admin/quizzes/storeQuestion', 'AdminQuizController@storeQuestion');
+$router->post('/admin/quizzes/updateQuestion', 'AdminQuizController@updateQuestion');
 $router->post('/admin/quizzes/addFromBank', 'AdminQuizController@addFromBank');
 $router->post('/admin/quizzes/removeQuestion', 'AdminQuizController@removeQuestion');
 $router->post('/admin/quizzes/delete', 'AdminQuizController@delete');
@@ -146,6 +149,7 @@ $router->get('/admin/quizzes/results', 'AdminQuizController@results');
 
 // Admin - Assignment management
 $router->post('/admin/assignments/store', 'AdminAssignmentController@store');
+$router->post('/admin/assignments/update', 'AdminAssignmentController@update');
 $router->post('/admin/assignments/delete', 'AdminAssignmentController@delete');
 $router->get('/admin/assignments/submissions', 'AdminAssignmentController@submissions');
 $router->get('/admin/assignments/pending', 'AdminAssignmentController@pending');

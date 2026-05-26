@@ -52,6 +52,11 @@ class AdminQuizController extends Controller {
 
         $iq = $db->prepare("SELECT qq.id as qq_id, qq.sort_order, qb.id as qb_id, qb.question_text FROM quiz_questions qq JOIN question_bank qb ON qq.bank_question_id = qb.id WHERE qq.quiz_id = ? ORDER BY qq.sort_order ASC");
         $iq->execute([$quiz_id]); $inQuizQuestions = $iq->fetchAll();
+        foreach ($inQuizQuestions as &$inq) {
+            $optStmt = $db->prepare("SELECT * FROM question_bank_options WHERE question_id = ? ORDER BY sort_order ASC, id ASC");
+            $optStmt->execute([$inq['qb_id']]);
+            $inq['options'] = $optStmt->fetchAll();
+        }
         $inQuizIds = array_column($inQuizQuestions, 'qb_id');
 
         // Tim course_id
@@ -97,6 +102,44 @@ class AdminQuizController extends Controller {
         $order = (int)$db->query("SELECT COUNT(*) FROM quiz_questions WHERE quiz_id=" . (int)$quiz_id)->fetchColumn();
         $db->prepare("INSERT INTO quiz_questions (quiz_id, bank_question_id, sort_order) VALUES (?, ?, ?)")->execute([$quiz_id, $qid, $order]);
         $_SESSION['success'] = 'Da them cau hoi moi vao de.';
+        $this->redirect('/admin/quizzes/questions?quiz_id=' . $quiz_id . '&course_id=' . $course_id);
+    }
+
+    public function updateQuestion() {
+        $quiz_id   = $_POST['quiz_id']   ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $qb_id     = $_POST['qb_id']     ?? 0;
+        $db = Database::getInstance()->getConnection();
+        
+        $stmt = $db->prepare("UPDATE question_bank SET question_text = ? WHERE id = ?");
+        $stmt->execute([$_POST['question_text'] ?? '', $qb_id]);
+        
+        $optStmt = $db->prepare("SELECT id FROM question_bank_options WHERE question_id = ? ORDER BY sort_order ASC, id ASC");
+        $optStmt->execute([$qb_id]);
+        $existingOptions = $optStmt->fetchAll();
+        
+        $options = $_POST['options'] ?? array();
+        $correct = (int)($_POST['correct'] ?? 0);
+        
+        foreach ($options as $i => $opt) {
+            $is_correct = ($i == $correct) ? 1 : 0;
+            if (isset($existingOptions[$i])) {
+                $db->prepare("UPDATE question_bank_options SET option_text = ?, is_correct = ? WHERE id = ?")
+                   ->execute([$opt, $is_correct, $existingOptions[$i]['id']]);
+            } else {
+                $db->prepare("INSERT INTO question_bank_options (question_id, option_text, is_correct, sort_order) VALUES (?, ?, ?, ?)")
+                   ->execute([$qb_id, $opt, $is_correct, $i]);
+            }
+        }
+        
+        if (count($existingOptions) > count($options)) {
+            for ($i = count($options); $i < count($existingOptions); $i++) {
+                $db->prepare("DELETE FROM question_bank_options WHERE id = ?")
+                   ->execute([$existingOptions[$i]['id']]);
+            }
+        }
+        
+        $_SESSION['success'] = 'Cap nhat cau hoi thanh cong!';
         $this->redirect('/admin/quizzes/questions?quiz_id=' . $quiz_id . '&course_id=' . $course_id);
     }
 

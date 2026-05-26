@@ -34,11 +34,11 @@ $total_count = count($answers);
                     <?php echo $a['is_correct'] ? '✓' : '✗'; ?>
                 </span>
                 <div class="w-100">
-                    <p class="fw-semibold mb-2"><?php echo htmlspecialchars($a['question_text']); ?></p>
+                    <div class="fw-semibold mb-2 text-dark"><?php echo $a['question_text']; ?></div>
                     <?php if($a['selected_text']): ?>
-                        <div class="small <?php echo $a['is_correct'] ? 'text-success' : 'text-danger'; ?>">
+                        <div class="small <?php echo $a['is_correct'] ? 'text-success' : 'text-danger'; ?> d-flex align-items-center gap-1 flex-wrap">
                             <i class="bi bi-<?php echo $a['is_correct'] ? 'check-circle' : 'x-circle'; ?> me-1"></i>
-                            Bạn chọn: <?php echo htmlspecialchars($a['selected_text']); ?>
+                            <span>Bạn chọn: </span> <span><?php echo $a['selected_text']; ?></span>
                         </div>
                     <?php else: ?>
                         <div class="small text-warning">
@@ -46,9 +46,9 @@ $total_count = count($answers);
                         </div>
                     <?php endif; ?>
                     <?php if(!$a['is_correct'] && !empty($a['correct_text'])): ?>
-                        <div class="small text-success mt-1">
+                        <div class="small text-success mt-1 d-flex align-items-center gap-1 flex-wrap">
                             <i class="bi bi-check2-circle me-1"></i>
-                            Đáp án đúng: <strong><?php echo htmlspecialchars($a['correct_text']); ?></strong>
+                            <span>Đáp án đúng: </span> <strong><?php echo $a['correct_text']; ?></strong>
                         </div>
                     <?php endif; ?>
                 </div>
