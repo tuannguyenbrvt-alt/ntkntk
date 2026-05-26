@@ -18,7 +18,11 @@ class Controller {
     }
 
     protected function redirect($url) {
-        header("Location: " . APP_URL . $url);
+        if (strpos($url, 'http://') === 0 || strpos($url, 'https://') === 0) {
+            header("Location: " . $url);
+        } else {
+            header("Location: " . APP_URL . $url);
+        }
         exit;
     }
 }
