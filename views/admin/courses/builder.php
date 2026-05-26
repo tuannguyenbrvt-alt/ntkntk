@@ -285,7 +285,7 @@
                 <!-- Text -->
                 <div class="mb-3 d-none" id="text_input_div">
                     <label class="form-label">Nội dung Văn bản</label>
-                    <textarea id="editor_item" class="form-control"></textarea>
+                    <textarea id="editor_item" class="form-control tinymce-editor"></textarea>
                 </div>
                 <!-- PDF notice -->
                 <div class="mb-3 d-none" id="pdf_notice_div">
@@ -326,7 +326,7 @@
                 <!-- Text -->
                 <div class="mb-3 d-none" id="edit_text_input_div">
                     <label class="form-label fw-semibold">Nội dung Văn bản</label>
-                    <textarea id="edit_editor_item" class="form-control"></textarea>
+                    <textarea id="edit_editor_item" class="form-control tinymce-editor"></textarea>
                 </div>
                 <!-- PDF upload -->
                 <div class="mb-3 d-none" id="edit_pdf_input_div">
@@ -417,7 +417,7 @@
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-semibold">Mô tả / Đề bài</label>
-                        <textarea name="description" id="asgn_description" class="form-control" placeholder="Mô tả đề bài..."></textarea>
+                        <textarea name="description" id="asgn_description" class="form-control tinymce-editor" placeholder="Mô tả đề bài..."></textarea>
                     </div>
                     <div class="col-md-4"><label class="form-label fw-semibold">Điểm tối đa</label><input type="number" name="max_score" class="form-control" value="10" min="1" step="0.5"></div>
                     <div class="col-md-8"><label class="form-label fw-semibold">Hạn nộp (tùy chọn)</label><input type="datetime-local" name="due_date" class="form-control"></div>
@@ -459,7 +459,7 @@
                     </div>
                     <div class="col-12">
                         <label class="form-label fw-semibold">Mô tả / Đề bài</label>
-                        <textarea name="description" id="edit_asgn_description" class="form-control"></textarea>
+                        <textarea name="description" id="edit_asgn_description" class="form-control tinymce-editor"></textarea>
                     </div>
                     <div class="col-md-4"><label class="form-label fw-semibold">Điểm tối đa</label><input type="number" name="max_score" id="edit_asgn_max_score" class="form-control" min="1" step="0.5"></div>
                     <div class="col-md-8"><label class="form-label fw-semibold">Hạn nộp (tùy chọn)</label><input type="datetime-local" name="due_date" id="edit_asgn_due_date" class="form-control"></div>
@@ -479,13 +479,7 @@
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
 <script>
-    tinymce.init({ selector: '#editor_item', height: 300, plugins: 'link image code media table lists', toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image media | code', menubar: false });
-    tinymce.init({ selector: '#edit_editor_item', height: 300, plugins: 'link image code media table lists', toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image media | code', menubar: false });
-    tinymce.init({ selector: '#asgn_description', height: 300, plugins: 'link image code media table lists', toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image media | code', menubar: false });
-    tinymce.init({ selector: '#edit_asgn_description', height: 300, plugins: 'link image code media table lists', toolbar: 'undo redo | blocks | bold italic | alignleft aligncenter alignright | bullist numlist | link image media | code', menubar: false });
-
     function showModal(id) { new bootstrap.Modal(document.getElementById(id)).show(); }
 
     // Add modals
@@ -495,12 +489,26 @@
         document.getElementById('item_lesson_id').value = lessonId;
         document.getElementById('video_url').value = '';
         document.getElementById('item_type').value = 'video';
-        if(tinymce.get('editor_item')) tinymce.get('editor_item').setContent('');
+        let editor = (typeof tinymce !== 'undefined') ? tinymce.get('editor_item') : null;
+        if (editor) {
+            editor.setContent('');
+        } else {
+            document.getElementById('editor_item').value = '';
+        }
         toggleContentInput();
         showModal('addItemModal');
     }
     function showAttachmentModal(lessonId) { document.getElementById('attachment_lesson_id').value = lessonId; showModal('addAttachmentModal'); }
-    function showAddAssignmentModal(lessonId) { document.getElementById('asgn_lesson_id').value = lessonId; showModal('addAssignmentModal'); }
+    function showAddAssignmentModal(lessonId) { 
+        document.getElementById('asgn_lesson_id').value = lessonId; 
+        let editor = (typeof tinymce !== 'undefined') ? tinymce.get('asgn_description') : null;
+        if (editor) {
+            editor.setContent('');
+        } else {
+            document.getElementById('asgn_description').value = '';
+        }
+        showModal('addAssignmentModal'); 
+    }
 
     // Edit modals
     function showEditPartModal(id, title)    { document.getElementById('edit_part_id').value = id; document.getElementById('edit_part_title').value = title; showModal('editPartModal'); }
@@ -525,8 +533,11 @@
             document.getElementById('edit_video_url').value = content;
         } else if (type === 'text') {
             document.getElementById('edit_text_input_div').classList.remove('d-none');
-            if (tinymce.get('edit_editor_item')) {
-                tinymce.get('edit_editor_item').setContent(content);
+            let editor = (typeof tinymce !== 'undefined') ? tinymce.get('edit_editor_item') : null;
+            if (editor) {
+                editor.setContent(content);
+            } else {
+                document.getElementById('edit_editor_item').value = content;
             }
         } else if (type === 'pdf') {
             document.getElementById('edit_pdf_input_div').classList.remove('d-none');
@@ -543,7 +554,6 @@
         document.getElementById('edit_asgn_max_score').value = asgn.max_score;
         
         if (asgn.due_date) {
-            // Format due_date YYYY-MM-DDTHH:MM
             let d = new Date(asgn.due_date);
             let year = d.getFullYear();
             let month = String(d.getMonth() + 1).padStart(2, '0');
@@ -561,14 +571,18 @@
             document.getElementById('edit_drive_folder_id_input').value = '';
         }
         
-        if (tinymce.get('edit_asgn_description')) {
-            tinymce.get('edit_asgn_description').setContent(asgn.description || '');
+        let editor = (typeof tinymce !== 'undefined') ? tinymce.get('edit_asgn_description') : null;
+        if (editor) {
+            editor.setContent(asgn.description || '');
+        } else {
+            document.getElementById('edit_asgn_description').value = asgn.description || '';
         }
         
         toggleEditDriveFolderField();
         showModal('editAssignmentModal');
     }
 
+    // Toggle content input based on type
     // Toggle content input based on type
     function toggleContentInput() {
         let type = document.getElementById('item_type').value;
@@ -592,7 +606,12 @@
         if (type === 'video') {
             document.getElementById('real_content').value = document.getElementById('video_url').value;
         } else if (type === 'text') {
-            document.getElementById('real_content').value = tinymce.get('editor_item').getContent();
+            let editor = (typeof tinymce !== 'undefined') ? tinymce.get('editor_item') : null;
+            if (editor) {
+                document.getElementById('real_content').value = editor.getContent();
+            } else {
+                document.getElementById('real_content').value = document.getElementById('editor_item').value;
+            }
         }
         btn.closest('form').submit();
     }
@@ -602,18 +621,27 @@
         if (type === 'video') {
             document.getElementById('edit_real_content').value = document.getElementById('edit_video_url').value;
         } else if (type === 'text') {
-            document.getElementById('edit_real_content').value = tinymce.get('edit_editor_item').getContent();
+            let editor = (typeof tinymce !== 'undefined') ? tinymce.get('edit_editor_item') : null;
+            if (editor) {
+                document.getElementById('edit_real_content').value = editor.getContent();
+            } else {
+                document.getElementById('edit_real_content').value = document.getElementById('edit_editor_item').value;
+            }
         }
         btn.closest('form').submit();
     }
 
     function submitAssignmentForm(btn) {
-        tinymce.triggerSave();
+        if (typeof tinymce !== 'undefined') {
+            tinymce.triggerSave();
+        }
         btn.closest('form').submit();
     }
 
     function submitEditAssignmentForm(btn) {
-        tinymce.triggerSave();
+        if (typeof tinymce !== 'undefined') {
+            tinymce.triggerSave();
+        }
         btn.closest('form').submit();
     }
 
