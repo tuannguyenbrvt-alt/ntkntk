@@ -1,18 +1,18 @@
 <div class="container py-4" style="max-width:960px;margin:auto;">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h4 class="text-white fw-bold mb-1"><i class="bi bi-person-badge me-2 text-success"></i>Học viên: <?php echo htmlspecialchars($user['full_name']); ?></h4>
-            <div class="text-white-50 small">
+            <h4 class="text-dark fw-bold mb-1"><i class="bi bi-person-badge me-2 text-success"></i>Học viên: <?php echo htmlspecialchars($user['full_name']); ?></h4>
+            <div class="text-muted small">
                 <span>Tên đăng nhập: <strong class="text-success"><?php echo htmlspecialchars($user['username']); ?></strong></span>
                 <span class="mx-2">|</span>
                 <span>Số điện thoại: <strong class="text-success"><?php echo htmlspecialchars($user['phone']); ?></strong></span>
             </div>
         </div>
-        <a href="<?php echo APP_URL; ?>/progress/lookup" class="btn btn-outline-light btn-sm"><i class="bi bi-arrow-left me-1"></i>Tra cứu lại</a>
+        <a href="<?php echo APP_URL; ?>/progress/lookup" class="btn btn-outline-dark btn-sm"><i class="bi bi-arrow-left me-1"></i>Tra cứu lại</a>
     </div>
 
     <!-- Bảng tổng hợp kết quả thống kê -->
-    <h5 class="text-white-50 mb-3"><i class="bi bi-pie-chart me-1 text-success"></i>Bảng tổng hợp kết quả học tập</h5>
+    <h5 class="text-secondary mb-3"><i class="bi bi-pie-chart me-1 text-success"></i>Bảng tổng hợp kết quả học tập</h5>
     <div class="row g-3 mb-5">
         <!-- Trắc nghiệm -->
         <div class="col-md-4">
@@ -88,7 +88,7 @@
 
     <!-- Chi tiết quiz -->
     <?php if(!empty($quizResults)): ?>
-    <h5 class="text-white-50 mb-3"><i class="bi py-1 bi-list-check text-success me-2"></i>Kết quả Trắc nghiệm</h5>
+    <h5 class="text-secondary mb-3"><i class="bi py-1 bi-list-check text-success me-2"></i>Kết quả Trắc nghiệm</h5>
     <div class="card border-0 shadow-sm mb-5 bg-dark text-white" style="border: 1px solid #333 !important;">
         <div class="table-responsive">
             <table class="table table-dark table-hover mb-0">
@@ -111,7 +111,7 @@
 
     <!-- Chi tiết bài tập -->
     <?php if(!empty($asgResults)): ?>
-    <h5 class="text-white-50 mb-3"><i class="bi bi-file-earmark-text text-success me-2"></i>Kết quả Bài tập</h5>
+    <h5 class="text-secondary mb-3"><i class="bi bi-file-earmark-text text-success me-2"></i>Kết quả Bài tập</h5>
     <div class="card border-0 shadow-sm bg-dark text-white" style="border: 1px solid #333 !important;">
         <div class="table-responsive">
             <table class="table table-dark table-hover mb-0">

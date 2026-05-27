@@ -49,15 +49,60 @@ class MenuHelper {
             // Nếu URL bắt đầu bằng http thì giữ nguyên, ngược lại thì gắn APP_URL phía trước
             $fullUrl = (strpos($url, 'http') === 0) ? $url : APP_URL . $url;
             
+            // Intercept menu Học viên to dynamically inject Login/Register or Profile/Logout
+            if ($title === 'Học viên') {
+                $dynamicChildren = [];
+                if (!isset($_SESSION['user_id'])) {
+                    // Chưa đăng nhập
+                    $dynamicChildren[] = ['title' => '<i class="bi bi-box-arrow-in-right me-2 text-success"></i>Đăng nhập', 'url' => '/login'];
+                    $dynamicChildren[] = ['title' => '<i class="bi bi-person-plus me-2 text-success"></i>Đăng ký', 'url' => '/register'];
+                } else {
+                    // Đã đăng nhập
+                    if (in_array($_SESSION['role'], ['super_admin', 'admin'])) {
+                        $dynamicChildren[] = ['title' => '<i class="bi bi-speedometer2 me-2 text-primary"></i>Quản trị hệ thống', 'url' => '/admin/dashboard'];
+                    }
+                    $dynamicChildren[] = ['title' => '<i class="bi bi-graph-up-arrow me-2 text-success"></i>Kết quả học tập', 'url' => '/progress'];
+                    $dynamicChildren[] = ['title' => '<i class="bi bi-person-badge me-2 text-success"></i>Hồ sơ học tập', 'url' => '/profile'];
+                    $dynamicChildren[] = ['title' => '<i class="bi bi-box-arrow-right me-2 text-danger"></i>Đăng xuất', 'url' => '/logout', 'is_danger' => true];
+                }
+                
+                // Add a divider if there are existing children
+                if (isset($item['children']) && count($item['children']) > 0) {
+                    $dynamicChildren[] = ['is_divider' => true];
+                    foreach ($item['children'] as $child) {
+                        $dynamicChildren[] = $child;
+                    }
+                } else {
+                    // If no children in DB, add a divider and grade lookup as default
+                    $dynamicChildren[] = ['is_divider' => true];
+                    $dynamicChildren[] = ['title' => '<i class="bi bi-search me-2"></i>Tra cứu kết quả', 'url' => '/progress/lookup'];
+                }
+                $item['children'] = $dynamicChildren;
+            }
+
             if (isset($item['children']) && count($item['children']) > 0) {
                 $html .= '<li class="nav-item dropdown">';
-                $html .= '<a class="nav-link dropdown-toggle" href="' . $fullUrl . '" role="button" data-bs-toggle="dropdown">' . $title . '</a>';
-                $html .= '<ul class="dropdown-menu shadow-sm border-0">';
+                // If title is Học viên and user is logged in, we can optionally display their name
+                $displayName = $title;
+                if ($title === 'Học viên' && isset($_SESSION['user_id'])) {
+                    $displayName = 'Học viên: <strong class="text-success-subtle ms-1">' . htmlspecialchars($_SESSION['full_name']) . '</strong>';
+                }
+                $html .= '<a class="nav-link dropdown-toggle d-flex align-items-center gap-1" href="' . $fullUrl . '" role="button" data-bs-toggle="dropdown">' . $displayName . '</a>';
+                $html .= '<ul class="dropdown-menu dropdown-menu-dark shadow-sm border-0 dropdown-menu-end" style="border: 1px solid #333 !important;">';
                 foreach ($item['children'] as $child) {
+                    if (isset($child['is_divider']) && $child['is_divider']) {
+                        $html .= '<li><hr class="dropdown-divider border-secondary border-opacity-25"></li>';
+                        continue;
+                    }
                     $childUrl = htmlspecialchars($child['url']);
-                    $childTitle = htmlspecialchars($child['title']);
+                    $childTitle = $child['title']; // Do not use htmlspecialchars since it contains HTML icons
                     $childFullUrl = (strpos($childUrl, 'http') === 0) ? $childUrl : APP_URL . $childUrl;
-                    $html .= '<li><a class="dropdown-item" href="' . $childFullUrl . '">' . $childTitle . '</a></li>';
+                    
+                    $class = "dropdown-item";
+                    if (isset($child['is_danger']) && $child['is_danger']) {
+                        $class .= " text-danger";
+                    }
+                    $html .= '<li><a class="' . $class . '" href="' . $childFullUrl . '">' . $childTitle . '</a></li>';
                     
                     if (isset($child['children'])) {
                         foreach ($child['children'] as $subchild) {

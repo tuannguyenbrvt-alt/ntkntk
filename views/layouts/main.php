@@ -49,44 +49,6 @@
                     $frontendMenuTree = MenuHelper::buildTree($allMenus);
                     echo MenuHelper::renderFrontendMenu($frontendMenuTree);
                     ?>
-                    <?php if (isset($_SESSION['user_id'])): ?>
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button"
-                                data-bs-toggle="dropdown">
-                                <?php if (!empty($_SESSION['avatar'])): ?>
-                                    <img src="<?php echo APP_URL . '/' . $_SESSION['avatar']; ?>"
-                                        class="rounded-circle me-2 object-fit-cover" width="30" height="30">
-                                <?php else: ?>
-                                    <i class="bi bi-person-circle fs-5 me-2"></i>
-                                <?php endif; ?>
-                                Xin chào, <strong
-                                    class="ms-1"><?php echo htmlspecialchars($_SESSION['full_name']); ?></strong>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                <?php if (in_array($_SESSION['role'], ['super_admin', 'admin'])): ?>
-                                    <li><a class="dropdown-item py-2" href="<?php echo APP_URL; ?>/admin/dashboard"><i
-                                                class="bi bi-speedometer2 me-2 text-primary"></i>Quản trị hệ thống</a></li>
-                                    <li>
-                                        <hr class="dropdown-divider">
-                                    </li>
-                                <?php endif; ?>
-                                <li><a class="dropdown-item py-2 fw-bold text-success"
-                                        href="<?php echo APP_URL; ?>/profile"><i class="bi bi-person-badge me-2"></i>Hồ sơ
-                                        học tập</a></li>
-                                <li><a class="dropdown-item py-2" href="<?php echo APP_URL; ?>/logout"><i
-                                            class="bi bi-box-arrow-right me-2 text-danger"></i>Đăng xuất</a></li>
-                            </ul>
-                        </li>
-                    <?php endif; ?>
-                    <?php if (!isset($_SESSION['user_id'])): ?>
-                        <li class="nav-item">
-                            <a class="nav-link" href="<?php echo APP_URL; ?>/login">Đăng nhập</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link btn btn-outline-light ms-2 px-3" href="<?php echo APP_URL; ?>/register">Đăng
-                                ký</a>
-                        </li>
-                    <?php endif; ?>
                     <!-- Search -->
                     <li class="nav-item ms-2">
                         <form action="<?php echo APP_URL; ?>/search" method="GET" class="d-flex">

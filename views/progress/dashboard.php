@@ -1,8 +1,8 @@
 <div class="container py-4" style="max-width:960px;margin:auto;">
-    <h4 class="fw-bold text-white mb-4"><i class="bi bi-graph-up-arrow text-success me-2"></i>Kết quả học tập của tôi</h4>
+    <h4 class="fw-bold text-dark mb-4"><i class="bi bi-graph-up-arrow text-success me-2"></i>Kết quả học tập của tôi</h4>
 
     <!-- Bảng tổng hợp kết quả thống kê -->
-    <h5 class="text-white-50 mb-3"><i class="bi bi-pie-chart me-1 text-success"></i>Bảng tổng hợp kết quả học tập</h5>
+    <h5 class="text-secondary mb-3"><i class="bi bi-pie-chart me-1 text-success"></i>Bảng tổng hợp kết quả học tập</h5>
     <div class="row g-3 mb-5">
         <!-- Trắc nghiệm -->
         <div class="col-md-4">
@@ -77,7 +77,7 @@
     </div>
 
     <!-- Tiến độ các khóa học -->
-    <h5 class="text-white-50 mb-3"><i class="bi bi-journal-bookmark me-1 text-success"></i>Tiến độ học tập</h5>
+    <h5 class="text-secondary mb-3"><i class="bi bi-journal-bookmark me-1 text-success"></i>Tiến độ học tập</h5>
     <div class="row g-3 mb-5">
         <?php foreach($courses as $c): ?>
         <div class="col-md-6">
@@ -100,7 +100,7 @@
 
     <!-- Kết quả trắc nghiệm -->
     <?php if(!empty($quizResults)): ?>
-    <h5 class="text-white-50 mb-3"><i class="bi bi-check-circle me-1 text-success"></i>Chi tiết Kết quả Trắc nghiệm</h5>
+    <h5 class="text-secondary mb-3"><i class="bi bi-check-circle me-1 text-success"></i>Chi tiết Kết quả Trắc nghiệm</h5>
     <div class="card border-0 shadow-sm mb-5 bg-dark text-white" style="border: 1px solid #333 !important;">
         <div class="table-responsive">
             <table class="table table-dark table-hover mb-0">
@@ -123,7 +123,7 @@
 
     <!-- Kết quả bài tập -->
     <?php if(!empty($asgResults)): ?>
-    <h5 class="text-white-50 mb-3"><i class="bi bi-file-earmark-text me-1 text-success"></i>Chi tiết Kết quả Bài tập</h5>
+    <h5 class="text-secondary mb-3"><i class="bi bi-file-earmark-text me-1 text-success"></i>Chi tiết Kết quả Bài tập</h5>
     <div class="card border-0 shadow-sm bg-dark text-white" style="border: 1px solid #333 !important;">
         <div class="table-responsive">
             <table class="table table-dark table-hover mb-0">
