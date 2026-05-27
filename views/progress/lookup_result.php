@@ -24,7 +24,7 @@
                             <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-50">Quiz</span>
                         </div>
                         <h3 class="fw-bold mb-2"><?php echo $quizStats['attempted_quizzes']; ?> <span class="fs-6 text-white-50">/ <?php echo $quizStats['total_quizzes']; ?> đề</span></h3>
-                        <div class="text-muted small">
+                        <div class="text-white-50 small">
                             <div class="d-flex justify-content-between py-1 border-bottom border-secondary border-opacity-25">
                                 <span>Số bài đạt:</span> <strong class="text-success"><?php echo $quizStats['passed_quizzes']; ?></strong>
                             </div>
@@ -48,7 +48,7 @@
                             <span class="badge bg-primary bg-opacity-20 text-primary border border-primary border-opacity-50">Essay</span>
                         </div>
                         <h3 class="fw-bold mb-2"><?php echo $essay['submitted']; ?> <span class="fs-6 text-white-50">/ <?php echo $essay['total']; ?> bài</span></h3>
-                        <div class="text-muted small">
+                        <div class="text-white-50 small">
                             <div class="d-flex justify-content-between py-1 border-bottom border-secondary border-opacity-25">
                                 <span>Đã chấm:</span> <strong class="text-white"><?php echo $essay['graded']; ?></strong>
                             </div>
@@ -72,7 +72,7 @@
                             <span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-50">File</span>
                         </div>
                         <h3 class="fw-bold mb-2"><?php echo $file['submitted']; ?> <span class="fs-6 text-white-50">/ <?php echo $file['total']; ?> bài</span></h3>
-                        <div class="text-muted small">
+                        <div class="text-white-50 small">
                             <div class="d-flex justify-content-between py-1 border-bottom border-secondary border-opacity-25">
                                 <span>Đã chấm:</span> <strong class="text-white"><?php echo $file['graded']; ?></strong>
                             </div>
@@ -96,11 +96,11 @@
                 <tbody>
                 <?php foreach($quizResults as $r): ?>
                 <tr>
-                    <td class="text-muted small"><?php echo htmlspecialchars($r['course_title']); ?></td>
+                    <td class="text-white-50 small"><?php echo htmlspecialchars($r['course_title']); ?></td>
                     <td><?php echo htmlspecialchars($r['quiz_title']); ?></td>
                     <td><strong class="text-success"><?php echo $r['score']; ?>%</strong></td>
                     <td><?php echo $r['passed'] ? '<span class="badge bg-success-subtle text-success border border-success">Đạt</span>' : '<span class="badge bg-danger-subtle text-danger border border-danger">Chưa đạt</span>'; ?></td>
-                    <td class="text-muted small"><?php echo date('d/m/Y H:i', strtotime($r['submitted_at'])); ?></td>
+                    <td class="text-white-50 small"><?php echo date('d/m/Y H:i', strtotime($r['submitted_at'])); ?></td>
                 </tr>
                 <?php endforeach; ?>
                 </tbody>
@@ -119,12 +119,12 @@
                 <tbody>
                 <?php foreach($asgResults as $r): ?>
                 <tr>
-                    <td class="text-muted small"><?php echo htmlspecialchars($r['course_title']); ?></td>
+                    <td class="text-white-50 small"><?php echo htmlspecialchars($r['course_title']); ?></td>
                     <td><?php echo htmlspecialchars($r['asgn_title']); ?></td>
                     <td><?php echo $r['type']==='essay'?'Tự luận':'Nộp file'; ?></td>
                     <td><?php echo $r['score'] !== null ? '<strong class="text-success">'.$r['score'].'</strong>/'.$r['max_score'] : '<span class="text-muted">Chờ chấm</span>'; ?></td>
-                    <td class="small text-muted"><?php echo $r['feedback'] ? htmlspecialchars($r['feedback']) : '—'; ?></td>
-                    <td class="text-muted small"><?php echo date('d/m/Y H:i', strtotime($r['submitted_at'])); ?></td>
+                    <td class="small text-white-50"><?php echo $r['feedback'] ? htmlspecialchars($r['feedback']) : '—'; ?></td>
+                    <td class="text-white-50 small"><?php echo date('d/m/Y H:i', strtotime($r['submitted_at'])); ?></td>
                 </tr>
                 <?php endforeach; ?>
                 </tbody>
