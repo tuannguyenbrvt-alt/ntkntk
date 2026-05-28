@@ -11,7 +11,7 @@
                     <div>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="fw-bold text-success"><i class="bi bi-list-check me-1"></i>Trắc nghiệm</span>
-                            <span class="badge bg-success bg-opacity-20 text-success border border-success border-opacity-50">Quiz</span>
+                            <span class="badge bg-success text-white">Quiz</span>
                         </div>
                         <h3 class="fw-bold mb-2"><?php echo $quizStats['attempted_quizzes']; ?> <span class="fs-6 text-white-50">/ <?php echo $quizStats['total_quizzes']; ?> đề</span></h3>
                         <div class="text-white-50 small">
@@ -35,7 +35,7 @@
                     <div>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="fw-bold text-primary"><i class="bi bi-journal-text me-1"></i>BT Tự luận</span>
-                            <span class="badge bg-primary bg-opacity-20 text-primary border border-primary border-opacity-50">Essay</span>
+                            <span class="badge bg-primary text-white">Essay</span>
                         </div>
                         <h3 class="fw-bold mb-2"><?php echo $essay['submitted']; ?> <span class="fs-6 text-white-50">/ <?php echo $essay['total']; ?> bài</span></h3>
                         <div class="text-white-50 small">
@@ -59,7 +59,7 @@
                     <div>
                         <div class="d-flex justify-content-between mb-2">
                             <span class="fw-bold text-info"><i class="bi bi-cloud-arrow-up me-1"></i>BT Nộp file</span>
-                            <span class="badge bg-info bg-opacity-20 text-info border border-info border-opacity-50">File</span>
+                            <span class="badge bg-info text-dark fw-bold">File</span>
                         </div>
                         <h3 class="fw-bold mb-2"><?php echo $file['submitted']; ?> <span class="fs-6 text-white-50">/ <?php echo $file['total']; ?> bài</span></h3>
                         <div class="text-white-50 small">

@@ -8,7 +8,7 @@
             <p class="text-white-50 small">Nhập tên đăng nhập và số điện thoại để tra cứu kết quả bài tập & trắc nghiệm</p>
             
             <?php if (isset($_SESSION['error'])): ?>
-                <div class="alert alert-danger bg-danger bg-opacity-20 text-danger border border-danger border-opacity-50 mt-3 small text-start">
+                <div class="alert alert-danger bg-danger text-white border-0 fw-semibold text-center mt-3 mb-3 small">
                     <?php echo $_SESSION['error']; unset($_SESSION['error']); ?>
                 </div>
             <?php endif; ?>

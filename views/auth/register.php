@@ -5,7 +5,7 @@
                 <h3 class="text-center mb-4 fw-bold text-success"><i class="bi bi-person-plus-fill me-2"></i>Đăng ký tài khoản</h3>
                 
                 <?php if (isset($error)): ?>
-                    <div class="alert alert-danger bg-danger bg-opacity-20 text-danger border border-danger border-opacity-50"><?php echo htmlspecialchars($error); ?></div>
+                    <div class="alert alert-danger bg-danger text-white border-0 fw-semibold text-center mb-3"><?php echo htmlspecialchars($error); ?></div>
                 <?php endif; ?>
                 
                 <form action="<?php echo APP_URL; ?>/register" method="POST" id="registerForm">
