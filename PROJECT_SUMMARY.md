@@ -14,20 +14,28 @@
 * **Cấu trúc Khóa học:** Khóa học -> Phần (Parts) -> Chương (Chapters) -> Bài học (Lessons) -> Nội dung (Items: Text, Quiz, Assignment...).
 * **Hệ thống Nộp bài tập (Assignments):**
   - Hỗ trợ nộp bài **Tự luận** và **Upload File**.
-  - **Tích hợp Google Drive:** Đã chuyển đổi từ Service Account sang **OAuth2 Refresh Token** để tự động upload bài tập học sinh lên Drive cá nhân. Token được lưu tại `config/google-oauth.json`.
+  - **Tích hợp Google Drive & Báo lỗi thông minh:** File bài làm chỉ lưu trực tiếp trên Google Drive để tránh tốn dung lượng máy chủ.
+  - **Cơ chế báo lỗi:** Nếu xảy ra sự cố upload lên Drive (do hết hạn token, lỗi 403, 404, lỗi kết nối API...), hệ thống tự động ghi lại lịch sử lỗi chi tiết kỹ thuật vào cơ sở dữ liệu (`file_drive_id = 'error'`) và chuyển thông tin lỗi cho Giáo viên. Học viên chỉ nhận được thông báo rút gọn, thân thiện và tiếp tục hiển thị form để nộp lại sau khi giáo viên sửa cấu hình.
+  - **Liên kết tải file học sinh:** Tích hợp liên kết thẻ `<a>` cho học viên click để tự tải/xem lại file bài làm của mình trên Google Drive sau khi nộp thành công.
+* **Làm mới quyền Google Drive cho Admin (MỚI NÂNG CẤP):**
+  - Tích hợp trang làm mới tự động quyền truy cập Drive tại `/admin/setup-drive-oauth` hoặc qua nút **"Cấu hình & Cấp lại quyền Google Drive"** trên dashboard chấm bài của giáo viên.
+  - Tự động đọc và sử dụng đúng cặp Client ID/Secret chuyên dụng của Drive (`533283503649-...`) để yêu cầu cấp quyền offline, giải quyết lỗi hết hạn token (`invalid_grant`), sau đó cập nhật đè token mới vào `config/google-oauth.json`.
+* **Thông tin Thanh toán & Huy hiệu Duyệt đăng ký (MỚI NÂNG CẤP):**
+  - **Trang thanh toán QR:** Bổ sung hướng dẫn học viên chụp màn hình chuyển khoản gửi qua Zalo `0979875712` để hỗ trợ kích hoạt khóa học nhanh hơn.
+  - **Huy hiệu duyệt đăng ký:** Sidebar Admin tại mục **"Duyệt đăng ký"** tự động đếm và hiển thị số lượng yêu cầu duyệt kích hoạt khóa học đang chờ duyệt (`status = 'pending'`) bằng huy hiệu màu đỏ nổi bật.
 * **Quản lý Chấm bài (Grading Dashboard):** 
   - Giáo viên có Dashboard tổng hợp các bài chờ chấm (`/admin/assignments/pending`).
   - Phân quyền rõ ràng: Super Admin chấm tất cả; Giáo viên chỉ chấm các khóa do mình tạo.
   - Hiển thị người chấm bài (`graded_by`) trên giao diện bài làm học sinh.
-* **Đăng ký Học viên Toàn diện (MỚI NÂNG CẤP):**
+* **Đăng ký Học viên Toàn diện:**
   - Biểu mẫu đăng ký mới hỗ trợ xác minh trùng khớp mật khẩu (`confirm_password`).
   - Yêu cầu điền đầy đủ các thông tin quan trọng khác như: **Số điện thoại** (bắt buộc), **Ngày sinh**, **Địa chỉ**, **Nghề nghiệp / Lớp học** (lưu trực tiếp vào bảng `users`).
-* **Đăng nhập Google OAuth2 (MỚI NÂNG CẤP):**
+* **Đăng nhập Google OAuth2:**
   - Tích hợp đăng nhập/đăng ký một chạm với tài khoản Google (Gmail) sử dụng cURL thuần, nhẹ nhàng và an toàn tối đa.
   - Tự động tạo hồ sơ học viên mới trong DB nếu chưa tồn tại.
-* **Báo cáo Học tập Chi tiết (MỚI NÂNG CẤP):**
+* **Báo cáo Học tập Chi tiết:**
   - Thêm bảng tổng hợp trực quan dạng Thẻ (Cards) về tiến độ: Tổng số bài đã nộp, tổng điểm đạt được / tối đa của từng loại hình (Trắc nghiệm, Bài tập Tự luận, Bài tập Nộp file).
-* **Tra cứu Kết quả Bảo mật hai lớp (MỚI NÂNG CẤP):**
+* **Tra cứu Kết quả Bảo mật hai lớp:**
   - Chức năng tra cứu ngoài không cần đăng nhập (`/progress/lookup`) yêu cầu nhập đồng thời cả **Tên đăng nhập (Username)** và **Số điện thoại** (Phone) để bảo vệ quyền riêng tư học viên.
 * **Hệ thống Soạn thảo & Tương tác nâng cao:**
   - Sửa và chèn hình ảnh, âm thanh, video qua TinyMCE trong Trắc nghiệm & Bài tập.
@@ -40,9 +48,12 @@
 - **Quizzes & Assignments:** Map trực tiếp qua lesson_id/lesson_items.
 
 ## 4. Ghi chú Bảo mật & Quy trình Deploy
-- **Lưu ý cấu hình:**
-  - File `config/config.php` chứa thông tin kết nối Database và thông số Google Login OAuth2 (`GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`).
-  - File `config/google-oauth.json` chứa Access Token Google Drive.
+- **Lưu ý cấu hình & Phân biệt Client ID:**
+  - Hệ thống sử dụng 2 Client ID Google khác nhau:
+    1. Client ID Đăng nhập Google (Được định nghĩa tại `config/secrets.php` và `config/config.php` - bắt đầu bằng `160692658866-...` trên sản xuất).
+    2. Client ID Google Drive gửi file (Được định nghĩa tại `config/google-oauth.json` - bắt đầu bằng `533283503649-...`).
+  - Đường dẫn chuyển hướng (Authorized redirect URIs) của cả 2 Client ID trên Google Cloud Console đều phải được đăng ký chung là: `https://ntkntk.com/auth/google/callback`.
+  - File `config/google-oauth.json` chứa Refresh Token Google Drive.
 - **Quy trình cập nhật code:**
   1. Viết code & Test tại Local.
   2. Git add, commit và push lên GitHub nhánh `main`.
@@ -55,4 +66,4 @@
   - Nghiên cứu thêm chức năng thi thử trắc nghiệm tính giờ và tự động khóa đề khi hết giờ.
 
 ---
-*(Lần cập nhật cuối: 27/05/2026)*
+*(Lần cập nhật cuối: 05/06/2026)*
