@@ -40,9 +40,13 @@
                         <div class="mb-4">
                             <div class="text-muted small text-uppercase fw-semibold mb-2">Trạng thái hiện tại</div>
                             <?php if($enrollment['status'] == 'pending'): ?>
-                                <div class="alert alert-warning border-warning d-flex align-items-center p-2">
-                                    <div class="spinner-border spinner-border-sm text-warning me-2" role="status"></div>
-                                    <strong class="text-dark">Đang chờ hệ thống kiểm tra số dư...</strong>
+                                <div class="alert alert-warning border-warning p-3">
+                                    <div class="d-flex align-items-start">
+                                        <div class="spinner-border spinner-border-sm text-warning me-2 mt-1" role="status"></div>
+                                        <div class="text-dark">
+                                            <strong>Đang chờ hệ thống kiểm tra số dư...</strong>, vui lòng chụp màn hình chuyển khoản chuyển vào số Zalo: <strong>0979875712</strong> để giúp quá trình xác nhận nhanh hơn.
+                                        </div>
+                                    </div>
                                 </div>
                             <?php else: ?>
                                 <span class="badge bg-success px-3 py-2 fs-6"><i class="bi bi-check-circle-fill"></i> Đã thanh toán</span>

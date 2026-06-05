@@ -43,7 +43,15 @@
                     <a href="<?php echo APP_URL; ?>/admin/menus" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/menus') !== false ? 'active' : ''; ?>"><i class="bi bi-list-nested me-2"></i> Menu</a>
                     <a href="<?php echo APP_URL; ?>/admin/posts" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/posts') !== false ? 'active' : ''; ?>"><i class="bi bi-file-text me-2"></i> Bài viết</a>
                     <a href="<?php echo APP_URL; ?>/admin/courses" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/courses') !== false ? 'active' : ''; ?>"><i class="bi bi-journal-bookmark me-2"></i> Khóa học</a>
-                    <a href="<?php echo APP_URL; ?>/admin/enrollments" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/enrollments') !== false ? 'active' : ''; ?>"><i class="bi bi-cart-check me-2"></i> Duyệt đăng ký</a>
+                    <a href="<?php echo APP_URL; ?>/admin/enrollments" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/enrollments') !== false ? 'active' : ''; ?> d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-cart-check me-2"></i> Duyệt đăng ký</span>
+                        <?php
+                        try {
+                            $__pendingEnroll = Database::getInstance()->getConnection()->query("SELECT COUNT(*) FROM enrollments WHERE status = 'pending'")->fetchColumn();
+                            if ($__pendingEnroll > 0) echo '<span class="badge bg-danger rounded-pill">' . $__pendingEnroll . '</span>';
+                        } catch(Exception $e) {}
+                        ?>
+                    </a>
                     <a href="<?php echo APP_URL; ?>/admin/students" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/students') !== false ? 'active' : ''; ?>"><i class="bi bi-people me-2"></i> Học viên</a>
                     <a href="<?php echo APP_URL; ?>/admin/assignments/pending" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/assignments') !== false ? 'active' : ''; ?> d-flex align-items-center justify-content-between">
                         <span><i class="bi bi-ui-checks me-2"></i> Chấm bài tập</span>
