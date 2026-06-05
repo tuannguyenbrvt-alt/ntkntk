@@ -130,10 +130,26 @@ class AdminAssignmentController extends Controller {
             return;
         }
 
+        $clientId = GOOGLE_CLIENT_ID;
+        $clientSecret = GOOGLE_CLIENT_SECRET;
+        
+        $oauthPath = ROOT_PATH . '/config/google-oauth.json';
+        if (file_exists($oauthPath)) {
+            $creds = json_decode(file_get_contents($oauthPath), true);
+            if (!empty($creds['client_id'])) {
+                $clientId = $creds['client_id'];
+            }
+            if (!empty($creds['client_secret'])) {
+                $clientSecret = $creds['client_secret'];
+            }
+        }
+
         $_SESSION['oauth_purpose'] = 'drive_setup';
+        $_SESSION['drive_client_id'] = $clientId;
+        $_SESSION['drive_client_secret'] = $clientSecret;
 
         $params = [
-            'client_id'       => GOOGLE_CLIENT_ID,
+            'client_id'       => $clientId,
             'redirect_uri'    => GOOGLE_REDIRECT_URI,
             'response_type'   => 'code',
             'scope'           => 'https://www.googleapis.com/auth/drive',

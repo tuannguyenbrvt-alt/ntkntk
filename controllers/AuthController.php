@@ -113,6 +113,11 @@ class AuthController extends Controller {
         if (isset($_SESSION['oauth_purpose']) && $_SESSION['oauth_purpose'] === 'drive_setup') {
             unset($_SESSION['oauth_purpose']);
             
+            $clientId = $_SESSION['drive_client_id'] ?? GOOGLE_CLIENT_ID;
+            $clientSecret = $_SESSION['drive_client_secret'] ?? GOOGLE_CLIENT_SECRET;
+            unset($_SESSION['drive_client_id']);
+            unset($_SESSION['drive_client_secret']);
+
             $code = $_GET['code'] ?? '';
             if (empty($code)) {
                 $_SESSION['error'] = 'Xác thực Google Drive thất bại hoặc bị hủy.';
@@ -122,8 +127,8 @@ class AuthController extends Controller {
             
             $postParams = [
                 'code'          => $code,
-                'client_id'     => GOOGLE_CLIENT_ID,
-                'client_secret' => GOOGLE_CLIENT_SECRET,
+                'client_id'     => $clientId,
+                'client_secret' => $clientSecret,
                 'redirect_uri'  => GOOGLE_REDIRECT_URI,
                 'grant_type'    => 'authorization_code'
             ];
@@ -143,8 +148,8 @@ class AuthController extends Controller {
             }
             
             $creds = [
-                'client_id'     => GOOGLE_CLIENT_ID,
-                'client_secret' => GOOGLE_CLIENT_SECRET,
+                'client_id'     => $clientId,
+                'client_secret' => $clientSecret,
                 'refresh_token' => $tokenData['refresh_token']
             ];
             
