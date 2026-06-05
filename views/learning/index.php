@@ -159,9 +159,26 @@
                                     <!-- Da cham diem -->
                                     <div class="p-3 rounded mb-3" style="background:#0d2e0d;border:1px solid #28a745;">
                                         <div class="text-success fw-bold">✅ Đã được chấm điểm: <span class="fs-5"><?php echo $my_sub['score']; ?>/<?php echo $asgn_info['max_score']; ?></span></div>
+                                        <?php if(!empty($my_sub['file_name'])): ?>
+                                            <div class="text-white-50 small mt-2">
+                                                <i class="bi bi-file-earmark-check me-1 text-info"></i>File bài làm: 
+                                                <?php if($my_sub['file_drive_url']): ?>
+                                                    <a href="<?php echo htmlspecialchars($my_sub['file_drive_url']); ?>" target="_blank" class="text-info text-decoration-underline fw-semibold"><?php echo htmlspecialchars($my_sub['file_name']); ?></a>
+                                                <?php else: ?>
+                                                    <span class="text-danger fw-semibold"><?php echo htmlspecialchars($my_sub['file_name']); ?> (Lỗi tải lên Google Drive)</span>
+                                                <?php endif; ?>
+                                            </div>
+                                        <?php endif; ?>
                                         <?php if($my_sub['feedback']): ?>
                                             <div class="text-white-50 small mt-2"><i class="bi bi-chat-quote me-1"></i>Nhận xét: <?php echo htmlspecialchars($my_sub['feedback']); ?></div>
                                         <?php endif; ?>
+                                    </div>
+                                <?php elseif($my_sub && $my_sub['file_drive_id'] === 'error'): ?>
+                                    <!-- Loi upload Google Drive -->
+                                    <div class="alert alert-danger py-3 mb-3">
+                                        <div class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Lỗi tải file lên Google Drive</div>
+                                        <div class="small mt-1 text-dark" style="white-space: pre-wrap;"><?php echo htmlspecialchars($my_sub['content']); ?></div>
+                                        <div class="mt-2 text-danger fw-semibold">Lưu ý: Bài làm của bạn chưa được nộp thành công lên Drive. Hệ thống đã báo lỗi đến giáo viên để khắc phục cấu hình. Vui lòng thử chọn file và nộp lại ở phía dưới.</div>
                                     </div>
                                 <?php elseif($my_sub): ?>
                                     <div class="alert alert-warning py-2"><i class="bi bi-hourglass me-2"></i>Đã nộp bài — Đang chờ giáo viên chấm điểm.</div>
@@ -183,11 +200,18 @@
                                             <input type="hidden" name="lesson_id" value="<?php echo $current_lesson['id']; ?>">
                                             <input type="hidden" name="drive_folder_id" value="<?php echo htmlspecialchars($asgn_info['drive_folder_id'] ?? ''); ?>">
                                             <?php if($my_sub && $my_sub['file_name']): ?>
-                                                <div class="text-white-50 small mb-2"><i class="bi bi-file-check me-1 text-info"></i>File đã nộp trước: <?php echo htmlspecialchars($my_sub['file_name']); ?></div>
+                                                <div class="text-white-50 small mb-2">
+                                                    <i class="bi bi-file-check me-1 text-info"></i>File đã chọn nộp trước: 
+                                                    <?php if($my_sub['file_drive_url']): ?>
+                                                        <a href="<?php echo htmlspecialchars($my_sub['file_drive_url']); ?>" target="_blank" class="text-info text-decoration-underline fw-semibold"><?php echo htmlspecialchars($my_sub['file_name']); ?></a>
+                                                    <?php else: ?>
+                                                        <span class="text-danger fw-semibold"><?php echo htmlspecialchars($my_sub['file_name']); ?> (Lỗi tải lên Drive)</span>
+                                                    <?php endif; ?>
+                                                </div>
                                             <?php endif; ?>
                                             <div class="input-group mb-3">
                                                 <input type="file" name="submission_file" class="form-control" style="background:#111;color:#eee;border-color:#444;" required>
-                                                <button type="submit" class="btn btn-info text-white"><i class="bi bi-cloud-upload me-1"></i><?php echo $my_sub ? 'Nộp lại' : 'Nộp file'; ?></button>
+                                                <button type="submit" class="btn btn-info text-white"><i class="bi bi-cloud-upload me-1"></i><?php echo ($my_sub && $my_sub['file_drive_id'] !== 'error') ? 'Nộp lại' : 'Nộp file'; ?></button>
                                             </div>
                                             <small class="text-muted">Tối đa 50MB. File sẽ được lưu trên Google Drive.</small>
                                         </form>

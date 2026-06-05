@@ -47,73 +47,83 @@ class AssignmentController extends Controller {
 
         // Kiem tra file upload
         if (!isset($_FILES['submission_file']) || $_FILES['submission_file']['error'] === UPLOAD_ERR_NO_FILE) {
-            $_SESSION['error'] = 'Vui long chon file de nop.';
+            $_SESSION['error'] = 'Vui lòng chọn file để nộp.';
             $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
             return;
         }
         $file = $_FILES['submission_file'];
         if ($file['error'] !== UPLOAD_ERR_OK) {
-            $_SESSION['error'] = 'Loi upload file. Ma loi: ' . $file['error'];
+            $_SESSION['error'] = 'Lỗi upload file lên máy chủ. Mã lỗi: ' . $file['error'];
             $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
             return;
         }
         if ($file['size'] > 50 * 1024 * 1024) {
-            $_SESSION['error'] = 'File qua lon. Toi da 50MB.';
+            $_SESSION['error'] = 'File quá lớn. Tối đa 50MB.';
             $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
             return;
         }
 
-        // Kiem tra cau hinh Google Drive
+        $uploadSuccess = false;
+        $fileDriveUrl = null;
+        $fileDriveId = null;
+        $driveErrorMsg = '';
+
+        // Kiem tra cau hinh va folder ID Google Drive, sau do upload
         try {
+            if (empty($folder_id)) {
+                throw new Exception('Bài tập này chưa có Google Drive Folder ID. Giáo viên chưa cấu hình thư mục lưu bài nộp.');
+            }
+
             require_once ROOT_PATH . '/helpers/GoogleDriveHelper.php';
             $creds = GoogleDriveHelper::loadCredentials();
-        } catch (Exception $e) {
-            $_SESSION['error'] = $e->getMessage();
-            $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
-            return;
-        }
 
-        if (empty($folder_id)) {
-            $_SESSION['error'] = 'Bai tap nay chua co Google Drive Folder ID. Vui long lien he giao vien.';
-            $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
-            return;
-        }
-
-        // Upload len Google Drive
-        try {
             $result = GoogleDriveHelper::uploadFile($file['tmp_name'], $file['name'], $folder_id, $creds);
+            $fileDriveUrl = $result['url'];
+            $fileDriveId = $result['id'];
+            $uploadSuccess = true;
         } catch (Exception $e) {
-            // Hien thi loi cu the de debug
             $errMsg = $e->getMessage();
             if (strpos($errMsg, 'openssl') !== false) {
-                $_SESSION['error'] = 'Loi: Server khong ho tro OpenSSL. Lien he hosting de bat openssl.';
+                $driveErrorMsg = 'Server không hỗ trợ OpenSSL. Liên hệ hosting để bật openssl.';
             } elseif (strpos($errMsg, 'HTTP 403') !== false || strpos($errMsg, '403') !== false) {
-                $_SESSION['error'] = 'Loi 403: Service Account chua co quyen vao thu muc Drive. Hay chia se thu muc voi email Service Account va cap quyen Editor.';
+                $driveErrorMsg = 'Lỗi 403: Google Drive từ chối truy cập. Tài khoản Google (Service Account/OAuth) chưa được phân quyền vào thư mục này. Giáo viên cần chia sẻ thư mục Drive và cấp quyền Editor cho tài khoản.';
             } elseif (strpos($errMsg, 'HTTP 404') !== false || strpos($errMsg, '404') !== false) {
-                $_SESSION['error'] = 'Loi 404: Khong tim thay thu muc Drive (Folder ID sai). Kiem tra lai Folder ID.';
+                $driveErrorMsg = 'Lỗi 404: Không tìm thấy thư mục Google Drive (Folder ID bị sai hoặc thư mục đã bị xóa).';
             } elseif (strpos($errMsg, 'curl') !== false || strpos($errMsg, 'cURL') !== false) {
-                $_SESSION['error'] = 'Loi ket noi mang. Server khong the ket noi Google API. Kiem tra lien ket internet cua hosting.';
+                $driveErrorMsg = 'Lỗi kết nối mạng: Không thể kết nối từ máy chủ đến Google API.';
             } else {
-                $_SESSION['error'] = 'Loi upload Google Drive: ' . $errMsg;
+                $driveErrorMsg = 'Lỗi Google Drive: ' . $errMsg;
             }
-            $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
-            return;
         }
 
-        // Luu submission vao DB
+        // Luu / cap nhat submission vao DB
         $exists = $db->prepare("SELECT id FROM assignment_submissions WHERE assignment_id=? AND student_id=?");
         $exists->execute([$assignment_id, $_SESSION['user_id']]);
         $row = $exists->fetch();
 
-        if ($row) {
-            $db->prepare("UPDATE assignment_submissions SET file_name=?, file_drive_url=?, file_drive_id=?, status='pending', submitted_at=NOW(), score=NULL, feedback=NULL WHERE id=?")
-               ->execute([$file['name'], $result['url'], $result['id'], $row['id']]);
+        if ($uploadSuccess) {
+            // Tải lên thành công: lưu thông tin file Drive và xóa thông tin lỗi nếu có
+            if ($row) {
+                $db->prepare("UPDATE assignment_submissions SET file_name=?, file_drive_url=?, file_drive_id=?, content=NULL, status='pending', submitted_at=NOW(), score=NULL, feedback=NULL WHERE id=?")
+                   ->execute([$file['name'], $fileDriveUrl, $fileDriveId, $row['id']]);
+            } else {
+                $db->prepare("INSERT INTO assignment_submissions (assignment_id, student_id, file_name, file_drive_url, file_drive_id, content, status) VALUES (?,?,?,?,?,NULL,'pending')")
+                   ->execute([$assignment_id, $_SESSION['user_id'], $file['name'], $fileDriveUrl, $fileDriveId]);
+            }
+            $_SESSION['success'] = 'Đã nộp file thành công lên Google Drive! Giáo viên sẽ chấm điểm sớm.';
         } else {
-            $db->prepare("INSERT INTO assignment_submissions (assignment_id, student_id, file_name, file_drive_url, file_drive_id) VALUES (?,?,?,?,?)")
-               ->execute([$assignment_id, $_SESSION['user_id'], $file['name'], $result['url'], $result['id']]);
+            // Tải lên thất bại: đánh dấu lỗi trong DB để báo cho cả học viên và giáo viên biết
+            $errorDetail = 'Lỗi tải tệp tin "' . $file['name'] . '" lên Google Drive. Nguyên nhân: ' . $driveErrorMsg;
+            if ($row) {
+                $db->prepare("UPDATE assignment_submissions SET file_name=?, file_drive_url=NULL, file_drive_id='error', content=?, status='pending', submitted_at=NOW(), score=NULL, feedback=NULL WHERE id=?")
+                   ->execute([$file['name'], $errorDetail, $row['id']]);
+            } else {
+                $db->prepare("INSERT INTO assignment_submissions (assignment_id, student_id, file_name, file_drive_url, file_drive_id, content, status) VALUES (?,?,?,NULL,'error',?,'pending')")
+                   ->execute([$assignment_id, $_SESSION['user_id'], $file['name'], $errorDetail]);
+            }
+            $_SESSION['error'] = 'Nộp file thất bại! Không thể upload lên Google Drive. Lỗi đã được ghi nhận và gửi đến giáo viên để khắc phục. Vui lòng thử lại sau.';
         }
 
-        $_SESSION['success'] = 'Da nop file thanh cong len Google Drive! Giao vien se cham diem som.';
         $this->redirect('/learning?course_id=' . $course_id . '&lesson_id=' . $lesson_id);
     }
 
