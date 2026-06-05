@@ -110,6 +110,55 @@ class AuthController extends Controller {
     }
 
     public function googleCallback() {
+        if (isset($_SESSION['oauth_purpose']) && $_SESSION['oauth_purpose'] === 'drive_setup') {
+            unset($_SESSION['oauth_purpose']);
+            
+            $code = $_GET['code'] ?? '';
+            if (empty($code)) {
+                $_SESSION['error'] = 'Xác thực Google Drive thất bại hoặc bị hủy.';
+                $this->redirect('/admin/assignments/pending');
+                return;
+            }
+            
+            $postParams = [
+                'code'          => $code,
+                'client_id'     => GOOGLE_CLIENT_ID,
+                'client_secret' => GOOGLE_CLIENT_SECRET,
+                'redirect_uri'  => GOOGLE_REDIRECT_URI,
+                'grant_type'    => 'authorization_code'
+            ];
+            
+            $ch = curl_init('https://oauth2.googleapis.com/token');
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postParams));
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            $response = curl_exec($ch);
+            curl_close($ch);
+            
+            $tokenData = json_decode($response, true);
+            if (empty($tokenData['refresh_token'])) {
+                $_SESSION['error'] = 'Không thể lấy Refresh Token từ Google. Vui lòng đảm bảo bạn chọn đúng tài khoản và đồng ý cấp quyền truy cập Drive ở màn hình tiếp theo.';
+                $this->redirect('/admin/assignments/pending');
+                return;
+            }
+            
+            $creds = [
+                'client_id'     => GOOGLE_CLIENT_ID,
+                'client_secret' => GOOGLE_CLIENT_SECRET,
+                'refresh_token' => $tokenData['refresh_token']
+            ];
+            
+            $oauthPath = ROOT_PATH . '/config/google-oauth.json';
+            if (file_put_contents($oauthPath, json_encode($creds, JSON_PRETTY_PRINT))) {
+                $_SESSION['success'] = 'Liên kết Google Drive thành công! Refresh Token đã được cập nhật.';
+            } else {
+                $_SESSION['error'] = 'Lỗi ghi tệp config/google-oauth.json. Vui lòng kiểm tra quyền ghi thư mục config.';
+            }
+            
+            $this->redirect('/admin/assignments/pending');
+            return;
+        }
+
         if (isset($_SESSION['user_id'])) {
             $this->redirect('/');
             return;

@@ -32,10 +32,13 @@
                 <div>
                     <div class="fw-semibold"><?php echo htmlspecialchars($sub['file_name'] ?? 'Không rõ tên file'); ?></div>
                     <?php if($sub['file_drive_id'] === 'error'): ?>
-                        <div class="alert alert-danger mt-2 mb-0 py-2" style="max-width: 600px;">
+                        <div class="alert alert-danger mt-2 mb-0 py-3" style="max-width: 600px;">
                             <i class="bi bi-exclamation-octagon-fill me-2"></i><strong>Lỗi tải file lên Google Drive:</strong>
                             <div class="mt-1 small text-dark" style="white-space: pre-wrap;"><?php echo htmlspecialchars($sub['content'] ?? 'Không xác định được nguyên nhân.'); ?></div>
-                            <div class="mt-2 text-muted small"><i class="bi bi-gear-fill me-1"></i>Vui lòng kiểm tra lại cấu hình tài khoản Drive, dung lượng hoặc Folder ID của bài tập này để học viên có thể nộp lại.</div>
+                            <div class="mt-3">
+                                <a href="<?php echo APP_URL; ?>/admin/setup-drive-oauth" class="btn btn-sm btn-danger fw-bold"><i class="bi bi-google me-1"></i>Cấu hình &amp; Cấp lại quyền Google Drive</a>
+                            </div>
+                            <div class="mt-2 text-muted small"><i class="bi bi-info-circle me-1"></i>Lưu ý: Sau khi cấp lại quyền thành công, vui lòng yêu cầu học viên tải file nộp lại.</div>
                         </div>
                     <?php elseif(!empty($sub['file_drive_url'])): ?>
                         <?php

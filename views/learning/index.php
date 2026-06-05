@@ -176,9 +176,8 @@
                                 <?php elseif($my_sub && $my_sub['file_drive_id'] === 'error'): ?>
                                     <!-- Loi upload Google Drive -->
                                     <div class="alert alert-danger py-3 mb-3">
-                                        <div class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Lỗi tải file lên Google Drive</div>
-                                        <div class="small mt-1 text-dark" style="white-space: pre-wrap;"><?php echo htmlspecialchars($my_sub['content']); ?></div>
-                                        <div class="mt-2 text-danger fw-semibold">Lưu ý: Bài làm của bạn chưa được nộp thành công lên Drive. Hệ thống đã báo lỗi đến giáo viên để khắc phục cấu hình. Vui lòng thử chọn file và nộp lại ở phía dưới.</div>
+                                        <div class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Lỗi nộp bài tập</div>
+                                        <div class="mt-2 text-danger fw-semibold">Phát sinh lỗi trong Quá trình nộp file bài tập. Bài làm của bạn chưa được nộp thành công lên Drive. Hệ thống đã báo lỗi đến giáo viên để khắc phục cấu hình. Vui lòng thử chọn file và nộp lại ở phía dưới.</div>
                                     </div>
                                 <?php elseif($my_sub): ?>
                                     <div class="alert alert-warning py-2"><i class="bi bi-hourglass me-2"></i>Đã nộp bài — Đang chờ giáo viên chấm điểm.</div>

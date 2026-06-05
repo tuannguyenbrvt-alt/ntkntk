@@ -123,4 +123,27 @@ class AdminAssignmentController extends Controller {
 
         $this->render('admin/assignments/pending', ['title' => 'Chấm bài tập', 'pendingSubs' => $pendingSubs], 'admin');
     }
+
+    public function setupDrive() {
+        if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['super_admin','admin'])) {
+            $this->redirect('/login');
+            return;
+        }
+
+        $_SESSION['oauth_purpose'] = 'drive_setup';
+
+        $params = [
+            'client_id'       => GOOGLE_CLIENT_ID,
+            'redirect_uri'    => GOOGLE_REDIRECT_URI,
+            'response_type'   => 'code',
+            'scope'           => 'https://www.googleapis.com/auth/drive',
+            'access_type'     => 'offline',
+            'prompt'          => 'consent',
+            'state'           => bin2hex(random_bytes(16))
+        ];
+
+        $_SESSION['oauth2state'] = $params['state'];
+        $url = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params);
+        $this->redirect($url);
+    }
 }
