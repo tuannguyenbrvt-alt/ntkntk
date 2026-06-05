@@ -349,7 +349,7 @@
     <div class="modal-dialog">
         <form action="<?php echo APP_URL; ?>/admin/courses/content/storeItem" method="POST" enctype="multipart/form-data" class="modal-content">
             <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
-            <input type="hidden" name="pdf_lesson_id" id="pdf_lesson_id">
+            <input type="hidden" name="lesson_id" id="pdf_lesson_id">
             <input type="hidden" name="type" value="pdf">
             <div class="modal-header bg-warning bg-opacity-10">
                 <h5 class="modal-title"><i class="bi bi-file-pdf text-danger me-2"></i>Upload File PDF</h5>

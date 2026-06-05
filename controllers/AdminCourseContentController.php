@@ -95,7 +95,7 @@ class AdminCourseContentController extends Controller {
     }
 
     public function storeItem() {
-        $lesson_id = $_POST['lesson_id'] ?? 0;
+        $lesson_id = $_POST['lesson_id'] ?? $_POST['pdf_lesson_id'] ?? 0;
         $course_id = $_POST['course_id'] ?? 0;
         $type      = $_POST['type']      ?? 'text';
         $content   = '';
