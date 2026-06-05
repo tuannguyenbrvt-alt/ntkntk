@@ -3,7 +3,7 @@
         <h5 class="mb-0 fw-bold"><?php echo isset($post) ? 'Chỉnh sửa bài viết' : 'Thêm bài viết mới'; ?></h5>
     </div>
     <div class="card-body">
-        <form action="<?php echo APP_URL; ?>/admin/posts/<?php echo isset($post) ? 'update' : 'store'; ?>" method="POST" enctype="multipart/form-data">
+        <form action="<?php echo APP_URL; ?>/admin/posts/<?php echo isset($post) ? 'update' : 'store'; ?>" method="POST" enctype="multipart/form-data" onsubmit="if(typeof tinymce !== 'undefined') { tinymce.triggerSave(); }">
             <?php if(isset($post)): ?>
                 <input type="hidden" name="id" value="<?php echo $post['id']; ?>">
             <?php endif; ?>
@@ -66,64 +66,75 @@
     </div>
 </div>
 
-<!-- Tích hợp TinyMCE WYSIWYG Editor qua CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
+<!-- Cấu hình TinyMCE & JS helper -->
 <script>
-    tinymce.init({
-        selector: '#editor',
-        height: 600,
-        plugins: 'advlist autolink lists link image charmap preview anchor pagebreak searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking table directionality emoticons',
-        toolbar: 'undo redo | blocks | bold italic strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | removeformat | fullscreen code',
-        menubar: true,
-        image_title: true,
-        automatic_uploads: true,
-        file_picker_types: 'image media',
-        // ==== Upload ảnh thẳng lên Server (không dùng Base64 nữa) ====
-        images_upload_url: '<?php echo APP_URL; ?>/admin/media/upload',
-        images_upload_handler: function (blobInfo, progress) {
-            return new Promise(function (resolve, reject) {
-                var xhr = new XMLHttpRequest();
-                xhr.open('POST', '<?php echo APP_URL; ?>/admin/media/upload');
-                xhr.upload.onprogress = function (e) {
-                    progress(e.loaded / e.total * 100);
-                };
-                xhr.onload = function () {
-                    if (xhr.status < 200 || xhr.status >= 300) {
-                        reject({ message: 'HTTP Error: ' + xhr.status, remove: true });
-                        return;
-                    }
-                    var json = JSON.parse(xhr.responseText);
-                    if (!json || typeof json.location != 'string') {
-                        reject({ message: 'Lỗi: ' + xhr.responseText, remove: true });
-                        return;
-                    }
-                    resolve(json.location);
-                };
-                xhr.onerror = function () {
-                    reject({ message: 'Lỗi kết nối.', remove: false });
-                };
-                var formData = new FormData();
-                formData.append('file', blobInfo.blob(), blobInfo.filename());
-                xhr.send(formData);
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof tinymce !== 'undefined') {
+            tinymce.init({
+                selector: '#editor',
+                height: 600,
+                plugins: 'advlist autolink lists link image charmap preview anchor pagebreak searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media nonbreaking table directionality emoticons',
+                toolbar: 'undo redo | blocks | bold italic strikethrough forecolor backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image media table | removeformat | fullscreen code',
+                menubar: true,
+                image_title: true,
+                automatic_uploads: true,
+                file_picker_types: 'image media',
+                // ==== Upload ảnh thẳng lên Server (không dùng Base64 nữa) ====
+                images_upload_url: '<?php echo APP_URL; ?>/admin/media/upload',
+                images_upload_handler: function (blobInfo, progress) {
+                    return new Promise(function (resolve, reject) {
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', '<?php echo APP_URL; ?>/admin/media/upload');
+                        xhr.upload.onprogress = function (e) {
+                            progress(e.loaded / e.total * 100);
+                        };
+                        xhr.onload = function () {
+                            if (xhr.status < 200 || xhr.status >= 300) {
+                                reject({ message: 'HTTP Error: ' + xhr.status, remove: true });
+                                return;
+                            }
+                            var json = JSON.parse(xhr.responseText);
+                            if (!json || typeof json.location != 'string') {
+                                reject({ message: 'Lỗi: ' + xhr.responseText, remove: true });
+                                return;
+                            }
+                            resolve(json.location);
+                        };
+                        xhr.onerror = function () {
+                            reject({ message: 'Lỗi kết nối.', remove: false });
+                        };
+                        var formData = new FormData();
+                        formData.append('file', blobInfo.blob(), blobInfo.filename());
+                        xhr.send(formData);
+                    });
+                },
+                setup: function (editor) {
+                    editor.on('change', function () {
+                        tinymce.triggerSave();
+                    });
+                }
             });
         }
-    });
 
-    // Tạo Auto Slug bằng JS thân thiện
-    document.getElementById('post-title').addEventListener('keyup', function() {
-        if(document.getElementById('post-slug').value === '' || <?php echo isset($post) ? 'false' : 'true'; ?>) {
-            let title = this.value;
-            let slug = title.toLowerCase()
-                .replace(/[áàảãạâấầẩẫậăắằẳẵặ]/g, 'a')
-                .replace(/[éèẻẽẹêếềểễệ]/g, 'e')
-                .replace(/[íìỉĩị]/g, 'i')
-                .replace(/[óòỏõọôốồổỗộơớờởỡợ]/g, 'o')
-                .replace(/[úùủũụưứừửữự]/g, 'u')
-                .replace(/[ýỳỷỹỵ]/g, 'y')
-                .replace(/đ/g, 'd')
-                .replace(/[^a-z0-9\s-]/g, '')
-                .replace(/\s+/g, '-');
-            document.getElementById('post-slug').value = slug;
+        // Tạo Auto Slug bằng JS thân thiện
+        var postTitle = document.getElementById('post-title');
+        if (postTitle) {
+            postTitle.addEventListener('keyup', function() {
+                if(document.getElementById('post-slug').value === '' || <?php echo isset($post) ? 'false' : 'true'; ?>) {
+                    let title = this.value;
+                    let slug = title.toLowerCase()
+                        .replace(/[áàảãạâấầẩẫậăắằẳẵặ]/g, 'a')
+                        .replace(/[éèẻẽẹêếềểễệ]/g, 'e')
+                        .replace(/[íìỉĩị]/g, 'i')
+                        .replace(/[óòỏõọôốồổỗộơớờởỡợ]/g, 'o')
+                        .replace(/[úùủũụưứừửữự]/g, 'u')
+                        .replace(/[ýỳỷỹỵ]/g, 'y')
+                        .replace(/đ/g, 'd')
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .replace(/\s+/g, '-');
+                    document.getElementById('post-slug').value = slug;
+                }
+            });
         }
     });
 </script>

@@ -3,7 +3,7 @@
         <h5 class="mb-0 fw-bold"><?php echo isset($course) ? 'Sửa thông tin Khóa học' : 'Tạo Khóa học mới'; ?></h5>
     </div>
     <div class="card-body">
-        <form action="<?php echo APP_URL; ?>/admin/courses/<?php echo isset($course) ? 'update' : 'store'; ?>" method="POST" enctype="multipart/form-data">
+        <form action="<?php echo APP_URL; ?>/admin/courses/<?php echo isset($course) ? 'update' : 'store'; ?>" method="POST" enctype="multipart/form-data" onsubmit="if(typeof tinymce !== 'undefined') { tinymce.triggerSave(); }">
             <?php if(isset($course)): ?>
                 <input type="hidden" name="id" value="<?php echo $course['id']; ?>">
             <?php endif; ?>
@@ -68,30 +68,42 @@
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
+<!-- Cấu hình TinyMCE & JS helper -->
 <script>
-    tinymce.init({
-        selector: '#editor',
-        height: 400,
-        plugins: 'advlist autolink lists link image charmap preview anchor pagebreak searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media table',
-        toolbar: 'undo redo | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code',
-        menubar: false
-    });
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof tinymce !== 'undefined') {
+            tinymce.init({
+                selector: '#editor',
+                height: 400,
+                plugins: 'advlist autolink lists link image charmap preview anchor pagebreak searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media table',
+                toolbar: 'undo redo | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code',
+                menubar: false,
+                setup: function (editor) {
+                    editor.on('change', function () {
+                        tinymce.triggerSave();
+                    });
+                }
+            });
+        }
 
-    document.getElementById('course-title').addEventListener('keyup', function() {
-        if(document.getElementById('course-slug').value === '' || <?php echo isset($course) ? 'false' : 'true'; ?>) {
-            let title = this.value;
-            let slug = title.toLowerCase()
-                .replace(/[áàảãạâấầẩẫậăắằẳẵặ]/g, 'a')
-                .replace(/[éèẻẽẹêếềểễệ]/g, 'e')
-                .replace(/[íìỉĩị]/g, 'i')
-                .replace(/[óòỏõọôốồổỗộơớờởỡợ]/g, 'o')
-                .replace(/[úùủũụưứừửữự]/g, 'u')
-                .replace(/[ýỳỷỹỵ]/g, 'y')
-                .replace(/đ/g, 'd')
-                .replace(/[^a-z0-9\s-]/g, '')
-                .replace(/\s+/g, '-');
-            document.getElementById('course-slug').value = slug;
+        var courseTitle = document.getElementById('course-title');
+        if (courseTitle) {
+            courseTitle.addEventListener('keyup', function() {
+                if(document.getElementById('course-slug').value === '' || <?php echo isset($course) ? 'false' : 'true'; ?>) {
+                    let title = this.value;
+                    let slug = title.toLowerCase()
+                        .replace(/[áàảãạâấầẩẫậăắằẳẵặ]/g, 'a')
+                        .replace(/[éèẻẽẹêếềểễệ]/g, 'e')
+                        .replace(/[íìỉĩị]/g, 'i')
+                        .replace(/[óòỏõọôốồổỗộơớờởỡợ]/g, 'o')
+                        .replace(/[úùủũụưứừửữự]/g, 'u')
+                        .replace(/[ýỳỷỹỵ]/g, 'y')
+                        .replace(/đ/g, 'd')
+                        .replace(/[^a-z0-9\s-]/g, '')
+                        .replace(/\s+/g, '-');
+                    document.getElementById('course-slug').value = slug;
+                }
+            });
         }
     });
 </script>

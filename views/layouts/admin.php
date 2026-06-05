@@ -172,6 +172,11 @@
                         });
                     }
                 });
+
+                // Tự động triggerSave trước khi submit bất kỳ form nào
+                document.addEventListener('submit', function() {
+                    tinymce.triggerSave();
+                });
             }
         });
     </script>
