@@ -193,6 +193,7 @@ CREATE TABLE `question_bank` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `course_id` int(11) NOT NULL,
   `question_text` text NOT NULL,
+  `question_type` enum('single','multiple') NOT NULL DEFAULT 'single',
   `created_by` int(11) NOT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

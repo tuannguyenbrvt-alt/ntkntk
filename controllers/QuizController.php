@@ -59,7 +59,7 @@ class QuizController extends Controller {
         }
 
         // Lay danh sach cau hoi cua de
-        $qs = $db->prepare("SELECT qq.id as qq_id, qb.id as qb_id, qb.question_text FROM quiz_questions qq JOIN question_bank qb ON qq.bank_question_id=qb.id WHERE qq.quiz_id=? ORDER BY qq.sort_order ASC");
+        $qs = $db->prepare("SELECT qq.id as qq_id, qb.id as qb_id, qb.question_text, qb.question_type FROM quiz_questions qq JOIN question_bank qb ON qq.bank_question_id=qb.id WHERE qq.quiz_id=? ORDER BY qq.sort_order ASC");
         $qs->execute([$quiz_id]);
         $questions = $qs->fetchAll();
 
@@ -88,7 +88,12 @@ class QuizController extends Controller {
         $savedStmt->execute([$attempt['id']]);
         $savedMap = array();
         foreach ($savedStmt->fetchAll() as $row) {
-            $savedMap[$row['bank_question_id']] = $row['selected_option_id'];
+            $qb_id = (int)$row['bank_question_id'];
+            $opt_id = (int)$row['selected_option_id'];
+            if (!isset($savedMap[$qb_id])) {
+                $savedMap[$qb_id] = array();
+            }
+            $savedMap[$qb_id][] = $opt_id;
         }
 
         $this->render('quiz/take', array(
@@ -131,21 +136,46 @@ class QuizController extends Controller {
         // Xoa cau tra loi cu neu co (lam lai)
         $db->prepare("DELETE FROM quiz_attempt_answers WHERE attempt_id=?")->execute([$attempt_id]);
 
+        // Lay tat ca cau hoi cua de thi de so sanh
+        $qs = $db->prepare("SELECT qq.bank_question_id as qb_id, qb.question_type FROM quiz_questions qq JOIN question_bank qb ON qq.bank_question_id = qb.id WHERE qq.quiz_id = ?");
+        $qs->execute([$attempt['quiz_id']]);
+        $questions = $qs->fetchAll();
+
         // Luu tung cau tra loi va tinh diem
         $score = 0;
-        foreach ($answers as $qb_id => $opt_id) {
-            $qb_id  = (int)$qb_id;
-            $opt_id = (int)$opt_id;
-            if ($qb_id <= 0 || $opt_id <= 0) continue;
+        foreach ($questions as $q) {
+            $qb_id = (int)$q['qb_id'];
+            
+            // Lay dap an dung tu DB
+            $cStmt = $db->prepare("SELECT id FROM question_bank_options WHERE question_id = ? AND is_correct = 1");
+            $cStmt->execute([$qb_id]);
+            $correctOptionIds = $cStmt->fetchAll(PDO::FETCH_COLUMN);
+            $correctOptionIds = array_map('intval', $correctOptionIds);
+            sort($correctOptionIds);
 
-            // Kiem tra dap an co dung khong
-            $cStmt = $db->prepare("SELECT is_correct FROM question_bank_options WHERE id=? AND question_id=?");
-            $cStmt->execute([$opt_id, $qb_id]);
-            $row = $cStmt->fetch();
-            $is_correct = ($row && $row['is_correct']) ? 1 : 0;
+            // Lay lua chon cua hoc sinh
+            $studentSelected = $answers[$qb_id] ?? array();
+            if (!is_array($studentSelected)) {
+                $studentSelected = array($studentSelected);
+            }
+            $studentSelected = array_filter(array_map('intval', $studentSelected));
+            sort($studentSelected);
 
-            $db->prepare("INSERT INTO quiz_attempt_answers (attempt_id, bank_question_id, selected_option_id, is_correct) VALUES (?,?,?,?)")
-               ->execute([$attempt_id, $qb_id, $opt_id, $is_correct]);
+            // Kiem tra dap an co dung hoan toan khong
+            $is_correct = ($correctOptionIds === $studentSelected && !empty($studentSelected)) ? 1 : 0;
+
+            if (empty($studentSelected)) {
+                // Neu khong chon gi, luu 1 dong NULL va ghi nhan sai
+                $db->prepare("INSERT INTO quiz_attempt_answers (attempt_id, bank_question_id, selected_option_id, is_correct) VALUES (?, ?, NULL, 0)")
+                   ->execute([$attempt_id, $qb_id]);
+            } else {
+                // Luu tung dap an hoc sinh da chon
+                foreach ($studentSelected as $opt_id) {
+                    $db->prepare("INSERT INTO quiz_attempt_answers (attempt_id, bank_question_id, selected_option_id, is_correct) VALUES (?, ?, ?, ?)")
+                       ->execute([$attempt_id, $qb_id, $opt_id, $is_correct]);
+                }
+            }
+
             $score += $is_correct;
         }
 
@@ -176,19 +206,52 @@ class QuizController extends Controller {
 
         if (!$attempt) { $this->redirect('/'); return; }
 
-        // Chi tiet tung cau tra loi kem dap an dung
-        $ansStmt = $db->prepare(
-            "SELECT qaa.bank_question_id, qaa.selected_option_id, qaa.is_correct,
-                    qb.question_text,
-                    qbo_sel.option_text as selected_text,
-                    (SELECT option_text FROM question_bank_options WHERE question_id=qb.id AND is_correct=1 LIMIT 1) as correct_text
+        // Lay cac cau hoi duy nhat hoc sinh da tra loi trong attempt nay
+        $qStmt = $db->prepare(
+            "SELECT DISTINCT qb.id, qb.question_text, qb.question_type, qq.sort_order 
              FROM quiz_attempt_answers qaa
-             JOIN question_bank qb ON qaa.bank_question_id=qb.id
-             LEFT JOIN question_bank_options qbo_sel ON qaa.selected_option_id=qbo_sel.id
-             WHERE qaa.attempt_id=?"
+             JOIN question_bank qb ON qaa.bank_question_id = qb.id
+             LEFT JOIN quiz_questions qq ON qq.bank_question_id = qb.id AND qq.quiz_id = ?
+             WHERE qaa.attempt_id = ?
+             ORDER BY qq.sort_order ASC, qb.id ASC"
         );
-        $ansStmt->execute([$attempt_id]);
-        $answers = $ansStmt->fetchAll();
+        $qStmt->execute([$attempt['quiz_id'], $attempt_id]);
+        $questions = $qStmt->fetchAll();
+
+        $resultDetails = [];
+        foreach ($questions as $q) {
+            $qb_id = (int)$q['id'];
+            
+            // Lay tat ca phuong an lua chon
+            $oStmt = $db->prepare("SELECT id, option_text, is_correct FROM question_bank_options WHERE question_id = ? ORDER BY sort_order ASC, id ASC");
+            $oStmt->execute([$qb_id]);
+            $options = $oStmt->fetchAll();
+            
+            // Lay cac lua chon hoc sinh da tick
+            $sStmt = $db->prepare("SELECT selected_option_id, is_correct FROM quiz_attempt_answers WHERE attempt_id = ? AND bank_question_id = ?");
+            $sStmt->execute([$attempt_id, $qb_id]);
+            $selectedRows = $sStmt->fetchAll();
+            
+            $selectedOptionIds = [];
+            $questionCorrect = 0;
+            foreach ($selectedRows as $sr) {
+                if ($sr['selected_option_id'] !== null) {
+                    $selectedOptionIds[] = (int)$sr['selected_option_id'];
+                }
+                if ($sr['is_correct']) {
+                    $questionCorrect = 1;
+                }
+            }
+            
+            $resultDetails[] = [
+                'id'                  => $qb_id,
+                'question_text'       => $q['question_text'],
+                'question_type'       => $q['question_type'] ?? 'single',
+                'options'             => $options,
+                'selected_option_ids' => $selectedOptionIds,
+                'is_correct'          => $questionCorrect
+            ];
+        }
 
         // Lay course_id de co the quay ve bai hoc
         $crStmt = $db->prepare("SELECT cp.course_id FROM course_lessons cl JOIN course_chapters cc ON cl.chapter_id=cc.id JOIN course_parts cp ON cc.part_id=cp.id WHERE cl.id=?");
@@ -196,10 +259,10 @@ class QuizController extends Controller {
         $cRow = $crStmt->fetch();
 
         $this->render('quiz/result', array(
-            'title'     => 'Ket qua: ' . $attempt['quiz_title'],
-            'attempt'   => $attempt,
-            'answers'   => $answers,
-            'course_id' => $cRow ? $cRow['course_id'] : 0,
+            'title'         => 'Kết quả: ' . $attempt['quiz_title'],
+            'attempt'       => $attempt,
+            'resultDetails' => $resultDetails,
+            'course_id'     => $cRow ? $cRow['course_id'] : 0,
         ), 'main');
     }
 }

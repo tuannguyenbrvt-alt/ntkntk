@@ -24,15 +24,35 @@
                 <span class="badge bg-primary" style="font-size:.95rem;">Câu <?php echo $i+1; ?></span>
             </div>
             <div class="fw-semibold mb-4 text-white-50" style="font-size:1.1rem;"><?php echo $q['question_text']; ?></div>
-            <?php foreach($q['options'] as $opt): ?>
+            <?php 
+            $qtype = $q['question_type'] ?? 'single';
+            foreach($q['options'] as $opt): 
+                $is_checked = isset($savedMap[$q['qb_id']]) && in_array((int)$opt['id'], $savedMap[$q['qb_id']]);
+            ?>
             <div>
+                <?php if($qtype === 'multiple'): ?>
+                <input type="checkbox"
+                       name="answers[<?php echo (int)$q['qb_id']; ?>][]"
+                       id="opt<?php echo (int)$opt['id']; ?>"
+                       value="<?php echo (int)$opt['id']; ?>"
+                       class="d-none"
+                       <?php echo $is_checked ? 'checked' : ''; ?>>
+                <?php else: ?>
                 <input type="radio"
                        name="answers[<?php echo (int)$q['qb_id']; ?>]"
                        id="opt<?php echo (int)$opt['id']; ?>"
                        value="<?php echo (int)$opt['id']; ?>"
                        class="d-none"
-                       <?php echo (isset($savedMap[$q['qb_id']]) && $savedMap[$q['qb_id']] == $opt['id']) ? 'checked' : ''; ?>>
-                <label for="opt<?php echo (int)$opt['id']; ?>" class="option-label text-start" style="display:block;"><?php echo $opt['option_text']; ?></label>
+                       <?php echo $is_checked ? 'checked' : ''; ?>>
+                <?php endif; ?>
+                <label for="opt<?php echo (int)$opt['id']; ?>" class="option-label text-start d-flex align-items-center gap-2" style="display:block;">
+                    <?php if($qtype === 'multiple'): ?>
+                        <i class="bi bi-<?php echo $is_checked ? 'check-square-fill' : 'square'; ?> text-muted fs-5 opt-icon"></i>
+                    <?php else: ?>
+                        <i class="bi bi-<?php echo $is_checked ? 'record-circle-fill' : 'circle'; ?> text-muted fs-5 opt-icon"></i>
+                    <?php endif; ?>
+                    <span><?php echo $opt['option_text']; ?></span>
+                </label>
             </div>
             <?php endforeach; ?>
         </div>
@@ -72,20 +92,45 @@ var iv = setInterval(function() {
 }, 500);
 <?php endif; ?>
 
-// Highlight dap an duoc chon
-document.querySelectorAll('input[type=radio]').forEach(function(r) {
-    r.addEventListener('change', function() {
-        var name = this.name;
-        document.querySelectorAll('input[name="' + name + '"]').forEach(function(x) {
-            x.nextElementSibling.style.borderColor = '#2d2d44';
-            x.nextElementSibling.style.background  = '';
-        });
-        this.nextElementSibling.style.borderColor = '#4e9af1';
-        this.nextElementSibling.style.background  = '#1e2a3a';
-    });
-    if (r.checked) {
-        r.nextElementSibling.style.borderColor = '#4e9af1';
-        r.nextElementSibling.style.background  = '#1e2a3a';
+// Highlight dap an duoc chon va cap nhat icon
+function applyHighlight(el) {
+    var label = el.nextElementSibling;
+    var icon = label.querySelector('.opt-icon');
+    if (el.checked) {
+        label.style.borderColor = '#4e9af1';
+        label.style.background  = '#1e2a3a';
+        if (icon) {
+            if (el.type === 'radio') {
+                icon.className = 'bi bi-record-circle-fill text-primary fs-5 opt-icon';
+            } else {
+                icon.className = 'bi bi-check-square-fill text-primary fs-5 opt-icon';
+            }
+        }
+    } else {
+        label.style.borderColor = '#2d2d44';
+        label.style.background  = '';
+        if (icon) {
+            if (el.type === 'radio') {
+                icon.className = 'bi bi-circle text-muted fs-5 opt-icon';
+            } else {
+                icon.className = 'bi bi-square text-muted fs-5 opt-icon';
+            }
+        }
     }
+}
+
+document.querySelectorAll('input[type=radio], input[type=checkbox]').forEach(function(input) {
+    input.addEventListener('change', function() {
+        if (this.type === 'radio') {
+            var name = this.name;
+            var escapedName = name.replace(/([\[\]])/g, '\\$1');
+            document.querySelectorAll('input[name="' + escapedName + '"]').forEach(function(x) {
+                applyHighlight(x);
+            });
+        } else {
+            applyHighlight(this);
+        }
+    });
+    applyHighlight(input);
 });
 </script>

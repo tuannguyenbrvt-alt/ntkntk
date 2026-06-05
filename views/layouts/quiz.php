@@ -15,7 +15,8 @@ body { background:#0f0f1a; color:#e0e0e0; font-family:'Inter',sans-serif; }
 .quiz-card { background:#1a1a2e; border:1px solid #2d2d44; border-radius:12px; padding:1.5rem; }
 .option-label { display:block; padding:.75rem 1rem; border:2px solid #2d2d44; border-radius:8px; cursor:pointer; transition:all .2s; margin-bottom:.5rem; }
 .option-label:hover { border-color:#4e9af1; background:#1e2a3a; }
-input[type=radio]:checked + .option-label { border-color:#4e9af1; background:#1e2a3a; }
+input[type=radio]:checked + .option-label,
+input[type=checkbox]:checked + .option-label { border-color:#4e9af1; background:#1e2a3a; }
 #timer { font-size:1.4rem; font-weight:700; color:#ffd700; }
 .sticky-top-bar { position:sticky; top:0; z-index:100; background:#12122a; border-bottom:1px solid #2d2d44; padding:.75rem 0; }
 </style>

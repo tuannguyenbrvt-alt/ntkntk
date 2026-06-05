@@ -2,8 +2,8 @@
 $pct    = $attempt['score'];
 $passed = $attempt['passed'];
 $correct_count = 0;
-foreach ($answers as $a) { if ($a['is_correct']) $correct_count++; }
-$total_count = count($answers);
+foreach ($resultDetails as $q) { if ($q['is_correct']) $correct_count++; }
+$total_count = count($resultDetails);
 ?>
 <div class="container py-5" style="max-width:760px; margin:auto;">
 
@@ -18,40 +18,76 @@ $total_count = count($answers);
                 <?php echo $pct; ?>%
             </div>
             <p class="text-white-50 mt-2">Điểm cần đạt: <?php echo $attempt['pass_score']; ?>%</p>
-            <p class="text-white-50">Đúng <strong class="text-white"><?php echo $correct_count; ?></strong> / <?php echo $total_count; ?> câu đã trả lời</p>
+            <p class="text-white-50">Đúng <strong class="text-white"><?php echo $correct_count; ?></strong> / <?php echo $total_count; ?> câu</p>
         </div>
     </div>
 
     <!-- Chi tiet tung cau -->
-    <?php if(!empty($answers)): ?>
+    <?php if(!empty($resultDetails)): ?>
     <h5 class="fw-bold text-dark mb-3">Chi tiết bài làm:</h5>
-    <?php foreach($answers as $i => $a): ?>
+    <?php foreach($resultDetails as $i => $q): ?>
     <div class="card mb-3 border-0 shadow-sm"
-         style="border-left:4px solid <?php echo $a['is_correct'] ? '#28a745' : '#dc3545'; ?> !important;">
+         style="border-left:4px solid <?php echo $q['is_correct'] ? '#28a745' : '#dc3545'; ?> !important;">
         <div class="card-body">
-            <div class="d-flex gap-2 align-items-start">
-                <span class="badge <?php echo $a['is_correct'] ? 'bg-success' : 'bg-danger'; ?> mt-1">
-                    <?php echo $a['is_correct'] ? '✓' : '✗'; ?>
+            <div class="d-flex gap-2 align-items-start mb-3">
+                <span class="badge <?php echo $q['is_correct'] ? 'bg-success' : 'bg-danger'; ?> mt-1" style="font-size: 0.9rem;">
+                    <?php echo $q['is_correct'] ? '✓' : '✗'; ?>
                 </span>
                 <div class="w-100">
-                    <div class="fw-semibold mb-2 text-dark"><?php echo $a['question_text']; ?></div>
-                    <?php if($a['selected_text']): ?>
-                        <div class="small <?php echo $a['is_correct'] ? 'text-success' : 'text-danger'; ?> d-flex align-items-center gap-1 flex-wrap">
-                            <i class="bi bi-<?php echo $a['is_correct'] ? 'check-circle' : 'x-circle'; ?> me-1"></i>
-                            <span>Bạn chọn: </span> <span><?php echo $a['selected_text']; ?></span>
-                        </div>
-                    <?php else: ?>
-                        <div class="small text-warning">
-                            <i class="bi bi-dash-circle me-1"></i>Bỏ qua
-                        </div>
+                    <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                        <span class="badge bg-secondary">Câu <?php echo $i+1; ?></span>
+                        <span class="badge bg-info-subtle text-info border border-info" style="font-size:0.75rem;">
+                            <?php echo $q['question_type'] === 'multiple' ? 'Chọn nhiều đáp án' : 'Chọn một đáp án'; ?>
+                        </span>
+                    </div>
+                    <div class="fw-semibold text-dark fs-6 mt-1"><?php echo $q['question_text']; ?></div>
+                </div>
+            </div>
+            
+            <div class="options-list ps-4">
+                <?php foreach($q['options'] as $opt): 
+                    $selected = in_array((int)$opt['id'], $q['selected_option_ids']);
+                    $correct = (bool)$opt['is_correct'];
+                    
+                    $border_style = '';
+                    $bg_style = '';
+                    $text_color = 'text-dark';
+                    
+                    if ($selected && $correct) {
+                        $border_style = 'border: 2px solid #28a745;';
+                        $bg_style = 'background-color: #e8f5e9;';
+                        $text_color = 'text-success fw-bold';
+                    } elseif ($selected && !$correct) {
+                        $border_style = 'border: 2px solid #dc3545;';
+                        $bg_style = 'background-color: #ffebee;';
+                        $text_color = 'text-danger';
+                    } elseif (!$selected && $correct) {
+                        $border_style = 'border: 2px dashed #28a745;';
+                        $bg_style = 'background-color: #f1f8e9;';
+                        $text_color = 'text-success';
+                    } else {
+                        $border_style = 'border: 1px solid #dee2e6;';
+                    }
+                ?>
+                <div class="p-2 mb-2 rounded d-flex align-items-center gap-2" style="<?php echo $border_style . ' ' . $bg_style; ?>">
+                    <div class="d-flex align-items-center">
+                        <?php if($q['question_type'] === 'multiple'): ?>
+                            <i class="bi bi-<?php echo $selected ? 'check-square-fill' : 'square'; ?> <?php echo $selected ? 'text-primary' : 'text-muted'; ?> fs-5"></i>
+                        <?php else: ?>
+                            <i class="bi bi-<?php echo $selected ? 'record-circle-fill' : 'circle'; ?> <?php echo $selected ? 'text-primary' : 'text-muted'; ?> fs-5"></i>
+                        <?php endif; ?>
+                    </div>
+                    <div class="flex-grow-1 <?php echo $text_color; ?>">
+                        <?php echo $opt['option_text']; ?>
+                    </div>
+                    <?php if($correct): ?>
+                        <span class="badge bg-success text-white"><i class="bi bi-check-lg me-1"></i>Đáp án đúng</span>
                     <?php endif; ?>
-                    <?php if(!$a['is_correct'] && !empty($a['correct_text'])): ?>
-                        <div class="small text-success mt-1 d-flex align-items-center gap-1 flex-wrap">
-                            <i class="bi bi-check2-circle me-1"></i>
-                            <span>Đáp án đúng: </span> <strong><?php echo $a['correct_text']; ?></strong>
-                        </div>
+                    <?php if($selected && !$correct): ?>
+                        <span class="badge bg-danger text-white"><i class="bi bi-x-lg me-1"></i>Bạn chọn sai</span>
                     <?php endif; ?>
                 </div>
+                <?php endforeach; ?>
             </div>
         </div>
     </div>

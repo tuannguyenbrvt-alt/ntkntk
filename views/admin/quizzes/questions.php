@@ -23,6 +23,9 @@
                                 <div class="flex-grow-1 pe-3">
                                     <div class="d-flex align-items-start gap-2">
                                         <span class="badge bg-primary mt-1"><?php echo $i+1; ?></span>
+                                        <span class="badge bg-info mt-1" style="font-size: 0.75rem;">
+                                            <?php echo ($q['question_type'] ?? 'single') === 'multiple' ? 'Chọn nhiều' : 'Chọn một'; ?>
+                                        </span>
                                         <div class="question-text-render text-dark fw-semibold"><?php echo $q['question_text']; ?></div>
                                     </div>
                                     <div class="mt-2 ps-4 small text-muted">
@@ -70,17 +73,39 @@
                                                 <label class="form-label fw-semibold">Nội dung câu hỏi *</label>
                                                 <textarea name="question_text" class="form-control tinymce-editor" rows="3" required><?php echo htmlspecialchars($q['question_text']); ?></textarea>
                                             </div>
-                                            <label class="form-label fw-semibold mb-2">Các phương án (chọn nút tròn bên trái phương án đúng)</label>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Loại câu hỏi *</label>
+                                                <select name="question_type" class="form-select" onchange="toggleEditQuestionType(<?php echo $q['qb_id']; ?>, this.value)">
+                                                    <option value="single" <?php echo ($q['question_type'] ?? 'single') === 'single' ? 'selected' : ''; ?>>Một đáp án đúng (Single Choice)</option>
+                                                    <option value="multiple" <?php echo ($q['question_type'] ?? 'single') === 'multiple' ? 'selected' : ''; ?>>Nhiều đáp án đúng (Multiple Choice)</option>
+                                                </select>
+                                            </div>
+                                            <label class="form-label fw-semibold mb-2">Các phương án (chọn đáp án đúng tương ứng)</label>
                                             
-                                            <?php for($j=0; $j<4; $j++): 
+                                            <?php 
+                                            $qtype = $q['question_type'] ?? 'single';
+                                            for($j=0; $j<4; $j++): 
                                                 $opt = $q['options'][$j] ?? null;
                                                 $is_correct = $opt ? $opt['is_correct'] : ($j === 0 ? 1 : 0);
                                                 $opt_text = $opt ? $opt['option_text'] : '';
                                             ?>
                                             <div class="mb-3 border p-2 rounded bg-light bg-opacity-50">
                                                 <div class="d-flex align-items-center gap-2 mb-1">
-                                                    <input type="radio" name="correct" value="<?php echo $j; ?>" <?php echo $is_correct ? 'checked' : ''; ?> id="correct_<?php echo $q['qb_id']; ?>_<?php echo $j; ?>">
-                                                    <label class="form-label fw-semibold mb-0" for="correct_<?php echo $q['qb_id']; ?>_<?php echo $j; ?>">Phương án <?php echo chr(65+$j); ?></label>
+                                                    <input type="radio" 
+                                                           name="correct_single" 
+                                                           value="<?php echo $j; ?>" 
+                                                           <?php echo $is_correct ? 'checked' : ''; ?> 
+                                                           class="correct-single-<?php echo $q['qb_id']; ?>" 
+                                                           style="display: <?php echo $qtype === 'single' ? 'inline-block' : 'none'; ?>;" 
+                                                           id="correct_single_<?php echo $q['qb_id']; ?>_<?php echo $j; ?>">
+                                                    <input type="checkbox" 
+                                                           name="correct_multiple[]" 
+                                                           value="<?php echo $j; ?>" 
+                                                           <?php echo $is_correct ? 'checked' : ''; ?> 
+                                                           class="correct-multiple-<?php echo $q['qb_id']; ?>" 
+                                                           style="display: <?php echo $qtype === 'multiple' ? 'inline-block' : 'none'; ?>;" 
+                                                           id="correct_multiple_<?php echo $q['qb_id']; ?>_<?php echo $j; ?>">
+                                                    <label class="form-label fw-semibold mb-0" for="correct_single_<?php echo $q['qb_id']; ?>_<?php echo $j; ?>">Phương án <?php echo chr(65+$j); ?></label>
                                                 </div>
                                                 <textarea name="options[]" class="form-control tinymce-editor-simple" rows="2" placeholder="Nhập nội dung phương án <?php echo chr(65+$j); ?>"><?php echo htmlspecialchars($opt_text); ?></textarea>
                                             </div>
@@ -115,12 +140,30 @@
                         <label class="form-label fw-semibold">Nội dung câu hỏi *</label>
                         <textarea name="question_text" class="form-control tinymce-editor" rows="2" placeholder="Nhập nội dung câu hỏi trắc nghiệm..."></textarea>
                     </div>
-                    <label class="form-label fw-semibold mb-2">Các phương án (chọn nút tròn bên trái phương án đúng)</label>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Loại câu hỏi *</label>
+                        <select name="question_type" class="form-select" id="new_question_type" onchange="toggleNewQuestionType(this.value)">
+                            <option value="single">Một đáp án đúng (Single Choice)</option>
+                            <option value="multiple">Nhiều đáp án đúng (Multiple Choice)</option>
+                        </select>
+                    </div>
+                    <label class="form-label fw-semibold mb-2">Các phương án (chọn đáp án đúng tương ứng)</label>
                     <?php for($i=0; $i<4; $i++): ?>
                     <div class="mb-3 border p-2 rounded bg-light bg-opacity-50">
                         <div class="d-flex align-items-center gap-2 mb-1">
-                            <input type="radio" name="correct" value="<?php echo $i; ?>" <?php echo $i===0?'checked':''; ?> id="new_correct_<?php echo $i; ?>">
-                            <label class="form-label fw-semibold mb-0" for="new_correct_<?php echo $i; ?>">Phương án <?php echo chr(65+$i); ?></label>
+                            <input type="radio" 
+                                   name="correct_single" 
+                                   value="<?php echo $i; ?>" 
+                                   <?php echo $i===0?'checked':''; ?> 
+                                   class="new-correct-single" 
+                                   id="new_correct_single_<?php echo $i; ?>">
+                            <input type="checkbox" 
+                                   name="correct_multiple[]" 
+                                   value="<?php echo $i; ?>" 
+                                   class="new-correct-multiple" 
+                                   style="display: none;" 
+                                   id="new_correct_multiple_<?php echo $i; ?>">
+                            <label class="form-label fw-semibold mb-0" for="new_correct_single_<?php echo $i; ?>">Phương án <?php echo chr(65+$i); ?></label>
                         </div>
                         <textarea name="options[]" class="form-control tinymce-editor-simple" rows="2" placeholder="Nhập nội dung phương án <?php echo chr(65+$i); ?>"></textarea>
                     </div>
@@ -156,3 +199,29 @@
     </div>
 </div>
 </div>
+
+<script>
+function toggleEditQuestionType(qbId, type) {
+    const radios = document.querySelectorAll('.correct-single-' + qbId);
+    const checkboxes = document.querySelectorAll('.correct-multiple-' + qbId);
+    if (type === 'multiple') {
+        radios.forEach(r => r.style.display = 'none');
+        checkboxes.forEach(c => c.style.display = 'inline-block');
+    } else {
+        radios.forEach(r => r.style.display = 'inline-block');
+        checkboxes.forEach(c => c.style.display = 'none');
+    }
+}
+
+function toggleNewQuestionType(type) {
+    const radios = document.querySelectorAll('.new-correct-single');
+    const checkboxes = document.querySelectorAll('.new-correct-multiple');
+    if (type === 'multiple') {
+        radios.forEach(r => r.style.display = 'none');
+        checkboxes.forEach(c => c.style.display = 'inline-block');
+    } else {
+        radios.forEach(r => r.style.display = 'inline-block');
+        checkboxes.forEach(c => c.style.display = 'none');
+    }
+}
+</script>

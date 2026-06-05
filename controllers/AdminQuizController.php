@@ -50,7 +50,7 @@ class AdminQuizController extends Controller {
         $q->execute([$quiz_id]); $quiz = $q->fetch();
         if (!$quiz) { $this->redirect('/admin/courses'); return; }
 
-        $iq = $db->prepare("SELECT qq.id as qq_id, qq.sort_order, qb.id as qb_id, qb.question_text FROM quiz_questions qq JOIN question_bank qb ON qq.bank_question_id = qb.id WHERE qq.quiz_id = ? ORDER BY qq.sort_order ASC");
+        $iq = $db->prepare("SELECT qq.id as qq_id, qq.sort_order, qb.id as qb_id, qb.question_text, qb.question_type FROM quiz_questions qq JOIN question_bank qb ON qq.bank_question_id = qb.id WHERE qq.quiz_id = ? ORDER BY qq.sort_order ASC");
         $iq->execute([$quiz_id]); $inQuizQuestions = $iq->fetchAll();
         foreach ($inQuizQuestions as &$inq) {
             $optStmt = $db->prepare("SELECT * FROM question_bank_options WHERE question_id = ? ORDER BY sort_order ASC, id ASC");
@@ -64,7 +64,7 @@ class AdminQuizController extends Controller {
         $cr->execute([$quiz['lesson_id']]); $cRow = $cr->fetch();
         $cid = $cRow ? $cRow['course_id'] : 0;
 
-        $bk = $db->prepare("SELECT qb.id, qb.question_text FROM question_bank qb WHERE qb.course_id = ? ORDER BY qb.id DESC");
+        $bk = $db->prepare("SELECT qb.id, qb.question_text, qb.question_type FROM question_bank qb WHERE qb.course_id = ? ORDER BY qb.id DESC");
         $bk->execute([$cid]); $bankAll = $bk->fetchAll();
 
         // Loc cau hoi chua trong de (khong dung fn())
@@ -90,14 +90,31 @@ class AdminQuizController extends Controller {
         $course_id = $_POST['course_id'] ?? 0;
         $cid       = $_POST['cid']       ?? 0;
         $db = Database::getInstance()->getConnection();
-        $qStmt = $db->prepare("INSERT INTO question_bank (course_id, question_text, created_by) VALUES (?, ?, ?)");
-        $qStmt->execute([$cid, $_POST['question_text'] ?? '', $_SESSION['user_id']]);
+        
+        $question_type = $_POST['question_type'] ?? 'single';
+        
+        $qStmt = $db->prepare("INSERT INTO question_bank (course_id, question_text, question_type, created_by) VALUES (?, ?, ?, ?)");
+        $qStmt->execute([$cid, $_POST['question_text'] ?? '', $question_type, $_SESSION['user_id']]);
         $qid = $db->lastInsertId();
+        
         $options = $_POST['options'] ?? array();
-        $correct = (int)($_POST['correct'] ?? 0);
+        
+        $correct_indices = [];
+        if ($question_type === 'multiple') {
+            if (isset($_POST['correct_multiple']) && is_array($_POST['correct_multiple'])) {
+                foreach ($_POST['correct_multiple'] as $idx) {
+                    $correct_indices[] = (int)$idx;
+                }
+            }
+        } else {
+            $correct_indices[] = (int)($_POST['correct_single'] ?? 0);
+        }
+        
         foreach ($options as $i => $opt) {
             if (trim($opt) === '') continue;
-            $db->prepare("INSERT INTO question_bank_options (question_id, option_text, is_correct, sort_order) VALUES (?, ?, ?, ?)")->execute([$qid, $opt, ($i == $correct) ? 1 : 0, $i]);
+            $is_correct = in_array($i, $correct_indices) ? 1 : 0;
+            $db->prepare("INSERT INTO question_bank_options (question_id, option_text, is_correct, sort_order) VALUES (?, ?, ?, ?)")
+               ->execute([$qid, $opt, $is_correct, $i]);
         }
         $order = (int)$db->query("SELECT COUNT(*) FROM quiz_questions WHERE quiz_id=" . (int)$quiz_id)->fetchColumn();
         $db->prepare("INSERT INTO quiz_questions (quiz_id, bank_question_id, sort_order) VALUES (?, ?, ?)")->execute([$quiz_id, $qid, $order]);
@@ -111,18 +128,30 @@ class AdminQuizController extends Controller {
         $qb_id     = $_POST['qb_id']     ?? 0;
         $db = Database::getInstance()->getConnection();
         
-        $stmt = $db->prepare("UPDATE question_bank SET question_text = ? WHERE id = ?");
-        $stmt->execute([$_POST['question_text'] ?? '', $qb_id]);
+        $question_type = $_POST['question_type'] ?? 'single';
+        
+        $stmt = $db->prepare("UPDATE question_bank SET question_text = ?, question_type = ? WHERE id = ?");
+        $stmt->execute([$_POST['question_text'] ?? '', $question_type, $qb_id]);
         
         $optStmt = $db->prepare("SELECT id FROM question_bank_options WHERE question_id = ? ORDER BY sort_order ASC, id ASC");
         $optStmt->execute([$qb_id]);
         $existingOptions = $optStmt->fetchAll();
         
         $options = $_POST['options'] ?? array();
-        $correct = (int)($_POST['correct'] ?? 0);
+        
+        $correct_indices = [];
+        if ($question_type === 'multiple') {
+            if (isset($_POST['correct_multiple']) && is_array($_POST['correct_multiple'])) {
+                foreach ($_POST['correct_multiple'] as $idx) {
+                    $correct_indices[] = (int)$idx;
+                }
+            }
+        } else {
+            $correct_indices[] = (int)($_POST['correct_single'] ?? 0);
+        }
         
         foreach ($options as $i => $opt) {
-            $is_correct = ($i == $correct) ? 1 : 0;
+            $is_correct = in_array($i, $correct_indices) ? 1 : 0;
             if (isset($existingOptions[$i])) {
                 $db->prepare("UPDATE question_bank_options SET option_text = ?, is_correct = ? WHERE id = ?")
                    ->execute([$opt, $is_correct, $existingOptions[$i]['id']]);
