@@ -23,7 +23,7 @@
             <div class="d-flex justify-content-between mb-3">
                 <span class="badge bg-primary" style="font-size:.95rem;">Câu <?php echo $i+1; ?></span>
             </div>
-            <div class="fw-semibold mb-4 text-white-50" style="font-size:1.1rem;"><?php echo $q['question_text']; ?></div>
+            <div class="fw-semibold mb-4 text-dark" style="font-size:1.1rem;"><?php echo $q['question_text']; ?></div>
             <?php 
             $qtype = $q['question_type'] ?? 'single';
             foreach($q['options'] as $opt): 
@@ -61,7 +61,7 @@
         <?php if(empty($questions)): ?>
         <div class="quiz-card text-center py-5">
             <i class="bi bi-exclamation-triangle text-warning" style="font-size:3rem;"></i>
-            <h5 class="mt-3 text-white-50">Đề thi chưa có câu hỏi nào.</h5>
+            <h5 class="mt-3 text-muted">Đề thi chưa có câu hỏi nào.</h5>
         </div>
         <?php endif; ?>
 
@@ -97,8 +97,9 @@ function applyHighlight(el) {
     var label = el.nextElementSibling;
     var icon = label.querySelector('.opt-icon');
     if (el.checked) {
-        label.style.borderColor = '#4e9af1';
-        label.style.background  = '#1e2a3a';
+        label.style.borderColor = '#3b82f6';
+        label.style.background  = '#e0f2fe';
+        label.style.color       = '#0369a1';
         if (icon) {
             if (el.type === 'radio') {
                 icon.className = 'bi bi-record-circle-fill text-primary fs-5 opt-icon';
@@ -107,8 +108,9 @@ function applyHighlight(el) {
             }
         }
     } else {
-        label.style.borderColor = '#2d2d44';
-        label.style.background  = '';
+        label.style.borderColor = '#e2e8f0';
+        label.style.background  = '#ffffff';
+        label.style.color       = '#1e293b';
         if (icon) {
             if (el.type === 'radio') {
                 icon.className = 'bi bi-circle text-muted fs-5 opt-icon';

@@ -12,11 +12,11 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 body { background:#0f0f1a; color:#e0e0e0; font-family:'Inter',sans-serif; }
-.quiz-card { background:#1a1a2e; border:1px solid #2d2d44; border-radius:12px; padding:1.5rem; }
-.option-label { display:block; padding:.75rem 1rem; border:2px solid #2d2d44; border-radius:8px; cursor:pointer; transition:all .2s; margin-bottom:.5rem; }
-.option-label:hover { border-color:#4e9af1; background:#1e2a3a; }
+.quiz-card { background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:1.5rem; color:#1e293b; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); }
+.option-label { display:block; padding:.75rem 1rem; border:2px solid #e2e8f0; border-radius:8px; cursor:pointer; transition:all .2s; margin-bottom:.5rem; color:#1e293b; background:#ffffff; }
+.option-label:hover { border-color:#3b82f6; background:#f0f9ff; color:#1e3a8a; }
 input[type=radio]:checked + .option-label,
-input[type=checkbox]:checked + .option-label { border-color:#4e9af1; background:#1e2a3a; }
+input[type=checkbox]:checked + .option-label { border-color:#3b82f6; background:#e0f2fe; color:#0369a1; }
 #timer { font-size:1.4rem; font-weight:700; color:#ffd700; }
 .sticky-top-bar { position:sticky; top:0; z-index:100; background:#12122a; border-bottom:1px solid #2d2d44; padding:.75rem 0; }
 </style>
