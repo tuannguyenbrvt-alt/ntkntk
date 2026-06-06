@@ -12,6 +12,21 @@
                 <div class="card-header bg-white d-flex justify-content-between align-items-center p-3">
                     <h5 class="mb-0 fw-bold"><i class="bi bi-folder2-open text-warning me-2"></i> Phần: <?php echo htmlspecialchars($part['title']); ?></h5>
                     <div>
+                        <!-- Reorder Part Up -->
+                        <form action="<?php echo APP_URL; ?>/admin/courses/content/reorderPart" method="POST" class="d-inline m-0">
+                            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+                            <input type="hidden" name="id" value="<?php echo $part['id']; ?>">
+                            <input type="hidden" name="direction" value="up">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Di chuyển Phần lên"><i class="bi bi-arrow-up"></i></button>
+                        </form>
+                        <!-- Reorder Part Down -->
+                        <form action="<?php echo APP_URL; ?>/admin/courses/content/reorderPart" method="POST" class="d-inline m-0 me-2">
+                            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+                            <input type="hidden" name="id" value="<?php echo $part['id']; ?>">
+                            <input type="hidden" name="direction" value="down">
+                            <button type="submit" class="btn btn-sm btn-outline-secondary" title="Di chuyển Phần xuống"><i class="bi bi-arrow-down"></i></button>
+                        </form>
+
                         <button class="btn btn-sm btn-outline-warning me-1" onclick="showEditPartModal(<?php echo $part['id']; ?>, '<?php echo addslashes(htmlspecialchars($part['title'])); ?>')"><i class="bi bi-pencil"></i> Sửa</button>
                         <button class="btn btn-sm btn-outline-primary me-2" onclick="showChapterModal(<?php echo $part['id']; ?>)"><i class="bi bi-plus"></i> Thêm Chương</button>
                         <form action="<?php echo APP_URL; ?>/admin/courses/content/deletePart" method="POST" class="d-inline" onsubmit="return confirm('Xóa toàn bộ Phần này?');">
@@ -32,14 +47,32 @@
                                 </h2>
                                 <div id="collapseChap<?php echo $chapter['id']; ?>" class="accordion-collapse collapse" data-bs-parent="#accordionPart<?php echo $part['id']; ?>">
                                     <div class="accordion-body bg-light p-2">
-                                        <div class="mb-2 text-end">
-                                            <button class="btn btn-sm btn-outline-warning me-1" onclick="showEditChapterModal(<?php echo $chapter['id']; ?>, '<?php echo addslashes(htmlspecialchars($chapter['title'])); ?>')"><i class="bi bi-pencil"></i> Sửa chương</button>
-                                            <button class="btn btn-sm btn-success" onclick="showLessonModal(<?php echo $chapter['id']; ?>)"><i class="bi bi-plus"></i> Thêm Bài học</button>
-                                            <form action="<?php echo APP_URL; ?>/admin/courses/content/deleteChapter" method="POST" class="d-inline ms-1" onsubmit="return confirm('Xóa Chương này?');">
-                                                <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
-                                                <input type="hidden" name="id" value="<?php echo $chapter['id']; ?>">
-                                                <button type="submit" class="btn btn-sm btn-danger px-2 py-1"><i class="bi bi-trash"></i></button>
-                                            </form>
+                                        <div class="mb-2 d-flex justify-content-between align-items-center">
+                                            <div class="d-flex gap-1">
+                                                <!-- Reorder Chapter Up -->
+                                                <form action="<?php echo APP_URL; ?>/admin/courses/content/reorderChapter" method="POST" class="d-inline m-0">
+                                                    <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+                                                    <input type="hidden" name="id" value="<?php echo $chapter['id']; ?>">
+                                                    <input type="hidden" name="direction" value="up">
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Di chuyển Chương lên"><i class="bi bi-arrow-up"></i></button>
+                                                </form>
+                                                <!-- Reorder Chapter Down -->
+                                                <form action="<?php echo APP_URL; ?>/admin/courses/content/reorderChapter" method="POST" class="d-inline m-0">
+                                                    <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+                                                    <input type="hidden" name="id" value="<?php echo $chapter['id']; ?>">
+                                                    <input type="hidden" name="direction" value="down">
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Di chuyển Chương xuống"><i class="bi bi-arrow-down"></i></button>
+                                                </form>
+                                            </div>
+                                            <div>
+                                                <button class="btn btn-sm btn-outline-warning me-1" onclick="showEditChapterModal(<?php echo $chapter['id']; ?>, '<?php echo addslashes(htmlspecialchars($chapter['title'])); ?>')"><i class="bi bi-pencil"></i> Sửa chương</button>
+                                                <button class="btn btn-sm btn-success" onclick="showLessonModal(<?php echo $chapter['id']; ?>)"><i class="bi bi-plus"></i> Thêm Bài học</button>
+                                                <form action="<?php echo APP_URL; ?>/admin/courses/content/deleteChapter" method="POST" class="d-inline ms-1" onsubmit="return confirm('Xóa Chương này?');">
+                                                    <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+                                                    <input type="hidden" name="id" value="<?php echo $chapter['id']; ?>">
+                                                    <button type="submit" class="btn btn-sm btn-danger px-2 py-1"><i class="bi bi-trash"></i></button>
+                                                </form>
+                                            </div>
                                         </div>
                                         <ul class="list-group">
                                             <?php foreach($chapter['lessons'] as $lesson): ?>
@@ -52,6 +85,21 @@
                                                             <?php if($lesson['is_free_preview']) echo '<span class="badge bg-success ms-2">Học thử</span>'; ?>
                                                         </strong>
                                                         <div class="d-flex gap-1 flex-wrap justify-content-end">
+                                                            <!-- Reorder Lesson Up -->
+                                                            <form action="<?php echo APP_URL; ?>/admin/courses/content/reorderLesson" method="POST" class="d-inline m-0">
+                                                                <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+                                                                <input type="hidden" name="id" value="<?php echo $lesson['id']; ?>">
+                                                                <input type="hidden" name="direction" value="up">
+                                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Di chuyển Bài lên"><i class="bi bi-arrow-up"></i></button>
+                                                            </form>
+                                                            <!-- Reorder Lesson Down -->
+                                                            <form action="<?php echo APP_URL; ?>/admin/courses/content/reorderLesson" method="POST" class="d-inline m-0 me-2">
+                                                                <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+                                                                <input type="hidden" name="id" value="<?php echo $lesson['id']; ?>">
+                                                                <input type="hidden" name="direction" value="down">
+                                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Di chuyển Bài xuống"><i class="bi bi-arrow-down"></i></button>
+                                                            </form>
+
                                                             <button class="btn btn-sm btn-outline-warning" onclick="showEditLessonModal(<?php echo $lesson['id']; ?>, '<?php echo addslashes(htmlspecialchars($lesson['title'])); ?>', <?php echo $lesson['is_free_preview']; ?>)"><i class="bi bi-pencil"></i> Sửa</button>
                                                             <button class="btn btn-sm btn-outline-info" onclick="showItemModal(<?php echo $lesson['id']; ?>)"><i class="bi bi-file-earmark-plus"></i> Nội dung</button>
                                                             <button class="btn btn-sm btn-outline-secondary" onclick="showAttachmentModal(<?php echo $lesson['id']; ?>)"><i class="bi bi-paperclip"></i> Đính kèm</button>
@@ -77,6 +125,7 @@
                                                                         <?php elseif($item['type'] == 'quiz'): ?>
                                                                             <i class="bi bi-trophy text-warning me-2"></i><span class="badge bg-warning text-dark me-1">Trắc nghiệm</span>
                                                                             <a href="<?php echo APP_URL; ?>/admin/quizzes/questions?quiz_id=<?php echo $item['content']; ?>&course_id=<?php echo $course['id']; ?>" class="btn btn-xs btn-outline-warning btn-sm ms-1" style="padding:1px 4px;font-size:.65rem;">Quản lý</a>
+                                                                            <a href="<?php echo APP_URL; ?>/admin/quizzes/edit?id=<?php echo $item['content']; ?>&course_id=<?php echo $course['id']; ?>" class="btn btn-xs btn-outline-primary btn-sm ms-1" style="padding:1px 4px;font-size:.65rem;"><i class="bi bi-pencil-square"></i> Sửa đề</a>
                                                                         <?php elseif($item['type'] == 'assignment_essay'): ?>
                                                                             <i class="bi bi-journal-text text-success me-2"></i><span class="badge bg-success me-1">BT Tự luận</span>
                                                                             <a href="<?php echo APP_URL; ?>/admin/assignments/submissions?assignment_id=<?php echo $item['content']; ?>&course_id=<?php echo $course['id']; ?>" class="btn btn-sm btn-outline-success ms-1" style="padding:1px 4px;font-size:.65rem;">Xem bài nộp</a>

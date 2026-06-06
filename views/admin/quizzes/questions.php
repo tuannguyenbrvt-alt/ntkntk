@@ -3,7 +3,10 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <div><h5 class="fw-bold mb-0"><i class="bi bi-list-check text-primary me-2"></i><?php echo htmlspecialchars($quiz['title']); ?></h5>
     <small class="text-muted">Bài học: <?php echo htmlspecialchars($quiz['lesson_title'] ?? ''); ?></small></div>
-    <a href="<?php echo APP_URL; ?>/admin/courses/builder?id=<?php echo $course_id; ?>" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Quay lại</a>
+    <div class="d-flex gap-2">
+        <a href="<?php echo APP_URL; ?>/admin/quizzes/edit?id=<?php echo $quiz['id']; ?>&course_id=<?php echo $course_id; ?>" class="btn btn-warning btn-sm text-white"><i class="bi bi-pencil me-1"></i>Sửa thông tin đề</a>
+        <a href="<?php echo APP_URL; ?>/admin/courses/builder?id=<?php echo $course_id; ?>" class="btn btn-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>Quay lại</a>
+    </div>
 </div>
 <div class="row g-4">
     <!-- Câu hỏi trong đề -->

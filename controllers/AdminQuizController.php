@@ -206,6 +206,45 @@ class AdminQuizController extends Controller {
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
 
+    public function edit() {
+        $id = (int)($_GET['id'] ?? 0);
+        $course_id = (int)($_GET['course_id'] ?? 0);
+        $db = Database::getInstance()->getConnection();
+        $q = $db->prepare("SELECT * FROM quizzes WHERE id=?");
+        $q->execute([$id]);
+        $quiz = $q->fetch();
+        if (!$quiz) {
+            $_SESSION['error'] = 'De thi khong ton tai.';
+            $this->redirect('/admin/courses/builder?id=' . $course_id);
+            return;
+        }
+        $this->render('admin/quizzes/form', [
+            'title' => 'Sửa Đề Trắc Nghiệm',
+            'lesson_id' => $quiz['lesson_id'],
+            'course_id' => $course_id,
+            'quiz' => $quiz
+        ], 'admin');
+    }
+
+    public function update() {
+        $id = (int)($_POST['id'] ?? 0);
+        $course_id = (int)($_POST['course_id'] ?? 0);
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("UPDATE quizzes SET title=?, description=?, time_limit_minutes=?, pass_score=?, max_attempts=?, shuffle_questions=?, shuffle_options=? WHERE id=?");
+        $stmt->execute([
+            $_POST['title'] ?? '',
+            $_POST['description'] ?? '',
+            (int)($_POST['time_limit_minutes'] ?? 0),
+            (float)($_POST['pass_score'] ?? 50),
+            (int)($_POST['max_attempts'] ?? 0),
+            isset($_POST['shuffle_questions']) ? 1 : 0,
+            isset($_POST['shuffle_options']) ? 1 : 0,
+            $id
+        ]);
+        $_SESSION['success'] = 'Cập nhật đề trắc nghiệm thành công!';
+        $this->redirect('/admin/quizzes/questions?quiz_id=' . $id . '&course_id=' . $course_id);
+    }
+
     public function results() {
         $quiz_id   = $_GET['quiz_id']   ?? 0;
         $course_id = $_GET['course_id'] ?? 0;

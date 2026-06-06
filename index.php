@@ -67,6 +67,9 @@ $router->post('/admin/courses/content/storeItem', 'AdminCourseContentController@
 $router->post('/admin/courses/content/updateItem', 'AdminCourseContentController@updateItem');
 $router->post('/admin/courses/content/deleteItem', 'AdminCourseContentController@deleteItem');
 $router->post('/admin/courses/content/reorderItem', 'AdminCourseContentController@reorderItem');
+$router->post('/admin/courses/content/reorderPart', 'AdminCourseContentController@reorderPart');
+$router->post('/admin/courses/content/reorderChapter', 'AdminCourseContentController@reorderChapter');
+$router->post('/admin/courses/content/reorderLesson', 'AdminCourseContentController@reorderLesson');
 $router->post('/admin/courses/content/storeAttachment', 'AdminCourseContentController@storeAttachment');
 $router->post('/admin/courses/content/deleteAttachment', 'AdminCourseContentController@deleteAttachment');
 
@@ -141,6 +144,8 @@ $router->post('/admin/consults/delete', 'AdminConsultController@delete');
 $router->get('/admin/quizzes', 'AdminQuizController@index');
 $router->get('/admin/quizzes/create', 'AdminQuizController@create');
 $router->post('/admin/quizzes/store', 'AdminQuizController@store');
+$router->get('/admin/quizzes/edit', 'AdminQuizController@edit');
+$router->post('/admin/quizzes/update', 'AdminQuizController@update');
 $router->get('/admin/quizzes/questions', 'AdminQuizController@questions');
 $router->post('/admin/quizzes/storeQuestion', 'AdminQuizController@storeQuestion');
 $router->post('/admin/quizzes/updateQuestion', 'AdminQuizController@updateQuestion');

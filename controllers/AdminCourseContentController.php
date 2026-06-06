@@ -316,4 +316,128 @@ class AdminCourseContentController extends Controller {
         $stmt->execute([$id]);
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
+
+    public function reorderPart() {
+        $id        = $_POST['id']        ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $direction = $_POST['direction'] ?? '';
+        
+        $db = Database::getInstance()->getConnection();
+        
+        $all = $db->prepare("SELECT id FROM course_parts WHERE course_id = ? ORDER BY sort_order ASC, id ASC");
+        $all->execute([$course_id]);
+        $rows = $all->fetchAll();
+        
+        $curr_index = -1;
+        foreach ($rows as $index => $row) {
+            $db->prepare("UPDATE course_parts SET sort_order = ? WHERE id = ?")->execute([$index, $row['id']]);
+            if ($row['id'] == $id) {
+                $curr_index = $index;
+            }
+        }
+        
+        if ($direction === 'up' && $curr_index > 0) {
+            $target_index = $curr_index - 1;
+            $target_id = $rows[$target_index]['id'];
+            
+            $db->prepare("UPDATE course_parts SET sort_order = ? WHERE id = ?")->execute([$target_index, $id]);
+            $db->prepare("UPDATE course_parts SET sort_order = ? WHERE id = ?")->execute([$curr_index, $target_id]);
+        } elseif ($direction === 'down' && $curr_index < count($rows) - 1) {
+            $target_index = $curr_index + 1;
+            $target_id = $rows[$target_index]['id'];
+            
+            $db->prepare("UPDATE course_parts SET sort_order = ? WHERE id = ?")->execute([$target_index, $id]);
+            $db->prepare("UPDATE course_parts SET sort_order = ? WHERE id = ?")->execute([$curr_index, $target_id]);
+        }
+        
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
+
+    public function reorderChapter() {
+        $id        = $_POST['id']        ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $direction = $_POST['direction'] ?? '';
+        
+        $db = Database::getInstance()->getConnection();
+        
+        $s = $db->prepare("SELECT part_id FROM course_chapters WHERE id = ?");
+        $s->execute([$id]);
+        $part_id = $s->fetchColumn();
+        if (!$part_id) {
+            $this->redirect('/admin/courses/builder?id=' . $course_id);
+            return;
+        }
+        
+        $all = $db->prepare("SELECT id FROM course_chapters WHERE part_id = ? ORDER BY sort_order ASC, id ASC");
+        $all->execute([$part_id]);
+        $rows = $all->fetchAll();
+        
+        $curr_index = -1;
+        foreach ($rows as $index => $row) {
+            $db->prepare("UPDATE course_chapters SET sort_order = ? WHERE id = ?")->execute([$index, $row['id']]);
+            if ($row['id'] == $id) {
+                $curr_index = $index;
+            }
+        }
+        
+        if ($direction === 'up' && $curr_index > 0) {
+            $target_index = $curr_index - 1;
+            $target_id = $rows[$target_index]['id'];
+            
+            $db->prepare("UPDATE course_chapters SET sort_order = ? WHERE id = ?")->execute([$target_index, $id]);
+            $db->prepare("UPDATE course_chapters SET sort_order = ? WHERE id = ?")->execute([$curr_index, $target_id]);
+        } elseif ($direction === 'down' && $curr_index < count($rows) - 1) {
+            $target_index = $curr_index + 1;
+            $target_id = $rows[$target_index]['id'];
+            
+            $db->prepare("UPDATE course_chapters SET sort_order = ? WHERE id = ?")->execute([$target_index, $id]);
+            $db->prepare("UPDATE course_chapters SET sort_order = ? WHERE id = ?")->execute([$curr_index, $target_id]);
+        }
+        
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
+
+    public function reorderLesson() {
+        $id        = $_POST['id']        ?? 0;
+        $course_id = $_POST['course_id'] ?? 0;
+        $direction = $_POST['direction'] ?? '';
+        
+        $db = Database::getInstance()->getConnection();
+        
+        $s = $db->prepare("SELECT chapter_id FROM course_lessons WHERE id = ?");
+        $s->execute([$id]);
+        $chapter_id = $s->fetchColumn();
+        if (!$chapter_id) {
+            $this->redirect('/admin/courses/builder?id=' . $course_id);
+            return;
+        }
+        
+        $all = $db->prepare("SELECT id FROM course_lessons WHERE chapter_id = ? ORDER BY sort_order ASC, id ASC");
+        $all->execute([$chapter_id]);
+        $rows = $all->fetchAll();
+        
+        $curr_index = -1;
+        foreach ($rows as $index => $row) {
+            $db->prepare("UPDATE course_lessons SET sort_order = ? WHERE id = ?")->execute([$index, $row['id']]);
+            if ($row['id'] == $id) {
+                $curr_index = $index;
+            }
+        }
+        
+        if ($direction === 'up' && $curr_index > 0) {
+            $target_index = $curr_index - 1;
+            $target_id = $rows[$target_index]['id'];
+            
+            $db->prepare("UPDATE course_lessons SET sort_order = ? WHERE id = ?")->execute([$target_index, $id]);
+            $db->prepare("UPDATE course_lessons SET sort_order = ? WHERE id = ?")->execute([$curr_index, $target_id]);
+        } elseif ($direction === 'down' && $curr_index < count($rows) - 1) {
+            $target_index = $curr_index + 1;
+            $target_id = $rows[$target_index]['id'];
+            
+            $db->prepare("UPDATE course_lessons SET sort_order = ? WHERE id = ?")->execute([$target_index, $id]);
+            $db->prepare("UPDATE course_lessons SET sort_order = ? WHERE id = ?")->execute([$curr_index, $target_id]);
+        }
+        
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
 }
