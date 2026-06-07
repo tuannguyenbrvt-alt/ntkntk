@@ -360,7 +360,7 @@ document.addEventListener("DOMContentLoaded", function() {
                 if (data.ok) {
                     let html = '';
                     data.messages.forEach(msg => {
-                        const isAdminReply = msg.sender_id !== null && msg.sender_id !== '';
+                        const isAdminReply = msg.sender_role === 'super_admin' || msg.sender_role === 'admin';
                         const bubbleClass = isAdminReply ? 'admin-reply align-self-end' : 'client-msg align-self-start';
                         const containerClass = isAdminReply ? 'justify-content-end' : 'justify-content-start';
                         

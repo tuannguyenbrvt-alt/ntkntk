@@ -112,7 +112,13 @@ class AdminChatController extends Controller {
         $db = Database::getInstance()->getConnection();
 
         // Lấy tin nhắn
-        $stmt = $db->prepare("SELECT * FROM chat_messages WHERE thread_id = ? ORDER BY created_at ASC");
+        $stmt = $db->prepare("
+            SELECT m.*, u.role as sender_role 
+            FROM chat_messages m
+            LEFT JOIN users u ON m.sender_id = u.id
+            WHERE m.thread_id = ? 
+            ORDER BY m.created_at ASC
+        ");
         $stmt->execute([$thread_id]);
         $messages = $stmt->fetchAll();
 
