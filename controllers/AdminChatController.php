@@ -230,6 +230,191 @@ class AdminChatController extends Controller {
         ]);
     }
 
+        ]);
+    }
+
+    // Thu hồi tin nhắn Admin (trong vòng 24 giờ)
+    public function recallMessage() {
+        header('Content-Type: application/json');
+        $message_id = (int)($_POST['message_id'] ?? 0);
+
+        if (!$message_id) {
+            echo json_encode(['ok' => false, 'error' => 'Tin nhắn không hợp lệ']);
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM chat_messages WHERE id = ?");
+        $stmt->execute([$message_id]);
+        $message = $stmt->fetch();
+
+        if (!$message) {
+            echo json_encode(['ok' => false, 'error' => 'Không tìm thấy tin nhắn']);
+            return;
+        }
+
+        if ($message['is_recalled']) {
+            echo json_encode(['ok' => false, 'error' => 'Tin nhắn đã được thu hồi trước đó']);
+            return;
+        }
+
+        // Đảm bảo tin nhắn được gửi bởi chính admin/giáo viên đang đăng nhập
+        if ($message['sender_id'] != $_SESSION['user_id']) {
+            echo json_encode(['ok' => false, 'error' => 'Bạn không có quyền thu hồi tin nhắn của người khác']);
+            return;
+        }
+
+        // Kiểm tra thời gian (trong vòng 24 giờ)
+        $timeSent = strtotime($message['created_at']);
+        if (time() - $timeSent > 24 * 3600) {
+            echo json_encode(['ok' => false, 'error' => 'Đã quá 24 giờ, không thể thu hồi tin nhắn này']);
+            return;
+        }
+
+        // Thực hiện xóa tệp cục bộ
+        if (!empty($message['file_path'])) {
+            $localFile = ROOT_PATH . '/' . $message['file_path'];
+            if (file_exists($localFile)) {
+                @unlink($localFile);
+            }
+        }
+
+        // Thực hiện xóa tệp trên Drive
+        if (!empty($message['file_drive_id']) && $message['file_drive_id'] !== 'error') {
+            try {
+                $creds = GoogleDriveHelper::loadCredentials();
+                GoogleDriveHelper::deleteFile($message['file_drive_id'], $creds);
+            } catch (Exception $e) {
+                error_log("Admin GoogleDrive Delete on Recall failed: " . $e->getMessage());
+            }
+        }
+
+        // Cập nhật DB
+        $db->prepare("
+            UPDATE chat_messages 
+            SET is_recalled = 1, message_text = NULL, file_name = NULL, file_path = NULL, file_drive_url = NULL, file_drive_id = NULL 
+            WHERE id = ?
+        ")->execute([$message_id]);
+
+        echo json_encode(['ok' => true]);
+    }
+
+    // Tìm kiếm học viên để chủ động nhắn tin
+    public function searchStudents() {
+        header('Content-Type: application/json');
+        $q = trim($_GET['q'] ?? '');
+
+        if (strlen($q) < 2) {
+            echo json_encode(['ok' => true, 'students' => []]);
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        $user_id = $_SESSION['user_id'];
+        $role = $_SESSION['role'];
+        $term = "%{$q}%";
+
+        // Query tìm kiếm học viên
+        if ($role === 'super_admin') {
+            $stmt = $db->prepare("
+                SELECT id, username, full_name, phone, email, avatar
+                FROM users
+                WHERE role = 'student'
+                  AND (full_name LIKE ? OR phone LIKE ? OR email LIKE ? OR username LIKE ?)
+                LIMIT 15
+            ");
+            $stmt->execute([$term, $term, $term, $term]);
+        } else {
+            // Đối với giáo viên thường: chỉ tìm học viên đăng ký các khóa của mình
+            $stmt = $db->prepare("
+                SELECT DISTINCT u.id, u.username, u.full_name, u.phone, u.email, u.avatar
+                FROM users u
+                JOIN enrollments e ON u.id = e.student_id
+                JOIN courses c ON e.course_id = c.id
+                WHERE u.role = 'student'
+                  AND c.author_id = ?
+                  AND (u.full_name LIKE ? OR u.phone LIKE ? OR u.email LIKE ?)
+                LIMIT 15
+            ");
+            $stmt->execute([$user_id, $term, $term, $term]);
+        }
+        $students = $stmt->fetchAll();
+
+        // Với mỗi học viên, lấy các khóa học họ đang học
+        foreach ($students as &$student) {
+            if ($role === 'super_admin') {
+                $stmtC = $db->prepare("
+                    SELECT c.id as course_id, c.title as course_title
+                    FROM enrollments e
+                    JOIN courses c ON e.course_id = c.id
+                    WHERE e.student_id = ? AND e.status = 'active'
+                ");
+                $stmtC->execute([$student['id']]);
+            } else {
+                $stmtC = $db->prepare("
+                    SELECT c.id as course_id, c.title as course_title
+                    FROM enrollments e
+                    JOIN courses c ON e.course_id = c.id
+                    WHERE e.student_id = ? AND e.status = 'active' AND c.author_id = ?
+                ");
+                $stmtC->execute([$student['id'], $user_id]);
+            }
+            $student['courses'] = $stmtC->fetchAll();
+        }
+
+        echo json_encode(['ok' => true, 'students' => $students]);
+    }
+
+    // Tạo / Mở cuộc trò chuyện chủ động với học viên
+    public function startThread() {
+        header('Content-Type: application/json');
+        $student_id = (int)($_POST['student_id'] ?? 0);
+        $course_id = isset($_POST['course_id']) && $_POST['course_id'] !== '' ? (int)$_POST['course_id'] : null;
+
+        if (!$student_id) {
+            echo json_encode(['ok' => false, 'error' => 'Học viên không hợp lệ']);
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Kiểm tra xem học viên có tồn tại không
+        $stmtUser = $db->prepare("SELECT id, role FROM users WHERE id = ?");
+        $stmtUser->execute([$student_id]);
+        $user = $stmtUser->fetch();
+        if (!$user || $user['role'] !== 'student') {
+            echo json_encode(['ok' => false, 'error' => 'Người dùng này không phải là học viên']);
+            return;
+        }
+
+        // Lọc xem thread đã tồn tại hay chưa
+        if ($course_id) {
+            $stmtCheck = $db->prepare("SELECT id FROM chat_threads WHERE student_id = ? AND course_id = ? AND type = 'student_teacher' LIMIT 1");
+            $stmtCheck->execute([$student_id, $course_id]);
+        } else {
+            $stmtCheck = $db->prepare("SELECT id FROM chat_threads WHERE student_id = ? AND course_id IS NULL AND type = 'student_teacher' LIMIT 1");
+            $stmtCheck->execute([$student_id]);
+        }
+        $thread = $stmtCheck->fetch();
+
+        if ($thread) {
+            $thread_id = $thread['id'];
+        } else {
+            // Khởi tạo thread mới
+            $stmtInsert = $db->prepare("INSERT INTO chat_threads (student_id, course_id, type) VALUES (?, ?, 'student_teacher')");
+            $stmtInsert->execute([$student_id, $course_id]);
+            $thread_id = $db->lastInsertId();
+        }
+
+        // Cập nhật lại thời gian hoạt động của thread để đẩy lên đầu
+        $db->prepare("UPDATE chat_threads SET updated_at = NOW() WHERE id = ?")->execute([$thread_id]);
+
+        echo json_encode([
+            'ok' => true,
+            'thread_id' => $thread_id
+        ]);
+    }
+
     // Kiểm tra quyền quản trị thread
     private function checkAdminThreadAccess($thread_id) {
         $db = Database::getInstance()->getConnection();

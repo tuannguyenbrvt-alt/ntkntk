@@ -87,6 +87,13 @@ class DashboardController extends Controller {
                 CONSTRAINT `chat_messages_ibfk_2` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
 
+            // Thêm cột is_recalled nếu chưa tồn tại
+            try {
+                $db->exec("ALTER TABLE `chat_messages` ADD COLUMN `is_recalled` tinyint(1) NOT NULL DEFAULT '0' AFTER `is_read`");
+            } catch (Exception $e) {
+                // Bỏ qua nếu cột đã tồn tại
+            }
+ 
             $_SESSION['success'] = 'Khởi tạo cơ sở dữ liệu Chat trực tuyến thành công!';
         } catch (Exception $e) {
             $_SESSION['error'] = 'Lỗi tạo bảng: ' . $e->getMessage();

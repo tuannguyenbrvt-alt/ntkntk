@@ -184,11 +184,15 @@ $router->get('/chat/active-threads', 'ChatController@getActiveThreads');
 $router->post('/chat/init', 'ChatController@initGuestThread');
 $router->get('/chat/messages', 'ChatController@getMessages');
 $router->post('/chat/send', 'ChatController@sendMessage');
+$router->post('/chat/recall', 'ChatController@recallMessage');
 
 // Chat trực tuyến (Admin & Giáo viên)
 $router->get('/admin/chat', 'AdminChatController@index');
 $router->get('/admin/chat/messages', 'AdminChatController@getMessages');
 $router->post('/admin/chat/send', 'AdminChatController@sendMessage');
+$router->post('/admin/chat/recall', 'AdminChatController@recallMessage');
+$router->get('/admin/chat/search-students', 'AdminChatController@searchStudents');
+$router->post('/admin/chat/start-thread', 'AdminChatController@startThread');
 $router->get('/admin/setup-chat-db', 'DashboardController@setupChatDb');
 
 // Dispatch Router

@@ -707,41 +707,61 @@
                                 const bubbleClass = isMe ? 'chat-bubble-client align-self-end' : 'chat-bubble-admin align-self-start';
                                 const containerClass = isMe ? 'justify-content-end' : 'justify-content-start';
                                 
-                                let fileHtml = '';
-                                if (msg.file_name) {
-                                    const link = msg.file_drive_url ? msg.file_drive_url : `${APP_URL}/${msg.file_path}`;
-                                    const isImg = msg.file_path && msg.file_path.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-                                    
-                                    if (isImg) {
-                                        fileHtml = `
-                                            <a href="${link}" target="_blank" class="d-block mb-1.5">
-                                                <img src="${APP_URL}/${msg.file_path}" class="rounded img-fluid" style="max-height: 140px; object-fit: contain;" alt="${msg.file_name}">
-                                            </a>
-                                        `;
-                                    } else {
-                                        fileHtml = `
-                                            <a href="${link}" target="_blank" class="widget-attach-card text-decoration-none">
-                                                <i class="bi bi-file-earmark-arrow-down fs-5"></i>
-                                                <div class="overflow-hidden">
-                                                    <div class="text-truncate fw-bold" style="font-size: 0.72rem; max-width: 160px;">${msg.file_name}</div>
-                                                </div>
-                                            </a>
-                                        `;
+                                let bubbleHtml = '';
+                                if (msg.is_recalled == 1) {
+                                    bubbleHtml = `
+                                        <div class="chat-bubble-client ${bubbleClass} text-muted fst-italic shadow-none" style="background: rgba(220, 225, 230, 0.4); border: 1px dashed #ccc; color: #7f8c8d !important;">
+                                            <i class="bi bi-trash3-fill me-1.5"></i>Tin nhắn đã bị thu hồi
+                                        </div>
+                                    `;
+                                } else {
+                                    let fileHtml = '';
+                                    if (msg.file_name) {
+                                        const link = msg.file_drive_url ? msg.file_drive_url : `${APP_URL}/${msg.file_path}`;
+                                        const isImg = msg.file_path && msg.file_path.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+                                        
+                                        if (isImg) {
+                                            fileHtml = `
+                                                <a href="${link}" target="_blank" class="d-block mb-1.5">
+                                                    <img src="${APP_URL}/${msg.file_path}" class="rounded img-fluid" style="max-height: 140px; object-fit: contain;" alt="${msg.file_name}">
+                                                </a>
+                                            `;
+                                        } else {
+                                            fileHtml = `
+                                                <a href="${link}" target="_blank" class="widget-attach-card text-decoration-none">
+                                                    <i class="bi bi-file-earmark-arrow-down fs-5"></i>
+                                                    <div class="overflow-hidden">
+                                                        <div class="text-truncate fw-bold" style="font-size: 0.72rem; max-width: 160px;">${msg.file_name}</div>
+                                                    </div>
+                                                </a>
+                                            `;
+                                        }
                                     }
+                                    bubbleHtml = `
+                                        <div class="chat-bubble-client ${bubbleClass}">
+                                            ${fileHtml}
+                                            ${msg.message_text ? `<div>${msg.message_text}</div>` : ''}
+                                        </div>
+                                    `;
                                 }
 
                                 const dateObj = new Date(msg.created_at);
                                 const timeStr = dateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
+                                let recallBtn = '';
+                                if (isMe && msg.is_recalled == 0) {
+                                    const timeDiffHours = (new Date().getTime() - dateObj.getTime()) / (3600 * 1000);
+                                    if (timeDiffHours < 24) {
+                                        recallBtn = `<span class="mx-1">•</span><a href="#" class="text-danger text-decoration-none btn-widget-recall-msg text-decoration-none" data-msg-id="${msg.id}" style="font-size: 0.65rem;">Thu hồi</a>`;
+                                    }
+                                }
+
                                 html += `
-                                    <div class="d-flex ${containerClass} w-100">
-                                        <div class="chat-bubble-client ${bubbleClass}">
-                                            ${fileHtml}
-                                            ${msg.message_text ? `<div>${msg.message_text}</div>` : ''}
-                                        </div>
+                                    <div class="d-flex ${containerClass} w-100 mb-1">
+                                        ${bubbleHtml}
                                     </div>
                                     <div class="d-flex ${containerClass} w-100">
-                                        <small class="chat-time-widget px-1.5 ${isMe ? 'text-end' : 'text-start'}">${timeStr}</small>
+                                        <small class="chat-time-widget px-1.5 ${isMe ? 'text-end' : 'text-start'}">${timeStr}${recallBtn}</small>
                                     </div>
                                 `;
                             });
@@ -778,6 +798,35 @@
         btnCancelWidgetAttach.addEventListener('click', () => {
             widgetFileInput.value = '';
             widgetPreview.classList.add('d-none');
+        });
+
+        // Bắt sự kiện click thu hồi tin nhắn trên widget chat
+        chatMsgList.addEventListener('click', function(e) {
+            if (e.target.classList.contains('btn-widget-recall-msg')) {
+                e.preventDefault();
+                const msgId = e.target.getAttribute('data-msg-id');
+
+                if (!confirm('Bạn có chắc chắn muốn thu hồi tin nhắn này không? Tệp đính kèm cũng sẽ bị xóa vĩnh viễn.')) {
+                    return;
+                }
+
+                const fd = new FormData();
+                fd.append('message_id', msgId);
+
+                fetch(`${APP_URL}/chat/recall`, {
+                    method: 'POST',
+                    body: fd
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.ok) {
+                        loadWidgetMessages(activeThreadId, false);
+                    } else {
+                        alert('Lỗi: ' + data.error);
+                    }
+                })
+                .catch(() => alert('Có lỗi xảy ra khi thu hồi tin nhắn.'));
+            }
         });
 
         // Gửi tin nhắn Widget

@@ -268,6 +268,79 @@ class ChatController extends Controller {
         ]);
     }
 
+    // Thu hồi tin nhắn (trong vòng 24 giờ)
+    public function recallMessage() {
+        header('Content-Type: application/json');
+        $message_id = (int)($_POST['message_id'] ?? 0);
+
+        if (!$message_id) {
+            echo json_encode(['ok' => false, 'error' => 'Tin nhắn không hợp lệ']);
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM chat_messages WHERE id = ?");
+        $stmt->execute([$message_id]);
+        $message = $stmt->fetch();
+
+        if (!$message) {
+            echo json_encode(['ok' => false, 'error' => 'Không tìm thấy tin nhắn']);
+            return;
+        }
+
+        if ($message['is_recalled']) {
+            echo json_encode(['ok' => false, 'error' => 'Tin nhắn đã được thu hồi trước đó']);
+            return;
+        }
+
+        // Xác định quyền sở hữu
+        $isOwner = false;
+        if (isset($_SESSION['user_id'])) {
+            $isOwner = ($message['sender_id'] == $_SESSION['user_id']);
+        } else if (isset($_SESSION['guest_chat_thread_id'])) {
+            $isOwner = ($message['sender_id'] === null && $message['thread_id'] == $_SESSION['guest_chat_thread_id']);
+        }
+
+        if (!$isOwner) {
+            echo json_encode(['ok' => false, 'error' => 'Bạn không có quyền thu hồi tin nhắn này']);
+            return;
+        }
+
+        // Kiểm tra thời gian gửi tin nhắn (trong vòng 24 giờ)
+        $timeSent = strtotime($message['created_at']);
+        if (time() - $timeSent > 24 * 3600) {
+            echo json_encode(['ok' => false, 'error' => 'Đã quá 24 giờ, không thể thu hồi tin nhắn này']);
+            return;
+        }
+
+        // Thực hiện xóa tệp cục bộ nếu có
+        if (!empty($message['file_path'])) {
+            $localFile = ROOT_PATH . '/' . $message['file_path'];
+            if (file_exists($localFile)) {
+                @unlink($localFile);
+            }
+        }
+
+        // Thực hiện xóa tệp trên Google Drive nếu có
+        if (!empty($message['file_drive_id']) && $message['file_drive_id'] !== 'error') {
+            try {
+                $creds = GoogleDriveHelper::loadCredentials();
+                GoogleDriveHelper::deleteFile($message['file_drive_id'], $creds);
+            } catch (Exception $e) {
+                error_log("GoogleDrive Delete on Recall failed: " . $e->getMessage());
+            }
+        }
+
+        // Cập nhật DB
+        $db->prepare("
+            UPDATE chat_messages 
+            SET is_recalled = 1, message_text = NULL, file_name = NULL, file_path = NULL, file_drive_url = NULL, file_drive_id = NULL 
+            WHERE id = ?
+        ")->execute([$message_id]);
+
+        echo json_encode(['ok' => true]);
+    }
+
     // Kiểm tra quyền truy cập thread của người dùng hiện tại
     private function checkThreadAccess($thread_id) {
         $db = Database::getInstance()->getConnection();

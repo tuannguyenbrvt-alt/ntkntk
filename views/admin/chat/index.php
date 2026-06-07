@@ -7,7 +7,12 @@
         <!-- Cột trái: Danh sách cuộc trò chuyện -->
         <div class="col-md-4 border-end d-flex flex-column h-100 bg-white">
             <div class="p-3 border-bottom bg-light">
-                <h5 class="fw-bold mb-3"><i class="bi bi-chat-dots-fill text-primary me-2"></i>Hội thoại trực tuyến</h5>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h5 class="fw-bold mb-0"><i class="bi bi-chat-dots-fill text-primary me-2"></i>Hội thoại</h5>
+                    <button class="btn btn-sm btn-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#newChatModal">
+                        <i class="bi bi-plus-lg me-1"></i>Tạo chat
+                    </button>
+                </div>
                 <div class="input-group">
                     <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
                     <input type="text" id="search-threads" class="form-control border-start-0 ps-0 shadow-none" placeholder="Tìm tên, số điện thoại...">
@@ -157,8 +162,39 @@
                 </div>
             </div>
             
+    <!-- Modal Tạo cuộc trò chuyện mới -->
+    <div class="modal fade" id="newChatModal" tabindex="-1" aria-labelledby="newChatModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white border-bottom border-warning border-2">
+                    <h6 class="modal-title fw-bold" id="newChatModalLabel"><i class="bi bi-person-plus-fill text-warning me-2"></i>Tạo cuộc trò chuyện mới</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-3">
+                    <div class="input-group mb-3">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" id="search-student-input" class="form-control shadow-none" placeholder="Tìm học viên theo Tên, Số điện thoại...">
+                    </div>
+                    
+                    <div id="student-search-results" class="list-group overflow-y-auto" style="max-height: 250px;">
+                        <div class="text-center text-muted py-4 small">Nhập ít nhất 2 ký tự để tìm kiếm học viên.</div>
+                    </div>
+                    
+                    <!-- Vùng chọn khóa học -->
+                    <div id="course-select-area" class="mt-3 d-none border-top pt-3">
+                        <input type="hidden" id="selected-student-id">
+                        <label for="student-course-select" class="form-label small fw-bold">Chọn Khóa học / Lớp học (Tùy chọn):</label>
+                        <select id="student-course-select" class="form-select form-select-sm shadow-none">
+                            <!-- Render via JS -->
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light p-2.5">
+                    <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-sm btn-primary px-3 fw-bold" id="btn-confirm-start-chat" disabled>Bắt đầu nhắn tin</button>
+                </div>
+            </div>
         </div>
-        
     </div>
 </div>
 
@@ -287,14 +323,14 @@ document.addEventListener("DOMContentLoaded", function() {
             emptyState.classList.add('d-none');
             activeState.classList.remove('d-none');
 
-            // Tắt badge chưa đọc trên giao diện ngay lập tức
+            document.getElementById('chat-empty-state').classList.add('d-none');
+            document.getElementById('chat-active-state').classList.remove('d-none');
+
             const badge = this.querySelector('.unread-badge');
             if (badge) badge.classList.add('d-none');
 
-            // Tải tin nhắn của thread được chọn
             loadMessages(currentThreadId, true);
 
-            // Bắt đầu chu kỳ Polling cập nhật tự động tin nhắn
             if (pollInterval) clearInterval(pollInterval);
             pollInterval = setInterval(function() {
                 loadMessages(currentThreadId, false);
@@ -302,12 +338,20 @@ document.addEventListener("DOMContentLoaded", function() {
         });
     });
 
+    // Tự động kích hoạt thread chỉ định từ URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const selectThreadId = urlParams.get('select_thread_id');
+    if (selectThreadId) {
+        const targetItem = document.querySelector(`.thread-item[data-id="${selectThreadId}"]`);
+        if (targetItem) {
+            setTimeout(() => targetItem.click(), 250);
+        }
+    }
+
     // Hàm tải tin nhắn
     function loadMessages(threadId, shouldScroll = false) {
         if (!threadId) return;
         
-        // Lưu chiều cao vùng cuộn trước khi tải
-        const preScrollHeight = chatMessagesContainer.scrollHeight;
         const isAtBottom = (chatMessagesContainer.scrollTop + chatMessagesContainer.clientHeight >= chatMessagesContainer.scrollHeight - 50);
 
         fetch(`<?php echo APP_URL; ?>/admin/chat/messages?thread_id=${threadId}`)
@@ -320,58 +364,230 @@ document.addEventListener("DOMContentLoaded", function() {
                         const bubbleClass = isAdminReply ? 'admin-reply align-self-end' : 'client-msg align-self-start';
                         const containerClass = isAdminReply ? 'justify-content-end' : 'justify-content-start';
                         
-                        let fileHtml = '';
-                        if (msg.file_name) {
-                            const link = msg.file_drive_url ? msg.file_drive_url : `<?php echo APP_URL; ?>/${msg.file_path}`;
-                            const icon = msg.file_path && msg.file_path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? 'bi-image' : 'bi-file-earmark';
-                            
-                            // Nếu là ảnh thì render trực tiếp dạng thumbnail
-                            if (icon === 'bi-image') {
-                                fileHtml = `
-                                    <a href="${link}" target="_blank" class="d-block mb-2">
-                                        <img src="<?php echo APP_URL; ?>/${msg.file_path}" class="rounded img-fluid" style="max-height: 180px; object-fit: contain;" alt="${msg.file_name}">
-                                    </a>
-                                `;
-                            } else {
-                                fileHtml = `
-                                    <a href="${link}" target="_blank" class="attachment-card">
-                                        <i class="bi ${icon} attachment-icon"></i>
-                                        <div class="overflow-hidden">
-                                            <div class="text-truncate small fw-bold">${msg.file_name}</div>
-                                            <span style="font-size: 0.7rem; opacity: 0.8;">Tải về tệp tin</span>
-                                        </div>
-                                    </a>
-                                `;
+                        let bubbleHtml = '';
+                        if (msg.is_recalled == 1) {
+                            bubbleHtml = `
+                                <div class="chat-bubble ${bubbleClass} text-muted fst-italic shadow-none" style="background: rgba(220, 225, 230, 0.4); border: 1px dashed #ccc; color: #7f8c8d !important;">
+                                    <i class="bi bi-trash3-fill me-1.5"></i>Tin nhắn đã bị thu hồi
+                                </div>
+                            `;
+                        } else {
+                            let fileHtml = '';
+                            if (msg.file_name) {
+                                const link = msg.file_drive_url ? msg.file_drive_url : `<?php echo APP_URL; ?>/${msg.file_path}`;
+                                const icon = msg.file_path && msg.file_path.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? 'bi-image' : 'bi-file-earmark';
+                                
+                                if (icon === 'bi-image') {
+                                    fileHtml = `
+                                        <a href="${link}" target="_blank" class="d-block mb-2">
+                                            <img src="<?php echo APP_URL; ?>/${msg.file_path}" class="rounded img-fluid" style="max-height: 180px; object-fit: contain;" alt="${msg.file_name}">
+                                        </a>
+                                    `;
+                                } else {
+                                    fileHtml = `
+                                        <a href="${link}" target="_blank" class="attachment-card">
+                                            <i class="bi ${icon} attachment-icon"></i>
+                                            <div class="overflow-hidden">
+                                                <div class="text-truncate small fw-bold">${msg.file_name}</div>
+                                                <span style="font-size: 0.7rem; opacity: 0.8;">Tải về tệp tin</span>
+                                            </div>
+                                        </a>
+                                    `;
+                                }
                             }
+                            bubbleHtml = `
+                                <div class="chat-bubble ${bubbleClass}">
+                                    ${fileHtml}
+                                    ${msg.message_text ? `<div>${msg.message_text}</div>` : ''}
+                                </div>
+                            `;
                         }
 
                         // Parse timestamp
                         const dateObj = new Date(msg.created_at);
                         const timeStr = dateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
+                        // Nút thu hồi nếu do chính admin gửi trong vòng 24 giờ
+                        let recallBtn = '';
+                        if (isAdminReply && msg.is_recalled == 0) {
+                            const timeDiffHours = (new Date().getTime() - dateObj.getTime()) / (3600 * 1000);
+                            if (timeDiffHours < 24) {
+                                recallBtn = `<span class="mx-1">•</span><a href="#" class="text-danger text-decoration-none btn-recall-msg small" data-msg-id="${msg.id}" title="Thu hồi tin nhắn">Thu hồi</a>`;
+                            }
+                        }
+
                         html += `
-                            <div class="d-flex ${containerClass} mb-2">
-                                <div class="chat-bubble ${bubbleClass}">
-                                    ${fileHtml}
-                                    <?php // Render tin nhắn văn bản ?>
-                                    ${msg.message_text ? `<div>${msg.message_text}</div>` : ''}
-                                </div>
+                            <div class="d-flex ${containerClass} mb-1">
+                                ${bubbleHtml}
                             </div>
                             <div class="d-flex ${containerClass}">
-                                <small class="text-muted chat-time px-2 ${isAdminReply ? 'text-end' : 'text-start'}">${timeStr}</small>
+                                <small class="text-muted chat-time px-2 ${isAdminReply ? 'text-end' : 'text-start'}">${timeStr}${recallBtn}</small>
                             </div>
                         `;
                     });
 
                     chatMessagesContainer.innerHTML = html;
 
-                    // Cuộn xuống cuối
                     if (shouldScroll || isAtBottom) {
                         chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
                     }
                 }
             })
             .catch(err => console.error('Lỗi tải tin nhắn:', err));
+    }
+
+    // Xử lý thu hồi tin nhắn từ Admin
+    chatMessagesContainer.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-recall-msg')) {
+            e.preventDefault();
+            const msgId = e.target.getAttribute('data-msg-id');
+
+            if (!confirm('Bạn có chắc chắn muốn thu hồi tin nhắn này? Toàn bộ nội dung tệp tin đính kèm (nếu có) cũng sẽ bị xóa vĩnh viễn.')) {
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('message_id', msgId);
+
+            fetch('<?php echo APP_URL; ?>/admin/chat/recall', {
+                method: 'POST',
+                body: fd
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    loadMessages(currentThreadId, false);
+                } else {
+                    alert('Lỗi: ' + data.error);
+                }
+            })
+            .catch(() => alert('Có lỗi xảy ra, không thể thu hồi tin nhắn.'));
+        }
+    });
+
+    // Modal tìm kiếm học viên và tạo thread chủ động
+    const searchStudentInput = document.getElementById('search-student-input');
+    const studentSearchResults = document.getElementById('student-search-results');
+    const courseSelectArea = document.getElementById('course-select-area');
+    const studentCourseSelect = document.getElementById('student-course-select');
+    const btnConfirmStartChat = document.getElementById('btn-confirm-start-chat');
+    const selectedStudentIdInput = document.getElementById('selected-student-id');
+
+    let searchTimeout = null;
+
+    if (searchStudentInput) {
+        searchStudentInput.addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            const query = this.value.trim();
+            
+            if (query.length < 2) {
+                studentSearchResults.innerHTML = '<div class="text-center text-muted py-4 small">Nhập ít nhất 2 ký tự để tìm kiếm học viên.</div>';
+                courseSelectArea.classList.add('d-none');
+                btnConfirmStartChat.disabled = true;
+                return;
+            }
+
+            studentSearchResults.innerHTML = '<div class="text-center py-4 small text-muted"><span class="spinner-border spinner-border-sm me-1"></span> Đang tìm kiếm...</div>';
+
+            searchTimeout = setTimeout(() => {
+                fetch(`<?php echo APP_URL; ?>/admin/chat/search-students?q=${encodeURIComponent(query)}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.ok) {
+                            if (data.students.length === 0) {
+                                studentSearchResults.innerHTML = '<div class="text-center text-muted py-4 small">Không tìm thấy học viên nào phù hợp.</div>';
+                                return;
+                            }
+
+                            let html = '';
+                            data.students.forEach(st => {
+                                html += `
+                                    <button type="button" class="list-group-item list-group-item-action d-flex align-items-center py-2.5 btn-select-student" 
+                                            data-id="${st.id}" data-name="${st.full_name}" data-courses='${JSON.stringify(st.courses)}'>
+                                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2.5 font-weight-bold" style="width: 32px; height: 32px; font-size: 0.85rem;">
+                                            ${st.full_name.substring(0, 1).toUpperCase()}
+                                        </div>
+                                        <div class="text-start overflow-hidden">
+                                            <div class="fw-bold small text-truncate">${st.full_name}</div>
+                                            <span class="text-muted" style="font-size: 0.7rem;">SĐT: ${st.phone || 'N/A'} | Email: ${st.email || 'N/A'}</span>
+                                        </div>
+                                    </button>
+                                `;
+                            });
+                            studentSearchResults.innerHTML = html;
+
+                            // Click chọn học viên trong list kết quả
+                            document.querySelectorAll('.btn-select-student').forEach(btn => {
+                                btn.addEventListener('click', function() {
+                                    document.querySelectorAll('.btn-select-student').forEach(el => el.classList.remove('active', 'bg-primary', 'text-white'));
+                                    this.classList.add('active', 'bg-primary', 'text-white');
+
+                                    const studentId = this.getAttribute('data-id');
+                                    selectedStudentIdInput.value = studentId;
+
+                                    // Lấy danh sách khóa học của học sinh đó
+                                    const courses = JSON.parse(this.getAttribute('data-courses'));
+                                    let courseHtml = '<option value="">-- Trò chuyện hỗ trợ chung --</option>';
+                                    courses.forEach(c => {
+                                        courseHtml += `<option value="${c.course_id}">Hỏi bài: ${c.course_title}</option>`;
+                                    });
+                                    studentCourseSelect.innerHTML = courseHtml;
+
+                                    courseSelectArea.classList.remove('d-none');
+                                    btnConfirmStartChat.disabled = false;
+                                });
+                            });
+                        }
+                    })
+                    .catch(err => {
+                        studentSearchResults.innerHTML = '<div class="text-center text-danger py-4 small">Lỗi kết nối. Thử lại sau!</div>';
+                    });
+            }, 300);
+        });
+    }
+
+    if (btnConfirmStartChat) {
+        btnConfirmStartChat.addEventListener('click', function() {
+            const studentId = selectedStudentIdInput.value;
+            const courseId = studentCourseSelect.value;
+
+            if (!studentId) return;
+
+            this.disabled = true;
+            this.textContent = 'Đang tạo...';
+
+            const formData = new FormData();
+            formData.append('student_id', studentId);
+            if (courseId) {
+                formData.append('course_id', courseId);
+            }
+
+            fetch('<?php echo APP_URL; ?>/admin/chat/start-thread', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.ok) {
+                    // Đóng modal
+                    const modalEl = document.getElementById('newChatModal');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    if (modal) modal.hide();
+
+                    // Chuyển hướng để kích hoạt thread mới
+                    window.location.href = `<?php echo APP_URL; ?>/admin/chat?select_thread_id=${data.thread_id}`;
+                } else {
+                    alert('Lỗi: ' + data.error);
+                    this.disabled = false;
+                    this.textContent = 'Bắt đầu nhắn tin';
+                }
+            })
+            .catch(() => {
+                alert('Có lỗi xảy ra, vui lòng thử lại.');
+                this.disabled = false;
+                this.textContent = 'Bắt đầu nhắn tin';
+            });
+        });
     }
 
     // Đính kèm tệp đính kèm

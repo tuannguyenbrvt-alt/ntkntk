@@ -171,4 +171,32 @@ class GoogleDriveHelper {
 
         throw new Exception('Chua cau hinh Google Drive. Vui long cai dat qua admin/setup-drive-oauth.php hoac upload service-account.json.');
     }
+
+    /**
+     * Xóa một file trên Google Drive
+     * @param string $fileId             ID của file cần xóa trên Drive
+     * @param string $serviceAccountJson Nội dung credentials JSON
+     * @return bool
+     */
+    public static function deleteFile($fileId, $serviceAccountJson) {
+        try {
+            $token = self::getAccessToken($serviceAccountJson);
+            $ch = curl_init("https://www.googleapis.com/drive/v3/files/{$fileId}");
+            curl_setopt_array($ch, [
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_CUSTOMREQUEST  => 'DELETE',
+                CURLOPT_HTTPHEADER     => [
+                    "Authorization: Bearer {$token}"
+                ],
+                CURLOPT_TIMEOUT        => 30,
+            ]);
+            curl_exec($ch);
+            $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            return ($code === 204);
+        } catch (Exception $e) {
+            error_log("GoogleDriveHelper::deleteFile Error: " . $e->getMessage());
+            return false;
+        }
+    }
 }
