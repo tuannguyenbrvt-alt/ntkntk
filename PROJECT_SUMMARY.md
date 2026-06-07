@@ -39,8 +39,12 @@
   - Chức năng tra cứu ngoài không cần đăng nhập (`/progress/lookup`) yêu cầu nhập đồng thời cả **Tên đăng nhập (Username)** và **Số điện thoại** (Phone) để bảo vệ quyền riêng tư học viên.
 * **Hệ thống Soạn thảo & Tương tác nâng cao:**
   - Sửa và chèn hình ảnh, âm thanh, video qua TinyMCE trong Trắc nghiệm & Bài tập.
-  - Thay đổi thứ tự nội dung bài học qua nút ⬆️ và ⬇️.
+  - Thay đổi thứ tự Phần, Chương, Bài học và Nội dung chi tiết trong bài học qua các nút di chuyển Lên ⬆️ và Xuống ⬇️ trực quan.
   - Hỗ trợ xem PDF trực tiếp trên di động qua Google Docs Viewer API.
+* **Cải tiến giao diện Trắc nghiệm (MỚI NÂNG CẤP):**
+  - Chuyển phông nền vùng câu hỏi và đáp án trắc nghiệm sang màu trắng, chữ tối màu giúp tăng độ tương phản và đảm bảo văn bản màu đen (được soạn thảo từ editor rich text) hiển thị rõ nét trên giao diện làm bài của học sinh.
+* **Quản lý thông tin đề Trắc nghiệm (MỚI NÂNG CẤP):**
+  - Hỗ trợ sửa tiêu đề, mô tả và các cấu hình đề trắc nghiệm trực tiếp từ trang Builder đề cương khóa học hoặc trang quản lý câu hỏi.
 
 ## 3. Cấu trúc Database cần chú ý
 - **Tên ĐÚNG:** `course_parts`, `course_chapters`, `course_lessons`, `course_progress` (KHÔNG DÙNG: `parts`, `chapters`, `lessons`).
@@ -60,10 +64,11 @@
   3. Webhook sẽ tự động pull code lên server thật (`ntkntk.com`) và cập nhật ngay lập tức.
 
 ## 5. Định hướng cho phiên làm việc tiếp theo
-- **Tối ưu hóa & Theo dõi vận hành:**
-  - Lắng nghe phản hồi từ học viên và giáo viên về bộ thống kê học tập mới để nâng cấp biểu đồ trực quan (ví dụ: dùng Chart.js).
-  - Tích hợp thông báo email tự động (như gửi email báo kết quả chấm bài của giáo viên).
-  - Nghiên cứu thêm chức năng thi thử trắc nghiệm tính giờ và tự động khóa đề khi hết giờ.
+- **Xây dựng chức năng nhắn tin trực tuyến (Chat System):**
+  - **Nhắn tin Học viên - Giáo viên:** Cho phép học viên gửi tin nhắn trực tiếp để trao đổi với Giáo viên giảng dạy.
+  - **Nhắn tin Khách - Quản trị viên:** Cho phép khách vãng lai nhắn tin với Quản trị viên hỗ trợ, chỉ yêu cầu nhập Họ tên và Số điện thoại trước khi bắt đầu hội thoại.
+  - **Nhắc nhở tin nhắn mới:** Tích hợp chuông thông báo / huy hiệu cảnh báo trên trang Dashboard/Navbar của Quản trị viên và Giáo viên khi đăng nhập để nhắc nhở trả lời tin nhắn chưa đọc.
+  - **Đính kèm hình ảnh và tệp tin:** Hỗ trợ học viên gửi ảnh và tệp đính kèm trong hội thoại. File gửi lên sẽ được tự động tải lên thư mục Google Drive được chỉ định trước, đồng thời lưu trữ bản sao dự phòng trên máy chủ local.
 
 ---
-*(Lần cập nhật cuối: 05/06/2026)*
+*(Lần cập nhật cuối: 07/06/2026)*
