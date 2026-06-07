@@ -48,4 +48,49 @@ class DashboardController extends Controller {
             'currentYear' => $year
         ], 'admin');
     }
+
+    public function setupChatDb() {
+        $db = Database::getInstance()->getConnection();
+        try {
+            $db->exec("CREATE TABLE IF NOT EXISTS `chat_threads` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `student_id` int(11) DEFAULT NULL,
+                `course_id` int(11) DEFAULT NULL,
+                `guest_name` varchar(100) DEFAULT NULL,
+                `guest_phone` varchar(20) DEFAULT NULL,
+                `type` enum('student_teacher','guest_admin') NOT NULL,
+                `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+                `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                KEY `student_id` (`student_id`),
+                KEY `course_id` (`course_id`),
+                CONSTRAINT `chat_threads_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+                CONSTRAINT `chat_threads_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `courses` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+            $db->exec("CREATE TABLE IF NOT EXISTS `chat_messages` (
+                `id` int(11) NOT NULL AUTO_INCREMENT,
+                `thread_id` int(11) NOT NULL,
+                `sender_id` int(11) DEFAULT NULL,
+                `sender_name` varchar(100) DEFAULT NULL,
+                `message_text` text DEFAULT NULL,
+                `file_name` varchar(255) DEFAULT NULL,
+                `file_path` varchar(500) DEFAULT NULL,
+                `file_drive_url` varchar(500) DEFAULT NULL,
+                `file_drive_id` varchar(100) DEFAULT NULL,
+                `is_read` tinyint(1) NOT NULL DEFAULT '0',
+                `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (`id`),
+                KEY `thread_id` (`thread_id`),
+                KEY `sender_id` (`sender_id`),
+                CONSTRAINT `chat_messages_ibfk_1` FOREIGN KEY (`thread_id`) REFERENCES `chat_threads` (`id`) ON DELETE CASCADE,
+                CONSTRAINT `chat_messages_ibfk_2` FOREIGN KEY (`sender_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
+
+            $_SESSION['success'] = 'Khởi tạo cơ sở dữ liệu Chat trực tuyến thành công!';
+        } catch (Exception $e) {
+            $_SESSION['error'] = 'Lỗi tạo bảng: ' . $e->getMessage();
+        }
+        $this->redirect('/admin/dashboard');
+    }
 }

@@ -1,0 +1,261 @@
+<?php
+require_once ROOT_PATH . '/helpers/UploadHelper.php';
+require_once ROOT_PATH . '/helpers/GoogleDriveHelper.php';
+
+class AdminChatController extends Controller {
+
+    public function __construct() {
+        if (!isset($_SESSION['user_id']) || !in_array($_SESSION['role'], ['super_admin', 'admin'])) {
+            if ($this->isAjaxRequest()) {
+                header('Content-Type: application/json');
+                echo json_encode(['ok' => false, 'error' => 'Từ chối truy cập']);
+                exit;
+            }
+            $this->redirect('/login');
+            exit;
+        }
+    }
+
+    // Trang chủ giao diện quản lý chat của Admin/Giáo viên
+    public function index() {
+        $db = Database::getInstance()->getConnection();
+        $user_id = $_SESSION['user_id'];
+        $role = $_SESSION['role'];
+
+        // Lấy danh sách các thread chat kèm thông tin tin nhắn chưa đọc
+        if ($role === 'super_admin') {
+            $stmt = $db->query("
+                SELECT t.*, 
+                       u.full_name as student_name, u.avatar as student_avatar, u.phone as student_phone,
+                       c.title as course_title,
+                       (
+                           SELECT COUNT(*) 
+                           FROM chat_messages m 
+                           WHERE m.thread_id = t.id 
+                             AND m.is_read = 0 
+                             AND (m.sender_id IS NULL OR m.sender_id IN (SELECT id FROM users WHERE role = 'student'))
+                       ) as unread_count,
+                       (
+                           SELECT message_text 
+                           FROM chat_messages m 
+                           WHERE m.thread_id = t.id 
+                           ORDER BY m.created_at DESC LIMIT 1
+                       ) as last_message,
+                       (
+                           SELECT file_name 
+                           FROM chat_messages m 
+                           WHERE m.thread_id = t.id 
+                           ORDER BY m.created_at DESC LIMIT 1
+                       ) as last_file
+                FROM chat_threads t
+                LEFT JOIN users u ON t.student_id = u.id
+                LEFT JOIN courses c ON t.course_id = c.id
+                ORDER BY t.updated_at DESC
+            ");
+            $threads = $stmt->fetchAll();
+        } else {
+            // Đối với giáo viên: chỉ xem được thread chat liên quan đến các khóa học họ dạy, hoặc chat của khách vãng lai
+            $stmt = $db->prepare("
+                SELECT t.*, 
+                       u.full_name as student_name, u.avatar as student_avatar, u.phone as student_phone,
+                       c.title as course_title,
+                       (
+                           SELECT COUNT(*) 
+                           FROM chat_messages m 
+                           WHERE m.thread_id = t.id 
+                             AND m.is_read = 0 
+                             AND (m.sender_id IS NULL OR m.sender_id IN (SELECT id FROM users WHERE role = 'student'))
+                       ) as unread_count,
+                       (
+                           SELECT message_text 
+                           FROM chat_messages m 
+                           WHERE m.thread_id = t.id 
+                           ORDER BY m.created_at DESC LIMIT 1
+                       ) as last_message,
+                       (
+                           SELECT file_name 
+                           FROM chat_messages m 
+                           WHERE m.thread_id = t.id 
+                           ORDER BY m.created_at DESC LIMIT 1
+                       ) as last_file
+                FROM chat_threads t
+                LEFT JOIN users u ON t.student_id = u.id
+                LEFT JOIN courses c ON t.course_id = c.id
+                WHERE t.type = 'guest_admin' OR c.author_id = ?
+                ORDER BY t.updated_at DESC
+            ");
+            $stmt->execute([$user_id]);
+            $threads = $stmt->fetchAll();
+        }
+
+        $this->render('admin/chat/index', [
+            'title' => 'Trò chuyện trực tuyến',
+            'threads' => $threads
+        ], 'admin');
+    }
+
+    // Lấy tin nhắn của một thread chỉ định (phía Admin)
+    public function getMessages() {
+        header('Content-Type: application/json');
+        $thread_id = (int)($_GET['thread_id'] ?? 0);
+
+        if (!$thread_id) {
+            echo json_encode(['ok' => false, 'error' => 'Thread không hợp lệ']);
+            return;
+        }
+
+        if (!$this->checkAdminThreadAccess($thread_id)) {
+            echo json_encode(['ok' => false, 'error' => 'Không có quyền truy cập thread này']);
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Lấy tin nhắn
+        $stmt = $db->prepare("SELECT * FROM chat_messages WHERE thread_id = ? ORDER BY created_at ASC");
+        $stmt->execute([$thread_id]);
+        $messages = $stmt->fetchAll();
+
+        // Đánh dấu các tin nhắn gửi từ học viên/khách là đã đọc
+        $db->prepare("
+            UPDATE chat_messages 
+            SET is_read = 1 
+            WHERE thread_id = ? 
+              AND (sender_id IS NULL OR sender_id IN (SELECT id FROM users WHERE role = 'student'))
+        ")->execute([$thread_id]);
+
+        echo json_encode([
+            'ok' => true,
+            'messages' => $messages
+        ]);
+    }
+
+    // Gửi tin nhắn phản hồi từ Admin/Giáo viên
+    public function sendMessage() {
+        header('Content-Type: application/json');
+        $thread_id = (int)($_POST['thread_id'] ?? 0);
+        $message_text = trim($_POST['message_text'] ?? '');
+
+        if (!$thread_id) {
+            echo json_encode(['ok' => false, 'error' => 'Thread không hợp lệ']);
+            return;
+        }
+
+        if (!$this->checkAdminThreadAccess($thread_id)) {
+            echo json_encode(['ok' => false, 'error' => 'Không có quyền gửi tin nhắn đến thread này']);
+            return;
+        }
+
+        if (empty($message_text) && (!isset($_FILES['attachment']) || $_FILES['attachment']['error'] === UPLOAD_ERR_NO_FILE)) {
+            echo json_encode(['ok' => false, 'error' => 'Nội dung tin nhắn trống']);
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        $sender_id = $_SESSION['user_id'];
+        $sender_name = $_SESSION['full_name'];
+
+        $fileName = null;
+        $filePath = null;
+        $fileDriveUrl = null;
+        $fileDriveId = null;
+
+        // Xử lý tệp đính kèm gửi từ admin
+        if (isset($_FILES['attachment']) && $_FILES['attachment']['error'] === UPLOAD_ERR_OK) {
+            try {
+                // 1. Lưu cục bộ
+                $allowedExtensions = ['jpg','jpeg','png','gif','webp','pdf','doc','docx','xls','xlsx','zip','rar','txt','mp3','mp4'];
+                $uploadResult = UploadHelper::uploadFile($_FILES['attachment'], 'uploads/chats/', $allowedExtensions, 20);
+                
+                if ($uploadResult) {
+                    $filePath = $uploadResult['path'];
+                    $fileName = $uploadResult['name'];
+
+                    // 2. Tải lên Google Drive
+                    try {
+                        $folder_id = defined('CHAT_DRIVE_FOLDER_ID') ? CHAT_DRIVE_FOLDER_ID : '';
+                        if (empty($folder_id)) {
+                            throw new Exception('Chưa cấu hình thư mục lưu trữ Drive cho Chat');
+                        }
+
+                        $creds = GoogleDriveHelper::loadCredentials();
+                        $localFullPath = ROOT_PATH . '/' . $filePath;
+                        
+                        $driveResult = GoogleDriveHelper::uploadFile($localFullPath, $fileName, $folder_id, $creds);
+                        $fileDriveUrl = $driveResult['url'];
+                        $fileDriveId = $driveResult['id'];
+                    } catch (Exception $ex) {
+                        $fileDriveId = 'error';
+                        error_log('Admin Chat Drive Upload Error: ' . $ex->getMessage());
+                    }
+                }
+            } catch (Exception $e) {
+                echo json_encode(['ok' => false, 'error' => $e->getMessage()]);
+                return;
+            }
+        }
+
+        // Lưu tin nhắn
+        $stmtMsg = $db->prepare("
+            INSERT INTO chat_messages (thread_id, sender_id, sender_name, message_text, file_name, file_path, file_drive_url, file_drive_id, is_read)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+        ");
+        $stmtMsg->execute([
+            $thread_id,
+            $sender_id,
+            $sender_name,
+            $message_text,
+            $fileName,
+            $filePath,
+            $fileDriveUrl,
+            $fileDriveId
+        ]);
+
+        // Cập nhật thời gian hoạt động của thread
+        $db->prepare("UPDATE chat_threads SET updated_at = NOW() WHERE id = ?")->execute([$thread_id]);
+
+        echo json_encode([
+            'ok' => true,
+            'message' => [
+                'thread_id' => $thread_id,
+                'sender_id' => $sender_id,
+                'sender_name' => $sender_name,
+                'message_text' => $message_text,
+                'file_name' => $fileName,
+                'file_path' => $filePath,
+                'file_drive_url' => $fileDriveUrl,
+                'file_drive_id' => $fileDriveId,
+                'created_at' => date('Y-m-d H:i:s')
+            ]
+        ]);
+    }
+
+    // Kiểm tra quyền quản trị thread
+    private function checkAdminThreadAccess($thread_id) {
+        $db = Database::getInstance()->getConnection();
+        $user_id = $_SESSION['user_id'];
+        $role = $_SESSION['role'];
+
+        if ($role === 'super_admin') {
+            return true;
+        }
+
+        $stmt = $db->prepare("
+            SELECT t.*, c.author_id 
+            FROM chat_threads t 
+            LEFT JOIN courses c ON t.course_id = c.id 
+            WHERE t.id = ?
+        ");
+        $stmt->execute([$thread_id]);
+        $thread = $stmt->fetch();
+
+        if (!$thread) return false;
+
+        // Cho phép admin/giáo viên truy cập cuộc trò chuyện của khách hoặc lớp học do chính họ dạy
+        return ($thread['type'] === 'guest_admin' || $thread['author_id'] == $user_id);
+    }
+
+    private function isAjaxRequest() {
+        return isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
+}

@@ -1,3 +1,36 @@
+<?php
+$__unreadChat = 0;
+if (isset($_SESSION['user_id']) && in_array($_SESSION['role'], ['super_admin', 'admin'])) {
+    try {
+        $db = Database::getInstance()->getConnection();
+        $user_id = $_SESSION['user_id'];
+        $role = $_SESSION['role'];
+        if ($role === 'super_admin') {
+            $qUnread = "
+                SELECT COUNT(*) 
+                FROM chat_messages m
+                JOIN chat_threads t ON m.thread_id = t.id
+                WHERE m.is_read = 0 
+                  AND (m.sender_id IS NULL OR m.sender_id IN (SELECT id FROM users WHERE role = 'student'))
+            ";
+            $__unreadChat = $db->query($qUnread)->fetchColumn();
+        } else {
+            $qUnread = "
+                SELECT COUNT(*) 
+                FROM chat_messages m
+                JOIN chat_threads t ON m.thread_id = t.id
+                LEFT JOIN courses c ON t.course_id = c.id
+                WHERE m.is_read = 0 
+                  AND (t.type = 'guest_admin' OR c.author_id = ?)
+                  AND (m.sender_id IS NULL OR m.sender_id IN (SELECT id FROM users WHERE role = 'student'))
+            ";
+            $stmt = $db->prepare($qUnread);
+            $stmt->execute([$user_id]);
+            $__unreadChat = $stmt->fetchColumn();
+        }
+    } catch(Exception $e) {}
+}
+?>
 <!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -76,6 +109,10 @@
                         } catch(Exception $e) {}
                         ?>
                     </a>
+                    <a href="<?php echo APP_URL; ?>/admin/chat" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/chat') !== false ? 'active' : ''; ?> d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-chat-dots me-2"></i> Trò chuyện</span>
+                        <?php if ($__unreadChat > 0) echo '<span class="badge bg-danger rounded-pill">' . $__unreadChat . '</span>'; ?>
+                    </a>
                     <a href="<?php echo APP_URL; ?>/admin/media" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/media') !== false ? 'active' : ''; ?>"><i class="bi bi-images me-2"></i> Thư viện Media</a>
                     <a href="<?php echo APP_URL; ?>/admin/users" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/users') !== false ? 'active' : ''; ?>"><i class="bi bi-shield-lock me-2"></i> Phân quyền & TK</a>
                     <a href="<?php echo APP_URL; ?>/admin/consults" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/consults') !== false ? 'active' : ''; ?> d-flex align-items-center justify-content-between">
@@ -109,6 +146,14 @@
                     <div class="container-fluid">
                         <span class="navbar-brand mb-0 h1 fs-5"><?php echo isset($title) ? $title : 'Dashboard'; ?></span>
                         <div class="ms-auto d-flex align-items-center">
+                            <a href="<?php echo APP_URL; ?>/admin/chat" class="position-relative me-4 text-dark text-decoration-none" title="Tin nhắn mới">
+                                <i class="bi bi-bell fs-5"></i>
+                                <?php if ($__unreadChat > 0): ?>
+                                    <span class="position-absolute top-0 start-100 translate-middle p-1.5 bg-danger border border-light rounded-circle">
+                                        <span class="visually-hidden">Tin nhắn mới</span>
+                                    </span>
+                                <?php endif; ?>
+                            </a>
                             <a href="<?php echo APP_URL; ?>/logout" class="btn btn-sm btn-outline-danger">Đăng xuất</a>
                         </div>
                     </div>

@@ -179,6 +179,17 @@ $router->get('/progress', 'ProgressController@dashboard');
 $router->get('/progress/lookup', 'ProgressController@lookup');
 $router->post('/progress/lookupResult', 'ProgressController@lookupResult');
 
+// Chat trực tuyến (Public & Học viên)
+$router->get('/chat/active-threads', 'ChatController@getActiveThreads');
+$router->post('/chat/init', 'ChatController@initGuestThread');
+$router->get('/chat/messages', 'ChatController@getMessages');
+$router->post('/chat/send', 'ChatController@sendMessage');
+
+// Chat trực tuyến (Admin & Giáo viên)
+$router->get('/admin/chat', 'AdminChatController@index');
+$router->get('/admin/chat/messages', 'AdminChatController@getMessages');
+$router->post('/admin/chat/send', 'AdminChatController@sendMessage');
+$router->get('/admin/setup-chat-db', 'DashboardController@setupChatDb');
 
 // Dispatch Router
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);

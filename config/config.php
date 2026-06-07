@@ -10,6 +10,9 @@ if (file_exists(__DIR__ . '/secrets.php')) {
     include_once __DIR__ . '/secrets.php';
 }
 
+// Cấu hình Google Drive Folder ID cho Chat trực tuyến
+define('CHAT_DRIVE_FOLDER_ID', '1ZYASrXxviVSU5DOWPuAXIOhlyqSFhQ97');
+
 // Cấu hình Google Login OAuth2 mặc định (Thay thế bằng Client ID / Secret thật trong secrets.php)
 if (!defined('GOOGLE_CLIENT_ID')) {
     define('GOOGLE_CLIENT_ID', 'YOUR_GOOGLE_CLIENT_ID_PLACEHOLDER');
