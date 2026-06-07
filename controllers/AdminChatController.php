@@ -230,9 +230,6 @@ class AdminChatController extends Controller {
         ]);
     }
 
-        ]);
-    }
-
     // Thu hồi tin nhắn Admin (trong vòng 24 giờ)
     public function recallMessage() {
         header('Content-Type: application/json');
