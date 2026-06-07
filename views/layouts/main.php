@@ -366,7 +366,7 @@
     <style>
         #floating-chat-widget {
             position: fixed;
-            bottom: 25px;
+            bottom: 95px; /* Tránh đè lên nút gọi điện ở góc dưới */
             right: 25px;
             z-index: 10000;
         }
@@ -833,6 +833,30 @@
             });
         });
     })();
+    </script>
+
+    <!-- Bootstrap 5 JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('footer-consult-form')?.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const m = document.getElementById('footer-form-msg');
+            const btn = this.querySelector('button[type=submit]');
+            const fd = new FormData(this);
+            btn.disabled = true;
+            btn.textContent = '⏳ Đang gửi...';
+            m.style.display = 'none';
+            fetch('<?php echo APP_URL; ?>/consult/store', { method: 'POST', body: fd })
+                .then(r => r.json())
+                .then(data => {
+                    m.style.display = 'block';
+                    m.style.color = data.ok ? '#4caf50' : '#f44336';
+                    m.textContent = data.ok ? '✅ ' + data.msg : '❌ ' + data.msg;
+                    if (data.ok) { document.getElementById('footer-consult-form').reset(); }
+                })
+                .catch(() => { m.style.display = 'block'; m.style.color = '#f44336'; m.textContent = '❌ Lỗi kết nối, thử lại sau.'; })
+                .finally(() => { btn.disabled = false; btn.textContent = '📨 Gửi Đăng Ký'; setTimeout(() => m.style.display = 'none', 5000); });
+        });
     </script>
 </body>
 
