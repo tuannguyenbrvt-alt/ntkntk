@@ -275,9 +275,12 @@
     <!-- Floating Chat Widget -->
     <div id="floating-chat-widget">
         <!-- Nút Tròn Nhấp Nháy Mở Chat -->
-        <button class="chat-btn-toggle shadow" id="btn-toggle-chat-widget" title="Hỗ trợ trực tuyến">
+        <button class="chat-btn-toggle shadow position-relative" id="btn-toggle-chat-widget" title="Hỗ trợ trực tuyến">
             <i class="bi bi-chat-dots-fill"></i>
             <i class="bi bi-x-lg"></i>
+            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="chat-widget-unread-badge" style="font-size: 0.65rem; display: none; transform: translate(-30%, -30%) !important;">
+                0
+            </span>
         </button>
 
         <!-- Khung Chat Widget -->
@@ -522,6 +525,8 @@
 
         btnClose.addEventListener('click', () => btnToggle.click());
 
+        const unreadBadge = document.getElementById('chat-widget-unread-badge');
+
         // Chọn màn hình khởi động dựa trên trạng thái đăng nhập
         function initWidgetScreen() {
             guestInitScreen.classList.add('d-none');
@@ -529,12 +534,15 @@
             chatMessagesScreen.classList.add('d-none');
             chatFooter.classList.add('d-none');
             
+            if (pollInterval) clearInterval(pollInterval);
+            
             if (activeThreadId) {
                 // Đã có thread đang nhắn tin dở
                 openChatThread(activeThreadId);
             } else if (IS_LOGGED_IN) {
                 // Học viên: hiện màn hình chọn giáo viên/lớp học
                 loadStudentSelection();
+                pollInterval = setInterval(loadStudentSelection, 5000);
             } else {
                 // Khách vãng lai: hiện màn điền thông tin
                 guestInitScreen.classList.remove('d-none');
@@ -545,7 +553,10 @@
         function loadStudentSelection() {
             studentSelectScreen.classList.remove('d-none');
             const listGroup = document.getElementById('student-thread-list-group');
-            listGroup.innerHTML = '<div class="text-center py-4 small text-muted"><span class="spinner-border spinner-border-sm me-1"></span> Đang tải...</div>';
+            
+            if (!listGroup.querySelector('.select-target-btn')) {
+                listGroup.innerHTML = '<div class="text-center py-4 small text-muted"><span class="spinner-border spinner-border-sm me-1"></span> Đang tải...</div>';
+            }
 
             fetch(`${APP_URL}/chat/active-threads`)
                 .then(r => r.json())
@@ -557,12 +568,13 @@
                         // Kiểm tra xem đã có sẵn thread với Admin chưa
                         const adminThread = data.threads.find(t => t.course_id == null);
                         const adminThreadId = adminThread ? adminThread.id : '';
+                        const adminUnread = (adminThread && adminThread.unread_count > 0) ? `<span class="badge bg-danger rounded-pill ms-2" style="font-size: 0.65rem;">${adminThread.unread_count}</span>` : '';
                         
                         html += `
                             <a href="#" class="list-group-item list-group-item-action py-2.5 small d-flex align-items-center justify-content-between select-target-btn" 
                                data-thread-id="${adminThreadId}" data-course-id="">
                                 <div>
-                                    <div class="fw-bold">💬 Tư vấn & Hỗ trợ chung</div>
+                                    <div class="fw-bold d-flex align-items-center">💬 Tư vấn & Hỗ trợ chung ${adminUnread}</div>
                                     <span class="text-muted" style="font-size: 0.72rem;">Bộ phận Quản trị viên</span>
                                 </div>
                                 <i class="bi bi-chevron-right text-muted" style="font-size: 0.75rem;"></i>
@@ -573,12 +585,13 @@
                         data.courses.forEach(c => {
                             const courseThread = data.threads.find(t => t.course_id == c.course_id);
                             const courseThreadId = courseThread ? courseThread.id : '';
+                            const courseUnread = (courseThread && courseThread.unread_count > 0) ? `<span class="badge bg-danger rounded-pill ms-2" style="font-size: 0.65rem;">${courseThread.unread_count}</span>` : '';
                             
                             html += `
                                 <a href="#" class="list-group-item list-group-item-action py-2.5 small d-flex align-items-center justify-content-between select-target-btn" 
                                    data-thread-id="${courseThreadId}" data-course-id="${c.course_id}" data-title="${c.course_title}">
                                     <div>
-                                        <div class="fw-bold">👨‍🏫 GV: ${c.teacher_name}</div>
+                                        <div class="fw-bold d-flex align-items-center">👨‍🏫 GV: ${c.teacher_name} ${courseUnread}</div>
                                         <span class="text-muted" style="font-size: 0.72rem;">Môn: ${c.course_title}</span>
                                     </div>
                                     <i class="bi bi-chevron-right text-muted" style="font-size: 0.75rem;"></i>
@@ -685,6 +698,9 @@
             chatMessagesScreen.classList.add('d-none');
             chatFooter.classList.add('d-none');
             studentSelectScreen.classList.remove('d-none');
+            
+            loadStudentSelection();
+            pollInterval = setInterval(loadStudentSelection, 5000);
         });
 
         // Tải danh sách tin nhắn
@@ -772,6 +788,7 @@
                         if (shouldScroll || isAtBottom) {
                             chatMsgList.scrollTop = chatMsgList.scrollHeight;
                         }
+                        checkUnreadCount();
                     }
                 })
                 .catch(err => {
@@ -881,6 +898,28 @@
                 sendBtn.innerHTML = `<i class="bi bi-send-fill text-dark" style="font-size: 0.85rem;"></i>`;
             });
         });
+
+        // Đếm tin nhắn chưa đọc của học viên/khách và cập nhật huy hiệu
+        function checkUnreadCount() {
+            fetch(`${APP_URL}/chat/unread-count`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.ok) {
+                        const count = data.unread_count;
+                        if (count > 0) {
+                            unreadBadge.textContent = count;
+                            unreadBadge.style.display = 'block';
+                        } else {
+                            unreadBadge.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(() => {});
+        }
+
+        // Bắt đầu background check cho unread badge
+        checkUnreadCount();
+        setInterval(checkUnreadCount, 10000);
     })();
     </script>
 

@@ -28,7 +28,15 @@ class ChatController extends Controller {
 
         // Lấy các thread chat đã tạo của học viên
         $stmtThreads = $db->prepare("
-            SELECT t.*, c.title as course_title, u.full_name as teacher_name
+            SELECT t.*, c.title as course_title, u.full_name as teacher_name,
+                   (
+                       SELECT COUNT(*) 
+                       FROM chat_messages m 
+                       WHERE m.thread_id = t.id 
+                         AND m.is_read = 0 
+                         AND m.sender_id != t.student_id
+                         AND m.is_recalled = 0
+                   ) as unread_count
             FROM chat_threads t
             LEFT JOIN courses c ON t.course_id = c.id
             LEFT JOIN users u ON c.author_id = u.id
@@ -339,6 +347,45 @@ class ChatController extends Controller {
         ")->execute([$message_id]);
 
         echo json_encode(['ok' => true]);
+    }
+
+    // Lấy tổng số tin nhắn chưa đọc của học viên/khách
+    public function getUnreadCount() {
+        header('Content-Type: application/json');
+        $db = Database::getInstance()->getConnection();
+        $total_unread = 0;
+
+        if (isset($_SESSION['user_id'])) {
+            $student_id = $_SESSION['user_id'];
+            $stmt = $db->prepare("
+                SELECT COUNT(*) 
+                FROM chat_messages m
+                JOIN chat_threads t ON m.thread_id = t.id
+                WHERE t.student_id = ? 
+                  AND m.is_read = 0 
+                  AND m.sender_id != ?
+                  AND m.is_recalled = 0
+            ");
+            $stmt->execute([$student_id, $student_id]);
+            $total_unread = (int)$stmt->fetchColumn();
+        } else if (isset($_SESSION['guest_chat_thread_id'])) {
+            $thread_id = $_SESSION['guest_chat_thread_id'];
+            $stmt = $db->prepare("
+                SELECT COUNT(*) 
+                FROM chat_messages 
+                WHERE thread_id = ? 
+                  AND is_read = 0 
+                  AND sender_id IS NOT NULL
+                  AND is_recalled = 0
+            ");
+            $stmt->execute([$thread_id]);
+            $total_unread = (int)$stmt->fetchColumn();
+        }
+
+        echo json_encode([
+            'ok' => true,
+            'unread_count' => $total_unread
+        ]);
     }
 
     // Kiểm tra quyền truy cập thread của người dùng hiện tại

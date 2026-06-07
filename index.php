@@ -185,6 +185,7 @@ $router->post('/chat/init', 'ChatController@initGuestThread');
 $router->get('/chat/messages', 'ChatController@getMessages');
 $router->post('/chat/send', 'ChatController@sendMessage');
 $router->post('/chat/recall', 'ChatController@recallMessage');
+$router->get('/chat/unread-count', 'ChatController@getUnreadCount');
 
 // Chat trực tuyến (Admin & Giáo viên)
 $router->get('/admin/chat', 'AdminChatController@index');
