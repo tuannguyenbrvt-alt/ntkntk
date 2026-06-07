@@ -45,6 +45,13 @@
   - Chuyển phông nền vùng câu hỏi và đáp án trắc nghiệm sang màu trắng, chữ tối màu giúp tăng độ tương phản và đảm bảo văn bản màu đen (được soạn thảo từ editor rich text) hiển thị rõ nét trên giao diện làm bài của học sinh.
 * **Quản lý thông tin đề Trắc nghiệm (MỚI NÂNG CẤP):**
   - Hỗ trợ sửa tiêu đề, mô tả và các cấu hình đề trắc nghiệm trực tiếp từ trang Builder đề cương khóa học hoặc trang quản lý câu hỏi.
+* **Hệ thống Nhắn tin Trực tuyến - Chat System (MỚI NÂNG CẤP):**
+  - **Nhắn tin đa đối tượng**: Học viên và khách vãng lai (nhập Họ tên + SĐT) nhắn tin trực tiếp qua Floating Widget ở ngoài trang chủ. Admin và Giáo viên phản hồi và quản lý cuộc trò chuyện qua trang `/admin/chat`.
+  - **Huy hiệu thông báo tin nhắn chưa đọc**: Hiển thị số lượng tin nhắn chưa đọc trên Navbar Admin/Giáo viên và trên nút Widget chat học sinh kèm theo chỉ báo cụ thể từng kênh. Tự động polling ngầm thông minh (10 giây khi đóng, 5 giây khi mở danh sách).
+  - **Lưu trữ tệp tin đính kèm**: Hỗ trợ đính kèm tệp đa định dạng, lưu trữ đồng thời trên thư mục Google Drive chuyên dụng (`1ZYASrXxviVSU5DOWPuAXIOhlyqSFhQ97`) và sao lưu cục bộ tại `uploads/chats/`.
+  - **Thu hồi tin nhắn**: Cho phép người gửi (học sinh/khách/admin) thu hồi tin nhắn trong vòng 24 giờ, xóa sạch file cục bộ và trên Google Drive.
+  - **Chủ động tạo hội thoại**: Admin/Giáo viên tìm kiếm học viên theo tên/SĐT/Email để chủ động mở thread trò chuyện hỗ trợ hoặc hỏi bài.
+  - **Phân biệt giao diện rõ rệt**: Giao diện chat Admin hiển thị tin nhắn gửi đi căn phải (màu xanh dương), tin nhắn nhận từ học viên căn trái (màu trắng) giúp quản lý dễ dàng.
 
 ## 3. Cấu trúc Database cần chú ý
 - **Tên ĐÚNG:** `course_parts`, `course_chapters`, `course_lessons`, `course_progress` (KHÔNG DÙNG: `parts`, `chapters`, `lessons`).
@@ -59,16 +66,17 @@
   - Đường dẫn chuyển hướng (Authorized redirect URIs) của cả 2 Client ID trên Google Cloud Console đều phải được đăng ký chung là: `https://ntkntk.com/auth/google/callback`.
   - File `config/google-oauth.json` chứa Refresh Token Google Drive.
 - **Quy trình cập nhật code:**
-  1. Viết code & Test tại Local.
-  2. Git add, commit và push lên GitHub nhánh `main`.
-  3. Webhook sẽ tự động pull code lên server thật (`ntkntk.com`) và cập nhật ngay lập tức.
+  - Viết code & Test tại Local.
+  - Git add, commit và push lên GitHub nhánh `main`.
+  - Webhook sẽ tự động pull code lên server thật (`ntkntk.com`) và cập nhật ngay lập tức.
 
 ## 5. Định hướng cho phiên làm việc tiếp theo
-- **Xây dựng chức năng nhắn tin trực tuyến (Chat System):**
-  - **Nhắn tin Học viên - Giáo viên:** Cho phép học viên gửi tin nhắn trực tiếp để trao đổi với Giáo viên giảng dạy.
-  - **Nhắn tin Khách - Quản trị viên:** Cho phép khách vãng lai nhắn tin với Quản trị viên hỗ trợ, chỉ yêu cầu nhập Họ tên và Số điện thoại trước khi bắt đầu hội thoại.
-  - **Nhắc nhở tin nhắn mới:** Tích hợp chuông thông báo / huy hiệu cảnh báo trên trang Dashboard/Navbar của Quản trị viên và Giáo viên khi đăng nhập để nhắc nhở trả lời tin nhắn chưa đọc.
-  - **Đính kèm hình ảnh và tệp tin:** Hỗ trợ học viên gửi ảnh và tệp đính kèm trong hội thoại. File gửi lên sẽ được tự động tải lên thư mục Google Drive được chỉ định trước, đồng thời lưu trữ bản sao dự phòng trên máy chủ local.
+- **Tích hợp thông báo nâng cao**:
+  - Gửi thông báo qua Email hoặc Zalo ZNS khi có tin nhắn mới nếu học viên/admin offline lâu ngày.
+- **Thống kê hiệu suất phản hồi**:
+  - Thống kê thời gian phản hồi trung bình của Giáo viên/Admin để cải thiện chất lượng hỗ trợ học viên.
+- **Tối ưu kết nối**:
+  - Xem xét chuyển đổi cơ chế polling sang WebSockets (hoặc Server-Sent Events) nếu quy mô lượt truy cập đồng thời tăng cao.
 
 ---
-*(Lần cập nhật cuối: 07/06/2026)*
+*(Lần cập nhật cuối: 08/06/2026)*
