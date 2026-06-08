@@ -496,12 +496,10 @@ class AdminChatController extends Controller {
     // Thống kê hiệu suất phản hồi của Giáo viên/Admin
     public function performance() {
         try {
-            echo "Trace 1: Đang lấy kết nối DB...<br>";
             $db = Database::getInstance()->getConnection();
             $user_id = $_SESSION['user_id'];
             $role = $_SESSION['role'];
 
-            echo "Trace 2: Đang thực hiện truy vấn SQL (Role: {$role})...<br>";
             // Lấy toàn bộ tin nhắn chat có join thông tin người gửi, thread và khóa học
             if ($role === 'super_admin') {
                 $stmt = $db->query("
@@ -534,9 +532,7 @@ class AdminChatController extends Controller {
                 $stmt->execute([$user_id]);
             }
             
-            echo "Trace 3: Fetching results...<br>";
             $messages = $stmt->fetchAll();
-            echo "Trace 4: Fetch xong. Số lượng tin nhắn: " . count($messages) . "<br>";
 
             // Nhóm tin nhắn theo thread
             $threadMessages = [];
@@ -634,13 +630,11 @@ class AdminChatController extends Controller {
                 return strcmp($b['responder_time'], $a['responder_time']);
             });
 
-            echo "Trace 5: Bắt đầu gọi render()...<br>";
             $this->render('admin/chat/performance', [
                 'title' => 'Thống kê hiệu suất phản hồi',
                 'responseStats' => $responseStats,
                 'detailedLogs' => array_slice($detailedLogs, 0, 50)
             ], 'admin');
-            echo "Trace 6: Đã chạy xong render() thành công!<br>";
         } catch (Throwable $e) {
             header('Content-Type: text/html; charset=utf-8');
             echo "<h2>Đã xảy ra lỗi hệ thống (DEBUG MODE):</h2>";
