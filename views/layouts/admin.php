@@ -109,10 +109,11 @@ if (isset($_SESSION['user_id']) && in_array($_SESSION['role'], ['super_admin', '
                         } catch(Exception $e) {}
                         ?>
                     </a>
-                    <a href="<?php echo APP_URL; ?>/admin/chat" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/chat') !== false ? 'active' : ''; ?> d-flex align-items-center justify-content-between">
+                    <a href="<?php echo APP_URL; ?>/admin/chat" class="<?php echo (strpos($_SERVER['REQUEST_URI'], '/admin/chat') !== false && strpos($_SERVER['REQUEST_URI'], '/admin/chat/performance') === false) ? 'active' : ''; ?> d-flex align-items-center justify-content-between">
                         <span><i class="bi bi-chat-dots me-2"></i> Trò chuyện</span>
                         <?php if ($__unreadChat > 0) echo '<span class="badge bg-danger rounded-pill">' . $__unreadChat . '</span>'; ?>
                     </a>
+                    <a href="<?php echo APP_URL; ?>/admin/chat/performance" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/chat/performance') !== false ? 'active' : ''; ?>"><i class="bi bi-bar-chart-line me-2"></i> Hiệu suất phản hồi</a>
                     <a href="<?php echo APP_URL; ?>/admin/media" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/media') !== false ? 'active' : ''; ?>"><i class="bi bi-images me-2"></i> Thư viện Media</a>
                     <a href="<?php echo APP_URL; ?>/admin/users" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/users') !== false ? 'active' : ''; ?>"><i class="bi bi-shield-lock me-2"></i> Phân quyền & TK</a>
                     <a href="<?php echo APP_URL; ?>/admin/consults" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/consults') !== false ? 'active' : ''; ?> d-flex align-items-center justify-content-between">

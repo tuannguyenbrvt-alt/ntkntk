@@ -75,6 +75,26 @@ class MailHelper {
         return self::send($user['email'], $user['full_name'], $subject, $body);
     }
 
+    /**
+     * Email thông báo có tin nhắn mới khi người dùng offline
+     */
+    public static function sendChatNotification(string $toEmail, string $toName, string $senderName, string $messageSnippet, string $chatUrl): bool {
+        $subject = "💬 Tin nhắn mới từ " . $senderName;
+        $body = self::wrapTemplate("
+            <h2 style='color:#0d6efd;'>Bạn có tin nhắn mới!</h2>
+            <p>Xin chào <strong>{$toName}</strong>,</p>
+            <p>Hệ thống ghi nhận bạn có tin nhắn mới chưa đọc từ <strong>{$senderName}</strong>:</p>
+            <div style='background:#f8f9fa; border-left: 4px solid #0d6efd; border-radius: 4px; padding: 15px; margin: 20px 0; font-style: italic; color: #495057;'>
+                \"" . htmlspecialchars($messageSnippet) . "\"
+            </div>
+            <p style='margin-bottom: 30px;'>Vui lòng nhấp vào nút bên dưới để xem chi tiết và phản hồi cuộc trò chuyện:</p>
+            <div style='text-align: center;'>
+                <a href='{$chatUrl}' style='display:inline-block; background:#0d6efd; color:#fff; padding:12px 30px; border-radius:50px; text-decoration:none; font-weight:bold; font-size:16px; box-shadow: 0 4px 6px rgba(13,110,253,0.15);'>Xem cuộc trò chuyện →</a>
+            </div>
+        ");
+        return self::send($toEmail, $toName, $subject, $body);
+    }
+
     private static function wrapTemplate(string $content): string {
         return "
         <div style='font-family:Arial,sans-serif;max-width:600px;margin:0 auto;'>

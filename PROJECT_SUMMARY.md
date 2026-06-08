@@ -52,11 +52,14 @@
   - **Thu hồi tin nhắn**: Cho phép người gửi (học sinh/khách/admin) thu hồi tin nhắn trong vòng 24 giờ, xóa sạch file cục bộ và trên Google Drive.
   - **Chủ động tạo hội thoại**: Admin/Giáo viên tìm kiếm học viên theo tên/SĐT/Email để chủ động mở thread trò chuyện hỗ trợ hoặc hỏi bài.
   - **Phân biệt giao diện rõ rệt**: Giao diện chat Admin hiển thị tin nhắn gửi đi căn phải (màu xanh dương), tin nhắn nhận từ học viên căn trái (màu trắng) giúp quản lý dễ dàng.
+  - **Thông báo nâng cao khi offline (MỚI NÂNG CẤP)**: Tự động gửi Email thông báo tin nhắn mới và giả lập gửi tin Zalo ZNS khi người nhận (học viên, khách, hoặc giáo viên/admin) offline > 5 phút. Hỗ trợ cơ chế giãn cách cooldown 1 giờ để chống spam hòm thư.
+  - **Thống kê hiệu suất phản hồi (MỚI NÂNG CẤP)**: Bổ sung trang thống kê hiệu suất `/admin/chat/performance` phân tích thời gian phản hồi trung bình, nhanh nhất, chậm nhất của từng giáo viên/admin kèm lịch sử gắn badge màu sắc trực quan.
 
 ## 3. Cấu trúc Database cần chú ý
 - **Tên ĐÚNG:** `course_parts`, `course_chapters`, `course_lessons`, `course_progress` (KHÔNG DÙNG: `parts`, `chapters`, `lessons`).
 - **Lesson Items:** Bảng `lesson_items` map Bài học với Nội dung chi tiết (Text, Quiz, Assignment). Trường `sort_order` lưu thứ tự.
 - **Quizzes & Assignments:** Map trực tiếp qua lesson_id/lesson_items.
+- **Các trường Chat mở rộng:** `users.last_active_at`, `chat_threads.guest_last_active_at`, `chat_threads.last_notified_at`.
 
 ## 4. Ghi chú Bảo mật & Quy trình Deploy
 - **Lưu ý cấu hình & Phân biệt Client ID:**
@@ -71,10 +74,6 @@
   - Webhook sẽ tự động pull code lên server thật (`ntkntk.com`) và cập nhật ngay lập tức.
 
 ## 5. Định hướng cho phiên làm việc tiếp theo
-- **Tích hợp thông báo nâng cao**:
-  - Gửi thông báo qua Email hoặc Zalo ZNS khi có tin nhắn mới nếu học viên/admin offline lâu ngày.
-- **Thống kê hiệu suất phản hồi**:
-  - Thống kê thời gian phản hồi trung bình của Giáo viên/Admin để cải thiện chất lượng hỗ trợ học viên.
 - **Tối ưu kết nối**:
   - Xem xét chuyển đổi cơ chế polling sang WebSockets (hoặc Server-Sent Events) nếu quy mô lượt truy cập đồng thời tăng cao.
 

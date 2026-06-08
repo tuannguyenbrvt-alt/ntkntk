@@ -16,6 +16,31 @@ spl_autoload_register(function ($class) {
     }
 });
 
+// Ghi nhận trạng thái hoạt động cuối cùng của Học viên/Admin/Khách (Last Active Tracker)
+try {
+    $__db = Database::getInstance()->getConnection();
+    $__now = time();
+
+    // Đối với tài khoản đã đăng nhập
+    if (isset($_SESSION['user_id'])) {
+        if (!isset($_SESSION['last_active_update']) || ($__now - $_SESSION['last_active_update']) > 120) {
+            $__stmt = $__db->prepare("UPDATE users SET last_active_at = NOW() WHERE id = ?");
+            $__stmt->execute([$_SESSION['user_id']]);
+            $_SESSION['last_active_update'] = $__now;
+        }
+    }
+    // Đối với khách vãng lai đang chat
+    if (isset($_SESSION['guest_chat_thread_id'])) {
+        if (!isset($_SESSION['guest_last_active_update']) || ($__now - $_SESSION['guest_last_active_update']) > 120) {
+            $__stmt = $__db->prepare("UPDATE chat_threads SET guest_last_active_at = NOW() WHERE id = ?");
+            $__stmt->execute([$_SESSION['guest_chat_thread_id']]);
+            $_SESSION['guest_last_active_update'] = $__now;
+        }
+    }
+} catch (Exception $__e) {
+    // Bỏ qua lỗi kết nối DB để không ảnh hưởng luồng chính
+}
+
 $router = new Router();
 
 // Định nghĩa các route cơ bản
@@ -189,6 +214,7 @@ $router->get('/chat/unread-count', 'ChatController@getUnreadCount');
 
 // Chat trực tuyến (Admin & Giáo viên)
 $router->get('/admin/chat', 'AdminChatController@index');
+$router->get('/admin/chat/performance', 'AdminChatController@performance');
 $router->get('/admin/chat/messages', 'AdminChatController@getMessages');
 $router->post('/admin/chat/send', 'AdminChatController@sendMessage');
 $router->post('/admin/chat/recall', 'AdminChatController@recallMessage');

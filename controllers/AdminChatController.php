@@ -1,6 +1,8 @@
 <?php
 require_once ROOT_PATH . '/helpers/UploadHelper.php';
 require_once ROOT_PATH . '/helpers/GoogleDriveHelper.php';
+require_once ROOT_PATH . '/helpers/MailHelper.php';
+require_once ROOT_PATH . '/helpers/ZaloHelper.php';
 
 class AdminChatController extends Controller {
 
@@ -220,6 +222,79 @@ class AdminChatController extends Controller {
         // Cập nhật thời gian hoạt động của thread
         $db->prepare("UPDATE chat_threads SET updated_at = NOW() WHERE id = ?")->execute([$thread_id]);
 
+        // Gửi thông báo cho Học viên/Khách nếu họ offline
+        try {
+            $stmtThread = $db->prepare("SELECT * FROM chat_threads WHERE id = ?");
+            $stmtThread->execute([$thread_id]);
+            $threadInfo = $stmtThread->fetch();
+
+            if ($threadInfo) {
+                $lastNotified = $threadInfo['last_notified_at'];
+                $cooldownPassed = ($lastNotified === null || (time() - strtotime($lastNotified)) > CHAT_NOTIFICATION_COOLDOWN);
+
+                if ($cooldownPassed) {
+                    $snippet = !empty($message_text) ? $message_text : "[Tệp đính kèm: " . $fileName . "]";
+                    $notified = false;
+
+                    if ($threadInfo['type'] === 'student_teacher' && !empty($threadInfo['student_id'])) {
+                        // Tìm thông tin học viên
+                        $stmtStudent = $db->prepare("SELECT * FROM users WHERE id = ?");
+                        $stmtStudent->execute([$threadInfo['student_id']]);
+                        $student = $stmtStudent->fetch();
+
+                        if ($student) {
+                            $lastActive = $student['last_active_at'];
+                            $isOffline = ($lastActive === null || (time() - strtotime($lastActive)) > CHAT_OFFLINE_THRESHOLD);
+
+                            if ($isOffline) {
+                                // 1. Gửi Email
+                                $chatUrl = APP_URL . "/learning"; 
+                                MailHelper::sendChatNotification(
+                                    $student['email'],
+                                    $student['full_name'],
+                                    $sender_name,
+                                    $snippet,
+                                    $chatUrl
+                                );
+
+                                // 2. Gửi Zalo ZNS
+                                if (!empty($student['phone'])) {
+                                    $templateData = [
+                                        'customer_name' => $student['full_name'],
+                                        'sender_name' => $sender_name,
+                                        'message_snippet' => $snippet
+                                    ];
+                                    ZaloHelper::sendZNS($student['phone'], ZALO_TEMPLATE_ID, $templateData);
+                                }
+                                $notified = true;
+                            }
+                        }
+                    } elseif ($threadInfo['type'] === 'guest_admin' && !empty($threadInfo['guest_phone'])) {
+                        // Khách vãng lai
+                        $lastActive = $threadInfo['guest_last_active_at'];
+                        $isOffline = ($lastActive === null || (time() - strtotime($lastActive)) > CHAT_OFFLINE_THRESHOLD);
+
+                        if ($isOffline) {
+                            // Khách chỉ nhận được Zalo ZNS qua số điện thoại đăng ký
+                            $templateData = [
+                                'customer_name' => $threadInfo['guest_name'] ?: 'Khách hàng',
+                                'sender_name' => $sender_name,
+                                'message_snippet' => $snippet
+                            ];
+                            ZaloHelper::sendZNS($threadInfo['guest_phone'], ZALO_TEMPLATE_ID, $templateData);
+                            $notified = true;
+                        }
+                    }
+
+                    if ($notified) {
+                        $db->prepare("UPDATE chat_threads SET last_notified_at = NOW() WHERE id = ?")->execute([$thread_id]);
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Error sending admin chat notification: " . $e->getMessage());
+        }
+
         echo json_encode([
             'ok' => true,
             'message' => [
@@ -416,6 +491,148 @@ class AdminChatController extends Controller {
             'ok' => true,
             'thread_id' => $thread_id
         ]);
+    }
+
+    // Thống kê hiệu suất phản hồi của Giáo viên/Admin
+    public function performance() {
+        $db = Database::getInstance()->getConnection();
+        $user_id = $_SESSION['user_id'];
+        $role = $_SESSION['role'];
+
+        // Lấy toàn bộ tin nhắn chat có join thông tin người gửi, thread và khóa học
+        if ($role === 'super_admin') {
+            $stmt = $db->query("
+                SELECT m.*, u.role as sender_role, u.full_name as sender_full_name, 
+                       t.type as thread_type, t.guest_name, t.student_id, t.course_id,
+                       student.full_name as student_full_name,
+                       c.title as course_title
+                FROM chat_messages m
+                JOIN chat_threads t ON m.thread_id = t.id
+                LEFT JOIN users u ON m.sender_id = u.id
+                LEFT JOIN users student ON t.student_id = student.id
+                LEFT JOIN courses c ON t.course_id = c.id
+                ORDER BY m.thread_id, m.created_at ASC
+            ");
+        } else {
+            // Đối với giáo viên thường: chỉ xem được dữ liệu chat liên quan đến các khóa học họ dạy, hoặc chat của khách vãng lai
+            $stmt = $db->prepare("
+                SELECT m.*, u.role as sender_role, u.full_name as sender_full_name, 
+                       t.type as thread_type, t.guest_name, t.student_id, t.course_id,
+                       student.full_name as student_full_name,
+                       c.title as course_title
+                FROM chat_messages m
+                JOIN chat_threads t ON m.thread_id = t.id
+                LEFT JOIN users u ON m.sender_id = u.id
+                LEFT JOIN users student ON t.student_id = student.id
+                LEFT JOIN courses c ON t.course_id = c.id
+                WHERE t.type = 'guest_admin' OR c.author_id = ?
+                ORDER BY m.thread_id, m.created_at ASC
+            ");
+            $stmt->execute([$user_id]);
+        }
+        $messages = $stmt->fetchAll();
+
+        // Nhóm tin nhắn theo thread
+        $threadMessages = [];
+        foreach ($messages as $msg) {
+            $threadMessages[$msg['thread_id']][] = $msg;
+        }
+
+        $responseStats = [];
+        $detailedLogs = [];
+
+        foreach ($threadMessages as $threadId => $msgs) {
+            $pendingStudentTime = null;
+            $pendingStudentName = '';
+
+            foreach ($msgs as $msg) {
+                // Bỏ qua tin nhắn đã thu hồi
+                if ($msg['is_recalled']) {
+                    continue;
+                }
+
+                $senderId = $msg['sender_id'];
+                $senderRole = $msg['sender_role'];
+                $createdAt = strtotime($msg['created_at']);
+
+                $isStudentOrGuest = false;
+                if ($senderId === null) {
+                    // Khách vãng lai
+                    $isStudentOrGuest = true;
+                    $senderName = $msg['sender_name'] ?: ($msg['guest_name'] ?: 'Khách vãng lai');
+                } elseif ($senderRole === 'student') {
+                    // Học viên
+                    $isStudentOrGuest = true;
+                    $senderName = $msg['sender_full_name'] ?: ($msg['student_full_name'] ?: $msg['sender_name']);
+                }
+
+                if ($isStudentOrGuest) {
+                    if ($pendingStudentTime === null) {
+                        $pendingStudentTime = $createdAt;
+                        $pendingStudentName = $senderName;
+                    }
+                } else {
+                    // Giáo viên / Admin trả lời
+                    if ($pendingStudentTime !== null) {
+                        $responseTime = $createdAt - $pendingStudentTime;
+                        $responderId = $senderId;
+                        $responderName = $msg['sender_full_name'] ?: $msg['sender_name'] ?: 'Admin/Giáo viên';
+
+                        if (!isset($responseStats[$responderId])) {
+                            $responseStats[$responderId] = [
+                                'name' => $responderName,
+                                'total_time' => 0,
+                                'count' => 0,
+                                'min_time' => 999999999,
+                                'max_time' => 0
+                            ];
+                        }
+
+                        $responseStats[$responderId]['total_time'] += $responseTime;
+                        $responseStats[$responderId]['count'] += 1;
+                        if ($responseTime < $responseStats[$responderId]['min_time']) {
+                            $responseStats[$responderId]['min_time'] = $responseTime;
+                        }
+                        if ($responseTime > $responseStats[$responderId]['max_time']) {
+                            $responseStats[$responderId]['max_time'] = $responseTime;
+                        }
+
+                        $detailedLogs[] = [
+                            'thread_id' => $threadId,
+                            'thread_title' => $msg['course_title'] ? "Khóa: " . $msg['course_title'] : "Hỗ trợ vãng lai / chung",
+                            'student_name' => $pendingStudentName,
+                            'responder_name' => $responderName,
+                            'student_time' => date('Y-m-d H:i:s', $pendingStudentTime),
+                            'responder_time' => $msg['created_at'],
+                            'response_time' => $responseTime
+                        ];
+
+                        $pendingStudentTime = null;
+                        $pendingStudentName = '';
+                    }
+                }
+            }
+        }
+
+        // Định dạng lại dữ liệu thống kê
+        foreach ($responseStats as $id => &$stats) {
+            if ($stats['min_time'] === 999999999) {
+                $stats['min_time'] = 0;
+            }
+            $stats['avg_time'] = $stats['count'] > 0 ? round($stats['total_time'] / $stats['count']) : 0;
+        }
+        unset($stats);
+
+        // Sắp xếp các sự kiện phản hồi theo thời gian phản hồi mới nhất
+        usort($detailedLogs, function($a, $b) {
+            return strcmp($b['responder_time'], $a['responder_time']);
+        });
+
+        $this->render('admin/chat/performance', [
+            'title' => 'Thống kê hiệu suất phản hồi',
+            'responseStats' => $responseStats,
+            'detailedLogs' => array_slice($detailedLogs, 0, 50)
+        ], 'admin');
     }
 
     // Kiểm tra quyền quản trị thread

@@ -42,6 +42,16 @@ define('UPLOAD_URL', APP_URL . '/uploads');
 // Cấu hình Múi giờ
 date_default_timezone_set('Asia/Ho_Chi_Minh');
 
+// Cấu hình thông báo nâng cao khi offline (giây)
+define('CHAT_OFFLINE_THRESHOLD', 300); // 5 phút (học viên/admin không hoạt động sẽ coi là offline)
+define('CHAT_NOTIFICATION_COOLDOWN', 3600); // 1 giờ (tránh gửi spam liên tục trên cùng 1 thread)
+
+// Cấu hình Zalo OA ZNS (Zalo Notification Service)
+define('ZALO_ZNS_ENABLED', false); // Đổi sang true trên production sau khi cấu hình access token
+define('ZALO_ACCESS_TOKEN', 'YOUR_ZALO_ACCESS_TOKEN_HERE');
+define('ZALO_OA_ID', 'YOUR_ZALO_OA_ID_HERE');
+define('ZALO_TEMPLATE_ID', 'YOUR_ZALO_TEMPLATE_ID_HERE');
+
 // Bật hiển thị lỗi CHỈ trong môi trường DEV (Tắt khi lên Production)
 // Để tắt lỗi production: đổi thành: define('APP_ENV', 'production');
 define('APP_ENV', 'production');

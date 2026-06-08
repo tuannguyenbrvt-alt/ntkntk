@@ -93,6 +93,27 @@ class DashboardController extends Controller {
             } catch (Exception $e) {
                 // Bỏ qua nếu cột đã tồn tại
             }
+
+            // Thêm cột last_active_at vào bảng users
+            try {
+                $db->exec("ALTER TABLE `users` ADD COLUMN `last_active_at` timestamp NULL DEFAULT NULL");
+            } catch (Exception $e) {
+                // Bỏ qua nếu cột đã tồn tại
+            }
+
+            // Thêm cột guest_last_active_at vào bảng chat_threads
+            try {
+                $db->exec("ALTER TABLE `chat_threads` ADD COLUMN `guest_last_active_at` timestamp NULL DEFAULT NULL");
+            } catch (Exception $e) {
+                // Bỏ qua nếu cột đã tồn tại
+            }
+
+            // Thêm cột last_notified_at vào bảng chat_threads
+            try {
+                $db->exec("ALTER TABLE `chat_threads` ADD COLUMN `last_notified_at` timestamp NULL DEFAULT NULL");
+            } catch (Exception $e) {
+                // Bỏ qua nếu cột đã tồn tại
+            }
  
             $_SESSION['success'] = 'Khởi tạo cơ sở dữ liệu Chat trực tuyến thành công!';
         } catch (Exception $e) {

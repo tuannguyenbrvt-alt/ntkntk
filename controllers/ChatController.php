@@ -1,6 +1,8 @@
 <?php
 require_once ROOT_PATH . '/helpers/UploadHelper.php';
 require_once ROOT_PATH . '/helpers/GoogleDriveHelper.php';
+require_once ROOT_PATH . '/helpers/MailHelper.php';
+require_once ROOT_PATH . '/helpers/ZaloHelper.php';
 
 class ChatController extends Controller {
 
@@ -259,6 +261,75 @@ class ChatController extends Controller {
 
         // Cập nhật thời gian hoạt động cuối cùng của thread
         $db->prepare("UPDATE chat_threads SET updated_at = NOW() WHERE id = ?")->execute([$thread_id]);
+
+        // Gửi thông báo nếu Giáo viên/Admin offline
+        try {
+            $stmtThread = $db->prepare("SELECT * FROM chat_threads WHERE id = ?");
+            $stmtThread->execute([$thread_id]);
+            $threadInfo = $stmtThread->fetch();
+
+            if ($threadInfo) {
+                $recipients = [];
+                if ($threadInfo['type'] === 'student_teacher') {
+                    if (!empty($threadInfo['course_id'])) {
+                        // Giáo viên dạy khóa học đó
+                        $stmtAuthor = $db->prepare("SELECT u.* FROM users u JOIN courses c ON c.author_id = u.id WHERE c.id = ?");
+                        $stmtAuthor->execute([$threadInfo['course_id']]);
+                        $recipients = $stmtAuthor->fetchAll();
+                    } else {
+                        // Chat chung với admin -> Gửi tất cả admin
+                        $stmtAdmins = $db->query("SELECT * FROM users WHERE role IN ('admin', 'super_admin')");
+                        $recipients = $stmtAdmins->fetchAll();
+                    }
+                } elseif ($threadInfo['type'] === 'guest_admin') {
+                    // Khách vãng lai -> Gửi tất cả admin
+                    $stmtAdmins = $db->query("SELECT * FROM users WHERE role IN ('admin', 'super_admin')");
+                    $recipients = $stmtAdmins->fetchAll();
+                }
+
+                $lastNotified = $threadInfo['last_notified_at'];
+                $cooldownPassed = ($lastNotified === null || (time() - strtotime($lastNotified)) > CHAT_NOTIFICATION_COOLDOWN);
+
+                if ($cooldownPassed && !empty($recipients)) {
+                    $notifiedAny = false;
+                    $snippet = !empty($message_text) ? $message_text : "[Tệp đính kèm: " . $fileName . "]";
+                    $chatUrl = APP_URL . "/admin/chat?thread_id=" . $thread_id;
+
+                    foreach ($recipients as $recipient) {
+                        $lastActive = $recipient['last_active_at'];
+                        $isOffline = ($lastActive === null || (time() - strtotime($lastActive)) > CHAT_OFFLINE_THRESHOLD);
+
+                        if ($isOffline) {
+                            // 1. Gửi Email
+                            MailHelper::sendChatNotification(
+                                $recipient['email'],
+                                $recipient['full_name'],
+                                $sender_name,
+                                $snippet,
+                                $chatUrl
+                            );
+
+                            // 2. Gửi Zalo ZNS nếu có SĐT
+                            if (!empty($recipient['phone'])) {
+                                $templateData = [
+                                    'customer_name' => $recipient['full_name'],
+                                    'sender_name' => $sender_name,
+                                    'message_snippet' => $snippet
+                                ];
+                                ZaloHelper::sendZNS($recipient['phone'], ZALO_TEMPLATE_ID, $templateData);
+                            }
+                            $notifiedAny = true;
+                        }
+                    }
+
+                    if ($notifiedAny) {
+                        $db->prepare("UPDATE chat_threads SET last_notified_at = NOW() WHERE id = ?")->execute([$thread_id]);
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            error_log("Error sending chat notification (Student -> Admin): " . $e->getMessage());
+        }
 
         echo json_encode([
             'ok' => true,
