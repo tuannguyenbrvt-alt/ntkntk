@@ -4,8 +4,8 @@
 // Để dùng SMTP (Gmail/Mailjet...), chỉ cần đổi hàm send() bên dưới
 
 class MailHelper {
-    private static string $fromEmail = 'noreply@ntkntk.com';
-    private static string $fromName  = 'Trung tâm Nguyễn Minh';
+    private static $fromEmail = 'noreply@ntkntk.com';
+    private static $fromName  = 'Trung tâm Nguyễn Minh';
 
     /**
      * Gửi email
