@@ -54,6 +54,11 @@
   - **Phân biệt giao diện rõ rệt**: Giao diện chat Admin hiển thị tin nhắn gửi đi căn phải (màu xanh dương), tin nhắn nhận từ học viên căn trái (màu trắng) giúp quản lý dễ dàng.
   - **Thông báo nâng cao khi offline (MỚI NÂNG CẤP)**: Tự động gửi Email thông báo tin nhắn mới và giả lập gửi tin Zalo ZNS khi người nhận (học viên, khách, hoặc giáo viên/admin) offline > 5 phút. Hỗ trợ cơ chế giãn cách cooldown 1 giờ để chống spam hòm thư.
   - **Thống kê hiệu suất phản hồi (MỚI NÂNG CẤP)**: Bổ sung trang thống kê hiệu suất `/admin/chat/performance` phân tích thời gian phản hồi trung bình, nhanh nhất, chậm nhất của từng giáo viên/admin kèm lịch sử gắn badge màu sắc trực quan.
+* **Hệ thống Bình luận đa đối tượng (MỚI NÂNG CẤP):**
+  - **Bật/Tắt bình luận**: Cho phép Admin bật/tắt bình luận cho từng Bài viết, Khóa học và Bài học thông qua checkbox trong Admin Panel.
+  - **Giao diện cây bình luận (Nested Replies)**: Component dùng chung `views/shared/comments.php` hiển thị phân cấp bình luận đẹp mắt và hỗ trợ gửi bình luận, trả lời (reply) nhanh, sửa hoặc xóa bình luận bằng AJAX không reload trang.
+  - **Bảo mật và Phân quyền**: Thành viên đăng nhập được bình luận trực tiếp (tự động duyệt) và có quyền Sửa/Xóa bình luận của mình. Khách vãng lai chỉ xem được các bình luận được phê duyệt công khai với khách (`is_public_to_guest = 1`), và chỉ được bình luận trên Bài viết khi cung cấp Họ tên và SĐT (tin nhắn chờ duyệt `status = 'pending'`).
+  - **Dashboard Điều duyệt Bình luận**: Admin Panel tích hợp trang `/admin/comments` và bộ đếm badge ở sidebar để duyệt bình luận của khách, bật/tắt quyền hiển thị với khách, hoặc xóa bất kỳ bình luận nào.
 
 ## 3. Cấu trúc Database cần chú ý
 - **Tên ĐÚNG:** `course_parts`, `course_chapters`, `course_lessons`, `course_progress` (KHÔNG DÙNG: `parts`, `chapters`, `lessons`).
