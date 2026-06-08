@@ -7,19 +7,35 @@ error_reporting(E_ALL);
 
 echo "<h3>PHP Version: " . phpversion() . "</h3>";
 
-require_once 'config/config.php';
-require_once 'config/database.php';
-require_once 'core/Router.php';
-require_once 'core/Controller.php';
+try {
+    echo "Trace A: Loading config.php...<br>";
+    require_once 'config/config.php';
+    
+    echo "Trace B: Loading database.php...<br>";
+    require_once 'config/database.php';
+    
+    echo "Trace C: Loading Router.php...<br>";
+    require_once 'core/Router.php';
+    
+    echo "Trace D: Loading Controller.php...<br>";
+    require_once 'core/Controller.php';
+} catch (Throwable $e) {
+    echo "<b>Lỗi nạp core:</b> " . $e->getMessage() . " tại " . $e->getFile() . " (Dòng " . $e->getLine() . ")<br>";
+    exit;
+}
 
 // Tự động load các class cần thiết
 spl_autoload_register(function ($class) {
-    if (file_exists('controllers/' . $class . '.php')) {
-        require_once 'controllers/' . $class . '.php';
-    } elseif (file_exists('core/' . $class . '.php')) {
-        require_once 'core/' . $class . '.php';
-    } elseif (file_exists('models/' . $class . '.php')) {
-        require_once 'models/' . $class . '.php';
+    try {
+        if (file_exists('controllers/' . $class . '.php')) {
+            require_once 'controllers/' . $class . '.php';
+        } elseif (file_exists('core/' . $class . '.php')) {
+            require_once 'core/' . $class . '.php';
+        } elseif (file_exists('models/' . $class . '.php')) {
+            require_once 'models/' . $class . '.php';
+        }
+    } catch (Throwable $e) {
+        echo "<b>Lỗi Autoload class {$class}:</b> " . $e->getMessage() . "<br>";
     }
 });
 
@@ -33,7 +49,24 @@ if (!isset($_SESSION['user_id'])) {
     $_SESSION['full_name'] = 'Admin Debugger';
 }
 
-echo "<h3>Bắt đầu khởi chạy trang thống kê hiệu suất...</h3>";
+echo "<h3>Bắt đầu nạp AdminChatController...</h3>";
 
-$controller = new AdminChatController();
-$controller->performance();
+try {
+    require_once 'controllers/AdminChatController.php';
+    echo "<b>Đã nạp AdminChatController thành công!</b><br>";
+} catch (Throwable $e) {
+    echo "<b>Lỗi nạp AdminChatController:</b> " . $e->getMessage() . " tại " . $e->getFile() . " (Dòng " . $e->getLine() . ")<br>";
+    echo "<pre>" . $e->getTraceAsString() . "</pre>";
+    exit;
+}
+
+echo "<h3>Bắt đầu khởi chạy performance()...</h3>";
+
+try {
+    $controller = new AdminChatController();
+    $controller->performance();
+} catch (Throwable $e) {
+    echo "<b>Lỗi khởi chạy performance():</b> " . $e->getMessage() . " tại " . $e->getFile() . " (Dòng " . $e->getLine() . ")<br>";
+    echo "<pre>" . $e->getTraceAsString() . "</pre>";
+    exit;
+}
