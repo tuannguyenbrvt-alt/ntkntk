@@ -295,6 +295,11 @@ class AdminChatController extends Controller {
             error_log("Error sending admin chat notification: " . $e->getMessage());
         }
 
+        // Đảm bảo không có ký tự lạ hoặc cảnh báo PHP làm hỏng chuỗi JSON trả về
+        if (ob_get_length()) {
+            ob_clean();
+        }
+        header('Content-Type: application/json');
         echo json_encode([
             'ok' => true,
             'message' => [
@@ -309,6 +314,7 @@ class AdminChatController extends Controller {
                 'created_at' => date('Y-m-d H:i:s')
             ]
         ]);
+        exit;
     }
 
     // Thu hồi tin nhắn Admin (trong vòng 24 giờ)

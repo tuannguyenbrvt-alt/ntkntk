@@ -19,7 +19,7 @@ class MailHelper {
 
         $to = self::$fromName ? "$toName <$toEmail>" : $toEmail;
 
-        return mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $htmlBody, $headers);
+        return @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $htmlBody, $headers);
     }
 
     /**
