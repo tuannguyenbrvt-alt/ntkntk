@@ -250,21 +250,21 @@ class AdminChatController extends Controller {
                                 // 1. Gửi Email
                                 $chatUrl = APP_URL . "/learning"; 
                                 MailHelper::sendChatNotification(
-                                    $student['email'],
-                                    $student['full_name'],
-                                    $sender_name,
-                                    $snippet,
-                                    $chatUrl
+                                    (string)$student['email'],
+                                    (string)$student['full_name'],
+                                    (string)$sender_name,
+                                    (string)$snippet,
+                                    (string)$chatUrl
                                 );
 
                                 // 2. Gửi Zalo ZNS
                                 if (!empty($student['phone'])) {
                                     $templateData = [
-                                        'customer_name' => $student['full_name'],
-                                        'sender_name' => $sender_name,
-                                        'message_snippet' => $snippet
+                                        'customer_name' => (string)$student['full_name'],
+                                        'sender_name' => (string)$sender_name,
+                                        'message_snippet' => (string)$snippet
                                     ];
-                                    ZaloHelper::sendZNS($student['phone'], ZALO_TEMPLATE_ID, $templateData);
+                                    ZaloHelper::sendZNS((string)$student['phone'], ZALO_TEMPLATE_ID, $templateData);
                                 }
                                 $notified = true;
                             }
@@ -277,11 +277,11 @@ class AdminChatController extends Controller {
                         if ($isOffline) {
                             // Khách chỉ nhận được Zalo ZNS qua số điện thoại đăng ký
                             $templateData = [
-                                'customer_name' => $threadInfo['guest_name'] ?: 'Khách hàng',
-                                'sender_name' => $sender_name,
-                                'message_snippet' => $snippet
+                                'customer_name' => (string)($threadInfo['guest_name'] ?: 'Khách hàng'),
+                                'sender_name' => (string)$sender_name,
+                                'message_snippet' => (string)$snippet
                             ];
-                            ZaloHelper::sendZNS($threadInfo['guest_phone'], ZALO_TEMPLATE_ID, $templateData);
+                            ZaloHelper::sendZNS((string)$threadInfo['guest_phone'], ZALO_TEMPLATE_ID, $templateData);
                             $notified = true;
                         }
                     }
@@ -291,7 +291,7 @@ class AdminChatController extends Controller {
                     }
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             error_log("Error sending admin chat notification: " . $e->getMessage());
         }
 

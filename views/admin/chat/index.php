@@ -661,7 +661,7 @@ document.addEventListener("DOMContentLoaded", function() {
                         listGroup.insertBefore(activeItem, listGroup.firstChild);
                     }
                 } else {
-                    alert('Lỗi gửi tin nhắn: ' . data.error);
+                    alert('Lỗi gửi tin nhắn: ' + data.error);
                 }
             })
             .catch(err => {

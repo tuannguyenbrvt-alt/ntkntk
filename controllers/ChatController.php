@@ -302,21 +302,21 @@ class ChatController extends Controller {
                         if ($isOffline) {
                             // 1. Gửi Email
                             MailHelper::sendChatNotification(
-                                $recipient['email'],
-                                $recipient['full_name'],
-                                $sender_name,
-                                $snippet,
-                                $chatUrl
+                                (string)$recipient['email'],
+                                (string)$recipient['full_name'],
+                                (string)$sender_name,
+                                (string)$snippet,
+                                (string)$chatUrl
                             );
 
                             // 2. Gửi Zalo ZNS nếu có SĐT
                             if (!empty($recipient['phone'])) {
                                 $templateData = [
-                                    'customer_name' => $recipient['full_name'],
-                                    'sender_name' => $sender_name,
-                                    'message_snippet' => $snippet
+                                    'customer_name' => (string)$recipient['full_name'],
+                                    'sender_name' => (string)$sender_name,
+                                    'message_snippet' => (string)$snippet
                                 ];
-                                ZaloHelper::sendZNS($recipient['phone'], ZALO_TEMPLATE_ID, $templateData);
+                                ZaloHelper::sendZNS((string)$recipient['phone'], ZALO_TEMPLATE_ID, $templateData);
                             }
                             $notifiedAny = true;
                         }
@@ -327,7 +327,7 @@ class ChatController extends Controller {
                     }
                 }
             }
-        } catch (Exception $e) {
+        } catch (Throwable $e) {
             error_log("Error sending chat notification (Student -> Admin): " . $e->getMessage());
         }
 
