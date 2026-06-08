@@ -5,6 +5,8 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+echo "<h3>PHP Version: " . phpversion() . "</h3>";
+
 require_once 'config/config.php';
 require_once 'config/database.php';
 require_once 'core/Router.php';
