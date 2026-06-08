@@ -113,6 +113,7 @@ $router->post('/admin/users/delete', 'AdminUserController@delete');
 $router->get('/admin/students', 'AdminStudentController@index');
 $router->get('/admin/students/show', 'AdminStudentController@show');
 $router->post('/admin/students/update', 'AdminStudentController@update');
+$router->get('/admin/students/quiz-attempt', 'AdminStudentController@quizAttempt');
 
 // Admin Media Library
 $router->get('/admin/media', 'MediaController@index');
