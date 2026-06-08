@@ -1,8 +1,8 @@
 <?php
 // views/admin/chat/performance.php
 
-// Helper function to format response time duration into human readable string
-function formatDuration($seconds) {
+// Helper closure to format response time duration into human readable string
+$formatDuration = function($seconds) {
     if ($seconds <= 0) return '0 giây';
     if ($seconds < 60) return $seconds . ' giây';
     if ($seconds < 3600) {
@@ -18,7 +18,7 @@ function formatDuration($seconds) {
     $days = floor($seconds / 86400);
     $hours = floor(($seconds % 86400) / 3600);
     return $days . ' ngày' . ($hours > 0 ? ' ' . $hours . ' giờ' : '');
-}
+};
 
 // Compute general statistics across all admins
 $totalReplies = 0;
@@ -65,7 +65,7 @@ if ($allMin === 999999999) {
                 <div class="d-flex justify-content-between align-items-start mb-3">
                     <div>
                         <span class="fs-6 opacity-75">T.gian Phản hồi Trung bình</span>
-                        <h2 class="fw-bold mt-2 mb-0"><?php echo formatDuration($avgSystemTime); ?></h2>
+                        <h2 class="fw-bold mt-2 mb-0"><?php echo $formatDuration($avgSystemTime); ?></h2>
                     </div>
                     <div class="p-2 bg-white bg-opacity-25 rounded-3">
                         <i class="bi bi-clock-history fs-4"></i>
@@ -113,7 +113,7 @@ if ($allMin === 999999999) {
                 <div class="d-flex justify-content-between align-items-start mb-3 text-dark">
                     <div>
                         <span class="fs-6 text-muted">Phản hồi Nhanh nhất</span>
-                        <h2 class="fw-bold mt-2 mb-0 text-success"><?php echo $totalReplies > 0 ? formatDuration($allMin) : 'Chưa có'; ?></h2>
+                        <h2 class="fw-bold mt-2 mb-0 text-success"><?php echo $totalReplies > 0 ? $formatDuration($allMin) : 'Chưa có'; ?></h2>
                     </div>
                     <div class="p-2 bg-success bg-opacity-10 rounded-3 text-success">
                         <i class="bi bi-lightning-charge fs-4"></i>
@@ -131,7 +131,7 @@ if ($allMin === 999999999) {
                 <div class="d-flex justify-content-between align-items-start mb-3 text-dark">
                     <div>
                         <span class="fs-6 text-muted">Phản hồi Lâu nhất</span>
-                        <h2 class="fw-bold mt-2 mb-0 text-danger"><?php echo $totalReplies > 0 ? formatDuration($allMax) : 'Chưa có'; ?></h2>
+                        <h2 class="fw-bold mt-2 mb-0 text-danger"><?php echo $totalReplies > 0 ? $formatDuration($allMax) : 'Chưa có'; ?></h2>
                     </div>
                     <div class="p-2 bg-danger bg-opacity-10 rounded-3 text-danger">
                         <i class="bi bi-hourglass-bottom fs-4"></i>
@@ -178,9 +178,9 @@ if ($allMin === 999999999) {
                                 </div>
                             </td>
                             <td><span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 fs-6 rounded-pill"><?php echo $stat['count']; ?></span></td>
-                            <td class="fw-bold"><?php echo formatDuration($stat['avg_time']); ?></td>
-                            <td class="text-success"><?php echo formatDuration($stat['min_time']); ?></td>
-                            <td class="text-danger"><?php echo formatDuration($stat['max_time']); ?></td>
+                            <td class="fw-bold"><?php echo $formatDuration($stat['avg_time']); ?></td>
+                            <td class="text-success"><?php echo $formatDuration($stat['min_time']); ?></td>
+                            <td class="text-danger"><?php echo $formatDuration($stat['max_time']); ?></td>
                             <td class="pe-4">
                                 <?php
                                 $avg = $stat['avg_time'];
@@ -261,7 +261,7 @@ if ($allMin === 999999999) {
                             <td><small class="text-muted"><?php echo date('H:i d/m/Y', strtotime($log['student_time'])); ?></small></td>
                             <td><small class="text-muted"><?php echo date('H:i d/m/Y', strtotime($log['responder_time'])); ?></small></td>
                             <td class="pe-4 text-end">
-                                <span class="d-block fw-bold"><?php echo formatDuration($delay); ?></span>
+                                <span class="d-block fw-bold"><?php echo $formatDuration($delay); ?></span>
                                 <span class="badge <?php echo $badgeClass; ?> rounded-pill" style="font-size: 10px;"><?php echo $badgeText; ?></span>
                             </td>
                         </tr>

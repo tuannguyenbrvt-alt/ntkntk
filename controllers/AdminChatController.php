@@ -495,6 +495,10 @@ class AdminChatController extends Controller {
 
     // Thống kê hiệu suất phản hồi của Giáo viên/Admin
     public function performance() {
+        ini_set('display_errors', 1);
+        ini_set('display_startup_errors', 1);
+        error_reporting(E_ALL);
+
         $db = Database::getInstance()->getConnection();
         $user_id = $_SESSION['user_id'];
         $role = $_SESSION['role'];
