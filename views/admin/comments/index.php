@@ -2,9 +2,18 @@
 // views/admin/comments/index.php
 ?>
 <div class="card shadow-sm border-0">
-    <div class="card-header bg-white p-3 d-flex align-items-center justify-content-between">
+    <div class="card-header bg-white p-3 d-flex align-items-center justify-content-between flex-wrap gap-3">
         <h5 class="mb-0 fw-bold"><i class="bi bi-chat-left-text-fill text-primary me-2"></i>Quản lý Bình luận</h5>
-        <span class="text-muted small">Hiển thị tối đa 150 bình luận mới nhất</span>
+        <div class="d-flex align-items-center gap-3">
+            <form action="" method="GET" class="d-flex align-items-center gap-1">
+                <input type="text" name="q" class="form-control form-control-sm rounded-pill px-3" placeholder="Tìm kiếm bình luận..." value="<?php echo htmlspecialchars($search ?? ''); ?>" style="width: 220px;">
+                <?php if (!empty($search)): ?>
+                    <a href="?" class="btn btn-sm btn-outline-secondary rounded-pill" title="Xóa tìm kiếm"><i class="bi bi-x-lg"></i></a>
+                <?php endif; ?>
+                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-search"></i> Tìm</button>
+            </form>
+            <span class="text-muted small">Hiển thị tối đa 150 bình luận mới nhất</span>
+        </div>
     </div>
     
     <div class="card-body p-0">

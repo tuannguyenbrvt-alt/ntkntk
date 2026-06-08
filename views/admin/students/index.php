@@ -1,6 +1,13 @@
 <div class="card shadow-sm border-0">
-    <div class="card-header bg-white p-3 d-flex justify-content-between align-items-center">
+    <div class="card-header bg-white p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-people me-2"></i> Danh sách Học viên (CRM)</h5>
+        <form action="" method="GET" class="d-flex align-items-center gap-1">
+            <input type="text" name="q" class="form-control form-control-sm rounded-pill px-3" placeholder="Tìm kiếm học viên..." value="<?php echo htmlspecialchars($search ?? ''); ?>" style="width: 220px;">
+            <?php if (!empty($search)): ?>
+                <a href="?" class="btn btn-sm btn-outline-secondary rounded-pill" title="Xóa tìm kiếm"><i class="bi bi-x-lg"></i></a>
+            <?php endif; ?>
+            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-search"></i> Tìm</button>
+        </form>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">

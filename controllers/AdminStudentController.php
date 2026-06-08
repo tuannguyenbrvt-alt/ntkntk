@@ -7,13 +7,20 @@ class AdminStudentController extends Controller {
     }
 
     public function index() {
+        $search = trim($_GET['q'] ?? '');
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT u.*, (SELECT COUNT(*) FROM enrollments WHERE student_id = u.id AND status = 'active') as active_courses FROM users u WHERE u.role = 'student' ORDER BY u.created_at DESC");
+        if ($search !== '') {
+            $stmt = $db->prepare("SELECT u.*, (SELECT COUNT(*) FROM enrollments WHERE student_id = u.id AND status = 'active') as active_courses FROM users u WHERE u.role = 'student' AND (u.full_name LIKE ? OR u.email LIKE ? OR u.phone LIKE ?) ORDER BY u.created_at DESC");
+            $stmt->execute(['%' . $search . '%', '%' . $search . '%', '%' . $search . '%']);
+        } else {
+            $stmt = $db->query("SELECT u.*, (SELECT COUNT(*) FROM enrollments WHERE student_id = u.id AND status = 'active') as active_courses FROM users u WHERE u.role = 'student' ORDER BY u.created_at DESC");
+        }
         $students = $stmt->fetchAll();
 
         $this->render('admin/students/index', [
             'title' => 'Quản lý Học viên',
-            'students' => $students
+            'students' => $students,
+            'search' => $search
         ], 'admin');
     }
 

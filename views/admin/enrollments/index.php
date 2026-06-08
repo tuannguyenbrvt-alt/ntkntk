@@ -12,12 +12,20 @@
 <?php endif; ?>
 
 <div class="card shadow-sm border-0 rounded-4">
-    <div class="card-header bg-white p-4 d-flex justify-content-between align-items-center rounded-top-4">
+    <div class="card-header bg-white p-4 d-flex justify-content-between align-items-center flex-wrap gap-3 rounded-top-4">
         <div>
             <h5 class="mb-0 fw-bold"><i class="bi bi-cart-check text-primary me-2"></i>Duyệt Đăng ký Khóa học</h5>
             <p class="text-muted small mb-0">Quản lý và xử lý các yêu cầu đăng ký từ học viên</p>
         </div>
-        <div class="d-flex gap-2">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <form action="" method="GET" class="d-flex align-items-center gap-1">
+                <input type="text" name="q" class="form-control form-control-sm rounded-pill px-3" placeholder="Tìm kiếm đăng ký..." value="<?php echo htmlspecialchars($search ?? ''); ?>" style="width: 220px;">
+                <?php if (!empty($search)): ?>
+                    <a href="?" class="btn btn-sm btn-outline-secondary rounded-pill" title="Xóa tìm kiếm"><i class="bi bi-x-lg"></i></a>
+                <?php endif; ?>
+                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-search"></i> Tìm</button>
+            </form>
+            
             <?php
             $pendingCount = 0;
             foreach ($enrollments as $en_item) {

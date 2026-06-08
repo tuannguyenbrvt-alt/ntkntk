@@ -11,10 +11,10 @@ class AdminCommentController extends Controller {
 
     // Hiển thị danh sách bình luận
     public function index() {
+        $search = trim($_GET['q'] ?? '');
         $db = Database::getInstance()->getConnection();
 
-        // Lấy tất cả bình luận kèm tên người gửi, và thông tin bài viết/khóa học/bài học tương ứng
-        $stmt = $db->query("
+        $queryStr = "
             SELECT c.*, 
                    u.full_name as author_name, u.role as author_role,
                    p.title as post_title, p.slug as post_slug,
@@ -27,15 +27,32 @@ class AdminCommentController extends Controller {
             LEFT JOIN posts p ON c.post_id = p.id
             LEFT JOIN courses cr ON c.course_id = cr.id
             LEFT JOIN course_lessons l ON c.lesson_id = l.id
-            ORDER BY FIELD(c.status, 'pending', 'approved'), c.created_at DESC
-            LIMIT 150
-        ");
+        ";
+        
+        if ($search !== '') {
+            $queryStr .= " WHERE c.content LIKE ? OR u.full_name LIKE ? OR c.guest_name LIKE ? OR c.guest_phone LIKE ? OR p.title LIKE ? OR cr.title LIKE ? OR l.title LIKE ? ";
+            $queryStr .= " ORDER BY FIELD(c.status, 'pending', 'approved'), c.created_at DESC LIMIT 150";
+            $stmt = $db->prepare($queryStr);
+            $stmt->execute([
+                '%' . $search . '%', 
+                '%' . $search . '%', 
+                '%' . $search . '%', 
+                '%' . $search . '%', 
+                '%' . $search . '%', 
+                '%' . $search . '%', 
+                '%' . $search . '%'
+            ]);
+        } else {
+            $queryStr .= " ORDER BY FIELD(c.status, 'pending', 'approved'), c.created_at DESC LIMIT 150";
+            $stmt = $db->query($queryStr);
+        }
         
         $comments = $stmt->fetchAll();
 
         $this->render('admin/comments/index', [
             'title' => 'Quản lý Bình luận',
-            'comments' => $comments
+            'comments' => $comments,
+            'search' => $search
         ], 'admin');
     }
 

@@ -1,9 +1,16 @@
 <div class="card shadow-sm border-0 rounded-4">
-    <div class="card-header bg-white p-4 d-flex justify-content-between align-items-center rounded-top-4">
+    <div class="card-header bg-white p-4 d-flex justify-content-between align-items-center flex-wrap gap-3 rounded-top-4">
         <div>
             <h5 class="mb-0 fw-bold"><i class="bi bi-shield-lock text-primary me-2"></i>Quản lý Tài khoản & Phân quyền</h5>
             <p class="text-muted small mb-0">Cấp quyền Quản trị viên, Giáo viên hoặc Học viên</p>
         </div>
+        <form action="" method="GET" class="d-flex align-items-center gap-1">
+            <input type="text" name="q" class="form-control form-control-sm rounded-pill px-3" placeholder="Tìm kiếm tài khoản..." value="<?php echo htmlspecialchars($search ?? ''); ?>" style="width: 220px;">
+            <?php if (!empty($search)): ?>
+                <a href="?" class="btn btn-sm btn-outline-secondary rounded-pill" title="Xóa tìm kiếm"><i class="bi bi-x-lg"></i></a>
+            <?php endif; ?>
+            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-search"></i> Tìm</button>
+        </form>
     </div>
     
     <?php if (isset($_SESSION['success'])): ?>

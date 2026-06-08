@@ -7,11 +7,17 @@ class AdminPostController extends Controller {
     }
 
     public function index() {
+        $search = trim($_GET['q'] ?? '');
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT p.*, u.full_name as author_name FROM posts p LEFT JOIN users u ON p.author_id = u.id ORDER BY p.created_at DESC");
+        if ($search !== '') {
+            $stmt = $db->prepare("SELECT p.*, u.full_name as author_name FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.title LIKE ? OR p.content LIKE ? ORDER BY p.created_at DESC");
+            $stmt->execute(['%' . $search . '%', '%' . $search . '%']);
+        } else {
+            $stmt = $db->query("SELECT p.*, u.full_name as author_name FROM posts p LEFT JOIN users u ON p.author_id = u.id ORDER BY p.created_at DESC");
+        }
         $posts = $stmt->fetchAll();
 
-        $this->render('admin/posts/index', ['title' => 'Quản lý Bài viết', 'posts' => $posts], 'admin');
+        $this->render('admin/posts/index', ['title' => 'Quản lý Bài viết', 'posts' => $posts, 'search' => $search], 'admin');
     }
 
     public function create() {

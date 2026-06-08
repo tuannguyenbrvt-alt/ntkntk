@@ -7,13 +7,20 @@ class AdminCourseController extends Controller {
     }
 
     public function index() {
+        $search = trim($_GET['q'] ?? '');
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT c.*, u.full_name as author_name FROM courses c LEFT JOIN users u ON c.author_id = u.id ORDER BY c.created_at DESC");
+        if ($search !== '') {
+            $stmt = $db->prepare("SELECT c.*, u.full_name as author_name FROM courses c LEFT JOIN users u ON c.author_id = u.id WHERE c.title LIKE ? OR c.description LIKE ? ORDER BY c.created_at DESC");
+            $stmt->execute(['%' . $search . '%', '%' . $search . '%']);
+        } else {
+            $stmt = $db->query("SELECT c.*, u.full_name as author_name FROM courses c LEFT JOIN users u ON c.author_id = u.id ORDER BY c.created_at DESC");
+        }
         $courses = $stmt->fetchAll();
 
         $this->render('admin/courses/index', [
             'title' => 'Quản lý Khóa học',
-            'courses' => $courses
+            'courses' => $courses,
+            'search' => $search
         ], 'admin');
     }
 

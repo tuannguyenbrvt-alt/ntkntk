@@ -1,7 +1,16 @@
 <div class="card shadow-sm border-0">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center p-3">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center flex-wrap gap-3 p-3">
         <h5 class="mb-0 fw-bold">Danh sách Khóa học</h5>
-        <a href="<?php echo APP_URL; ?>/admin/courses/create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i> Tạo khóa học mới</a>
+        <div class="d-flex align-items-center gap-2">
+            <form action="" method="GET" class="d-flex align-items-center gap-1">
+                <input type="text" name="q" class="form-control form-control-sm rounded-pill px-3" placeholder="Tìm kiếm khóa học..." value="<?php echo htmlspecialchars($search ?? ''); ?>" style="width: 220px;">
+                <?php if (!empty($search)): ?>
+                    <a href="?" class="btn btn-sm btn-outline-secondary rounded-pill" title="Xóa tìm kiếm"><i class="bi bi-x-lg"></i></a>
+                <?php endif; ?>
+                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-search"></i> Tìm</button>
+            </form>
+            <a href="<?php echo APP_URL; ?>/admin/courses/create" class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-plus-lg me-1"></i> Tạo khóa học mới</a>
+        </div>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">

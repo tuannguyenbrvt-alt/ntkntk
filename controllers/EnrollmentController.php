@@ -71,13 +71,20 @@ class EnrollmentController extends Controller {
     // Admin xử lý enrollments
     public function adminIndex() {
         if (!in_array($_SESSION['role'], ['super_admin', 'admin'])) $this->redirect('/');
+        $search = trim($_GET['q'] ?? '');
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT e.*, u.full_name, u.email, c.title as course_title FROM enrollments e JOIN users u ON e.student_id = u.id JOIN courses c ON e.course_id = c.id ORDER BY e.created_at DESC");
+        if ($search !== '') {
+            $stmt = $db->prepare("SELECT e.*, u.full_name, u.email, c.title as course_title FROM enrollments e JOIN users u ON e.student_id = u.id JOIN courses c ON e.course_id = c.id WHERE u.full_name LIKE ? OR u.email LIKE ? OR c.title LIKE ? OR e.tx_code LIKE ? ORDER BY e.created_at DESC");
+            $stmt->execute(['%' . $search . '%', '%' . $search . '%', '%' . $search . '%', '%' . $search . '%']);
+        } else {
+            $stmt = $db->query("SELECT e.*, u.full_name, u.email, c.title as course_title FROM enrollments e JOIN users u ON e.student_id = u.id JOIN courses c ON e.course_id = c.id ORDER BY e.created_at DESC");
+        }
         $enrollments = $stmt->fetchAll();
 
         $this->render('admin/enrollments/index', [
             'title' => 'Quản lý Duyệt khóa học',
-            'enrollments' => $enrollments
+            'enrollments' => $enrollments,
+            'search' => $search
         ], 'admin');
     }
 

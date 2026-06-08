@@ -8,14 +8,20 @@ class AdminUserController extends Controller {
     }
 
     public function index() {
+        $search = trim($_GET['q'] ?? '');
         $db = Database::getInstance()->getConnection();
-        // Lấy danh sách tất cả người dùng
-        $stmt = $db->query("SELECT * FROM users ORDER BY created_at DESC");
+        if ($search !== '') {
+            $stmt = $db->prepare("SELECT * FROM users WHERE username LIKE ? OR email LIKE ? OR full_name LIKE ? OR phone LIKE ? ORDER BY created_at DESC");
+            $stmt->execute(['%' . $search . '%', '%' . $search . '%', '%' . $search . '%', '%' . $search . '%']);
+        } else {
+            $stmt = $db->query("SELECT * FROM users ORDER BY created_at DESC");
+        }
         $users = $stmt->fetchAll();
 
         $this->render('admin/users/index', [
             'title' => 'Quản lý Tài khoản & Phân quyền',
-            'users' => $users
+            'users' => $users,
+            'search' => $search
         ], 'admin');
     }
 
