@@ -63,8 +63,10 @@ class AdminCourseController extends Controller {
             $slug .= '-' . time();
         }
 
-        $stmt = $db->prepare("INSERT INTO courses (title, slug, description, thumbnail, price, original_price, status, author_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        if ($stmt->execute([$title, $slug, $description, $thumbnail, $price, $original_price, $status, $author_id])) {
+        $allow_comments = isset($_POST['allow_comments']) ? 1 : 0;
+
+        $stmt = $db->prepare("INSERT INTO courses (title, slug, description, thumbnail, price, original_price, status, author_id, allow_comments) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt->execute([$title, $slug, $description, $thumbnail, $price, $original_price, $status, $author_id, $allow_comments])) {
             $courseId = $db->lastInsertId();
             $_SESSION['success'] = 'Thêm khóa học thành công! Vui lòng xây dựng đề cương.';
             // Chuyển tới giao diện Builder
@@ -130,8 +132,10 @@ class AdminCourseController extends Controller {
             $slug .= '-' . time();
         }
 
-        $stmt = $db->prepare("UPDATE courses SET title = ?, slug = ?, description = ?, thumbnail = ?, price = ?, original_price = ?, status = ? WHERE id = ?");
-        if ($stmt->execute([$title, $slug, $description, $thumbnail, $price, $original_price, $status, $id])) {
+        $allow_comments = isset($_POST['allow_comments']) ? 1 : 0;
+
+        $stmt = $db->prepare("UPDATE courses SET title = ?, slug = ?, description = ?, thumbnail = ?, price = ?, original_price = ?, status = ?, allow_comments = ? WHERE id = ?");
+        if ($stmt->execute([$title, $slug, $description, $thumbnail, $price, $original_price, $status, $allow_comments, $id])) {
             $_SESSION['success'] = 'Cập nhật thành công!';
             $this->redirect('/admin/courses');
         } else {

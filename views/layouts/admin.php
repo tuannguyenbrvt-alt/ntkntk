@@ -116,6 +116,15 @@ if (isset($_SESSION['user_id']) && in_array($_SESSION['role'], ['super_admin', '
                     <a href="<?php echo APP_URL; ?>/admin/chat/performance" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/chat/performance') !== false ? 'active' : ''; ?>"><i class="bi bi-bar-chart-line me-2"></i> Hiệu suất phản hồi</a>
                     <a href="<?php echo APP_URL; ?>/admin/media" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/media') !== false ? 'active' : ''; ?>"><i class="bi bi-images me-2"></i> Thư viện Media</a>
                     <a href="<?php echo APP_URL; ?>/admin/users" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/users') !== false ? 'active' : ''; ?>"><i class="bi bi-shield-lock me-2"></i> Phân quyền & TK</a>
+                    <a href="<?php echo APP_URL; ?>/admin/comments" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/comments') !== false ? 'active' : '';   ?> d-flex align-items-center justify-content-between">
+                        <span><i class="bi bi-chat-left-text me-2"></i> Bình luận</span>
+                        <?php
+                        try {
+                            $__pendingComments = Database::getInstance()->getConnection()->query("SELECT COUNT(*) FROM comments WHERE status = 'pending'")->fetchColumn();
+                            if ($__pendingComments > 0) echo '<span class="badge bg-danger rounded-pill">' . $__pendingComments . '</span>';
+                        } catch(Exception $e) {}
+                        ?>
+                    </a>
                     <a href="<?php echo APP_URL; ?>/admin/consults" class="<?php echo strpos($_SERVER['REQUEST_URI'], '/admin/consults') !== false ? 'active' : ''; ?> d-flex align-items-center justify-content-between">
                         <span><i class="bi bi-headset me-2"></i> Đăng ký Tư vấn</span>
                         <?php

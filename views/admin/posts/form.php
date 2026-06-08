@@ -49,6 +49,11 @@
                             <option value="page" <?php echo (isset($post) && $post['type'] == 'page') ? 'selected' : ''; ?>>Trang tĩnh (Ví dụ: Giới thiệu)</option>
                         </select>
                     </div>
+
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="allow_comments" id="allow_comments" value="1" <?php echo (!isset($post) || $post['allow_comments'] == 1) ? 'checked' : ''; ?>>
+                        <label class="form-check-label fw-semibold" for="allow_comments">Cho phép bình luận</label>
+                    </div>
                     
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Ảnh đại diện (Thumbnail)</label>

@@ -100,7 +100,7 @@
                                                                 <button type="submit" class="btn btn-sm btn-outline-secondary" title="Di chuyển Bài xuống"><i class="bi bi-arrow-down"></i></button>
                                                             </form>
 
-                                                            <button class="btn btn-sm btn-outline-warning" onclick="showEditLessonModal(<?php echo $lesson['id']; ?>, '<?php echo addslashes(htmlspecialchars($lesson['title'])); ?>', <?php echo $lesson['is_free_preview']; ?>)"><i class="bi bi-pencil"></i> Sửa</button>
+                                                            <button class="btn btn-sm btn-outline-warning" onclick="showEditLessonModal(<?php echo $lesson['id']; ?>, '<?php echo addslashes(htmlspecialchars($lesson['title'])); ?>', <?php echo $lesson['is_free_preview']; ?>, <?php echo $lesson['allow_comments'] ?? 1; ?>)"><i class="bi bi-pencil"></i> Sửa</button>
                                                             <button class="btn btn-sm btn-outline-info" onclick="showItemModal(<?php echo $lesson['id']; ?>)"><i class="bi bi-file-earmark-plus"></i> Nội dung</button>
                                                             <button class="btn btn-sm btn-outline-secondary" onclick="showAttachmentModal(<?php echo $lesson['id']; ?>)"><i class="bi bi-paperclip"></i> Đính kèm</button>
                                                             <a href="<?php echo APP_URL; ?>/admin/quizzes/create?lesson_id=<?php echo $lesson['id']; ?>&course_id=<?php echo $course['id']; ?>" class="btn btn-sm btn-outline-warning"><i class="bi bi-trophy"></i> Trắc nghiệm</a>
@@ -285,6 +285,10 @@
                     <input class="form-check-input" type="checkbox" name="is_free_preview" id="is_free" value="1">
                     <label class="form-check-label" for="is_free">Cho phép học thử (Miễn phí)</label>
                 </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="allow_comments" id="add_lesson_allow_comments" value="1" checked>
+                    <label class="form-check-label" for="add_lesson_allow_comments">Cho phép bình luận</label>
+                </div>
             </div>
             <div class="modal-footer"><button type="submit" class="btn btn-primary">Lưu</button></div>
         </form>
@@ -303,6 +307,10 @@
                 <div class="form-check form-switch mb-3">
                     <input class="form-check-input" type="checkbox" name="is_free_preview" id="edit_lesson_free" value="1">
                     <label class="form-check-label" for="edit_lesson_free">Cho phép học thử (Miễn phí)</label>
+                </div>
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" name="allow_comments" id="edit_lesson_allow_comments" value="1">
+                    <label class="form-check-label" for="edit_lesson_allow_comments">Cho phép bình luận</label>
                 </div>
             </div>
             <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-warning text-white"><i class="bi bi-save me-1"></i>Lưu thay đổi</button></div>
@@ -562,10 +570,11 @@
     // Edit modals
     function showEditPartModal(id, title)    { document.getElementById('edit_part_id').value = id; document.getElementById('edit_part_title').value = title; showModal('editPartModal'); }
     function showEditChapterModal(id, title) { document.getElementById('edit_chapter_id').value = id; document.getElementById('edit_chapter_title').value = title; showModal('editChapterModal'); }
-    function showEditLessonModal(id, title, isFree) {
+    function showEditLessonModal(id, title, isFree, allowComments) {
         document.getElementById('edit_lesson_id').value = id;
         document.getElementById('edit_lesson_title').value = title;
         document.getElementById('edit_lesson_free').checked = (isFree == 1);
+        document.getElementById('edit_lesson_allow_comments').checked = (allowComments == 1);
         showModal('editLessonModal');
     }
 

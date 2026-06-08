@@ -123,6 +123,14 @@
                     <div class="alert alert-warning"><i class="bi bi-exclamation-triangle me-2"></i> Khóa học đang trong quá trình cập nhật nội dung.</div>
                 <?php endif; ?>
             </div>
+
+            <!-- Hệ thống Bình luận -->
+            <?php if (isset($course['allow_comments']) && $course['allow_comments'] == 1): ?>
+                <?php 
+                    $course_id = $course['id'];
+                    include ROOT_PATH . '/views/shared/comments.php'; 
+                ?>
+            <?php endif; ?>
         </div>
         
         <div class="col-lg-4 mt-5 mt-lg-0">

@@ -54,6 +54,14 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Hệ thống Bình luận -->
+            <?php if (isset($post['allow_comments']) && $post['allow_comments'] == 1): ?>
+                <?php 
+                    $post_id = $post['id'];
+                    include ROOT_PATH . '/views/shared/comments.php'; 
+                ?>
+            <?php endif; ?>
         </div>
     </div>
 </div>

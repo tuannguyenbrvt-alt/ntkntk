@@ -248,6 +248,16 @@
                             </div>
                         </div>
                     <?php endif; ?>
+
+                    <!-- Hệ thống Bình luận -->
+                    <?php if ($current_lesson && isset($current_lesson['allow_comments']) && $current_lesson['allow_comments'] == 1): ?>
+                        <div class="mt-4 text-dark text-start">
+                            <?php 
+                                $lesson_id = $current_lesson['id'];
+                                include ROOT_PATH . '/views/shared/comments.php'; 
+                            ?>
+                        </div>
+                    <?php endif; ?>
                     
                 <?php else: ?>
                     <div class="text-center py-5">

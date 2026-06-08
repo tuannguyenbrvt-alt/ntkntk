@@ -68,9 +68,10 @@ class AdminCourseContentController extends Controller {
         $course_id = $_POST['course_id'] ?? 0;
         $title = $_POST['title'] ?? '';
         $is_free_preview = isset($_POST['is_free_preview']) ? 1 : 0;
+        $allow_comments = isset($_POST['allow_comments']) ? 1 : 0;
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("INSERT INTO course_lessons (chapter_id, title, is_free_preview) VALUES (?, ?, ?)");
-        $stmt->execute([$chapter_id, $title, $is_free_preview]);
+        $stmt = $db->prepare("INSERT INTO course_lessons (chapter_id, title, is_free_preview, allow_comments) VALUES (?, ?, ?, ?)");
+        $stmt->execute([$chapter_id, $title, $is_free_preview, $allow_comments]);
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
     public function updateLesson() {
@@ -78,10 +79,11 @@ class AdminCourseContentController extends Controller {
         $course_id = $_POST['course_id'] ?? 0;
         $title = trim($_POST['title'] ?? '');
         $is_free_preview = isset($_POST['is_free_preview']) ? 1 : 0;
+        $allow_comments = isset($_POST['allow_comments']) ? 1 : 0;
         if ($title) {
             $db = Database::getInstance()->getConnection();
-            $stmt = $db->prepare("UPDATE course_lessons SET title = ?, is_free_preview = ? WHERE id = ?");
-            $stmt->execute([$title, $is_free_preview, $id]);
+            $stmt = $db->prepare("UPDATE course_lessons SET title = ?, is_free_preview = ?, allow_comments = ? WHERE id = ?");
+            $stmt->execute([$title, $is_free_preview, $allow_comments, $id]);
         }
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }

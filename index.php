@@ -222,5 +222,16 @@ $router->get('/admin/chat/search-students', 'AdminChatController@searchStudents'
 $router->post('/admin/chat/start-thread', 'AdminChatController@startThread');
 $router->get('/admin/setup-chat-db', 'DashboardController@setupChatDb');
 
+// Hệ thống Bình luận (Comments System)
+$router->post('/comment/store', 'CommentController@store');
+$router->post('/comment/update', 'CommentController@update');
+$router->post('/comment/delete', 'CommentController@delete');
+
+// Admin - Comments Management
+$router->get('/admin/comments', 'AdminCommentController@index');
+$router->post('/admin/comments/approve', 'AdminCommentController@approve');
+$router->post('/admin/comments/toggle-public', 'AdminCommentController@togglePublic');
+$router->post('/admin/comments/delete', 'AdminCommentController@delete');
+
 // Dispatch Router
 $router->dispatch($_SERVER['REQUEST_URI'], $_SERVER['REQUEST_METHOD']);

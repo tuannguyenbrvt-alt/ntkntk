@@ -49,6 +49,8 @@ class AdminPostController extends Controller {
             }
         }
 
+        $allow_comments = isset($_POST['allow_comments']) ? 1 : 0;
+
         $db = Database::getInstance()->getConnection();
         
         // Check slug exist
@@ -58,8 +60,8 @@ class AdminPostController extends Controller {
             $slug .= '-' . time();
         }
 
-        $stmt = $db->prepare("INSERT INTO posts (title, slug, content, thumbnail, type, status, author_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        if ($stmt->execute([$title, $slug, $content, $thumbnail, $type, $status, $author_id])) {
+        $stmt = $db->prepare("INSERT INTO posts (title, slug, content, thumbnail, type, status, author_id, allow_comments) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt->execute([$title, $slug, $content, $thumbnail, $type, $status, $author_id, $allow_comments])) {
             $_SESSION['success'] = 'Thêm bài viết thành công!';
             $this->redirect('/admin/posts');
         } else {
@@ -116,14 +118,16 @@ class AdminPostController extends Controller {
             }
         }
 
+        $allow_comments = isset($_POST['allow_comments']) ? 1 : 0;
+
         $stmtCheck = $db->prepare("SELECT id FROM posts WHERE slug = ? AND id != ?");
         $stmtCheck->execute([$slug, $id]);
         if ($stmtCheck->fetch()) {
             $slug .= '-' . time();
         }
 
-        $stmt = $db->prepare("UPDATE posts SET title = ?, slug = ?, content = ?, thumbnail = ?, type = ?, status = ? WHERE id = ?");
-        if ($stmt->execute([$title, $slug, $content, $thumbnail, $type, $status, $id])) {
+        $stmt = $db->prepare("UPDATE posts SET title = ?, slug = ?, content = ?, thumbnail = ?, type = ?, status = ?, allow_comments = ? WHERE id = ?");
+        if ($stmt->execute([$title, $slug, $content, $thumbnail, $type, $status, $allow_comments, $id])) {
             $_SESSION['success'] = 'Cập nhật thành công!';
             $this->redirect('/admin/posts');
         } else {
