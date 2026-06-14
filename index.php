@@ -145,6 +145,8 @@ $router->get('/post', 'PostController@show');
 // API Routes
 $router->post('/api/posts/create', 'PostApiController@create');
 $router->post('/api/media/upload', 'PostApiController@uploadMedia');
+$router->get('/api/courses/lessons', 'QuizApiController@getLessons');
+$router->post('/api/quizzes/create', 'QuizApiController@create');
 
 // Static Pages
 $router->get('/page', 'PageController@show');
