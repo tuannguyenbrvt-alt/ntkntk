@@ -37,6 +37,10 @@ try {
             $_SESSION['guest_last_active_update'] = $__now;
         }
     }
+
+    // Ghi nhận lượt truy cập trang web (Visitor Tracker)
+    require_once 'helpers/TrackerHelper.php';
+    TrackerHelper::recordVisit($__db);
 } catch (Exception $__e) {
     // Bỏ qua lỗi kết nối DB để không ảnh hưởng luồng chính
 }

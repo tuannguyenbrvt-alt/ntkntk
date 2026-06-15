@@ -1,72 +1,72 @@
 <div class="row g-4 mb-4">
     <!-- Revenue Card -->
-    <div class="col-xl-3 col-md-6">
+    <div class="col-xl-2 col-md-4 col-sm-6 col-12">
         <div class="card border-0 shadow-sm rounded-4 h-100 bg-success text-white overflow-hidden position-relative">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
-                        <h6 class="text-uppercase fw-bold text-white-50 mb-1">Tổng doanh thu</h6>
-                        <h3 class="fw-bold mb-0"><?php echo number_format($totalRevenue); ?> đ</h3>
+                        <h6 class="text-uppercase fw-bold text-white-50 mb-1" style="font-size: 0.75rem;">Tổng doanh thu</h6>
+                        <h3 class="fw-bold mb-0" style="font-size: 1.4rem;"><?php echo number_format($totalRevenue); ?> đ</h3>
                     </div>
-                    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                        <i class="bi bi-wallet2 fs-4"></i>
+                    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex-shrink: 0;">
+                        <i class="bi bi-wallet2 fs-5"></i>
                     </div>
                 </div>
-                <small class="text-white-50"><i class="bi bi-arrow-up-circle me-1"></i> Tính từ lúc hệ thống chạy</small>
+                <small class="text-white-50"><i class="bi bi-arrow-up-circle me-1"></i> Từ lúc chạy hệ thống</small>
             </div>
-            <i class="bi bi-cash-coin position-absolute text-white opacity-10" style="font-size: 8rem; right: -20px; bottom: -30px;"></i>
+            <i class="bi bi-cash-coin position-absolute text-white opacity-10" style="font-size: 6rem; right: -15px; bottom: -20px;"></i>
         </div>
     </div>
     
     <!-- Students Card -->
-    <div class="col-xl-3 col-md-6">
+    <div class="col-xl-2 col-md-4 col-sm-6 col-12">
         <div class="card border-0 shadow-sm rounded-4 h-100 bg-primary text-white overflow-hidden position-relative">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
-                        <h6 class="text-uppercase fw-bold text-white-50 mb-1">Tổng học viên</h6>
-                        <h3 class="fw-bold mb-0"><?php echo number_format($totalStudents); ?></h3>
+                        <h6 class="text-uppercase fw-bold text-white-50 mb-1" style="font-size: 0.75rem;">Tổng học viên</h6>
+                        <h3 class="fw-bold mb-0" style="font-size: 1.4rem;"><?php echo number_format($totalStudents); ?></h3>
                     </div>
-                    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                        <i class="bi bi-people fs-4"></i>
+                    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex-shrink: 0;">
+                        <i class="bi bi-people fs-5"></i>
                     </div>
                 </div>
-                <small class="text-white-50"><i class="bi bi-person-check me-1"></i> Đã có tài khoản trên hệ thống</small>
+                <small class="text-white-50"><i class="bi bi-person-check me-1"></i> Có tài khoản trên hệ thống</small>
             </div>
-            <i class="bi bi-person-workspace position-absolute text-white opacity-10" style="font-size: 8rem; right: -20px; bottom: -30px;"></i>
+            <i class="bi bi-person-workspace position-absolute text-white opacity-10" style="font-size: 6rem; right: -15px; bottom: -20px;"></i>
         </div>
     </div>
 
     <!-- Courses Card -->
-    <div class="col-xl-3 col-md-6">
+    <div class="col-xl-2 col-md-4 col-sm-6 col-12">
         <div class="card border-0 shadow-sm rounded-4 h-100 bg-info text-white overflow-hidden position-relative">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
-                        <h6 class="text-uppercase fw-bold text-white-50 mb-1">Khóa học xuất bản</h6>
-                        <h3 class="fw-bold mb-0"><?php echo number_format($totalCourses); ?></h3>
+                        <h6 class="text-uppercase fw-bold text-white-50 mb-1" style="font-size: 0.75rem;">Khóa học xuất bản</h6>
+                        <h3 class="fw-bold mb-0" style="font-size: 1.4rem;"><?php echo number_format($totalCourses); ?></h3>
                     </div>
-                    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                        <i class="bi bi-journal-bookmark fs-4"></i>
+                    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex-shrink: 0;">
+                        <i class="bi bi-journal-bookmark fs-5"></i>
                     </div>
                 </div>
                 <small class="text-white-50"><i class="bi bi-broadcast me-1"></i> Đang hiển thị (Published)</small>
             </div>
-            <i class="bi bi-book position-absolute text-white opacity-10" style="font-size: 8rem; right: -20px; bottom: -30px;"></i>
+            <i class="bi bi-book position-absolute text-white opacity-10" style="font-size: 6rem; right: -15px; bottom: -20px;"></i>
         </div>
     </div>
 
     <!-- Pending Enrollments Card -->
-    <div class="col-xl-3 col-md-6">
+    <div class="col-xl-2 col-md-4 col-sm-6 col-12">
         <div class="card border-0 shadow-sm rounded-4 h-100 bg-warning text-dark overflow-hidden position-relative">
             <div class="card-body p-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <div>
-                        <h6 class="text-uppercase fw-bold text-dark opacity-75 mb-1">Đơn chờ duyệt</h6>
-                        <h3 class="fw-bold mb-0"><?php echo number_format($pendingEnrollments); ?></h3>
+                        <h6 class="text-uppercase fw-bold text-dark opacity-75 mb-1" style="font-size: 0.75rem;">Đơn chờ duyệt</h6>
+                        <h3 class="fw-bold mb-0" style="font-size: 1.4rem;"><?php echo number_format($pendingEnrollments); ?></h3>
                     </div>
-                    <div class="bg-dark bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                        <i class="bi bi-hourglass-split fs-4 text-dark"></i>
+                    <div class="bg-dark bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex-shrink: 0;">
+                        <i class="bi bi-hourglass-split fs-5 text-dark"></i>
                     </div>
                 </div>
                 <?php if($pendingEnrollments > 0): ?>
@@ -75,7 +75,45 @@
                     <small class="text-dark opacity-75"><i class="bi bi-check-all me-1"></i> Đã duyệt hết</small>
                 <?php endif; ?>
             </div>
-            <i class="bi bi-cart-check position-absolute text-dark opacity-10" style="font-size: 8rem; right: -20px; bottom: -30px;"></i>
+            <i class="bi bi-cart-check position-absolute text-dark opacity-10" style="font-size: 6rem; right: -15px; bottom: -20px;"></i>
+        </div>
+    </div>
+
+    <!-- Today Visits Card -->
+    <div class="col-xl-2 col-md-4 col-sm-6 col-12">
+        <div class="card border-0 shadow-sm rounded-4 h-100 bg-danger text-white overflow-hidden position-relative">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="text-uppercase fw-bold text-white-50 mb-1" style="font-size: 0.75rem;">Truy cập hôm nay</h6>
+                        <h3 class="fw-bold mb-0" style="font-size: 1.4rem;"><?php echo number_format($visitStats['today']); ?></h3>
+                    </div>
+                    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex-shrink: 0;">
+                        <i class="bi bi-eye fs-5"></i>
+                    </div>
+                </div>
+                <small class="text-white-50"><i class="bi bi-calendar-event me-1"></i> Lượt truy cập trong ngày</small>
+            </div>
+            <i class="bi bi-eye-fill position-absolute text-white opacity-10" style="font-size: 6rem; right: -15px; bottom: -20px;"></i>
+        </div>
+    </div>
+
+    <!-- Total Visits Card -->
+    <div class="col-xl-2 col-md-4 col-sm-6 col-12">
+        <div class="card border-0 shadow-sm rounded-4 h-100 bg-secondary text-white overflow-hidden position-relative">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="text-uppercase fw-bold text-white-50 mb-1" style="font-size: 0.75rem;">Tổng lượt truy cập</h6>
+                        <h3 class="fw-bold mb-0" style="font-size: 1.4rem;"><?php echo number_format($visitStats['total']); ?></h3>
+                    </div>
+                    <div class="bg-white bg-opacity-25 rounded-circle d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex-shrink: 0;">
+                        <i class="bi bi-globe fs-5"></i>
+                    </div>
+                </div>
+                <small class="text-white-50"><i class="bi bi-activity me-1"></i> Tích lũy toàn hệ thống</small>
+            </div>
+            <i class="bi bi-globe2 position-absolute text-white opacity-10" style="font-size: 6rem; right: -15px; bottom: -20px;"></i>
         </div>
     </div>
 </div>

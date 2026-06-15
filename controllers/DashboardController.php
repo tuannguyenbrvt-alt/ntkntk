@@ -36,6 +36,10 @@ class DashboardController extends Controller {
         $stmtRecent = $db->query("SELECT e.*, u.full_name, c.title as course_title FROM enrollments e JOIN users u ON e.student_id = u.id JOIN courses c ON e.course_id = c.id ORDER BY e.created_at DESC LIMIT 6");
         $recentEnrollments = $stmtRecent->fetchAll();
 
+        // 4. Thống kê lượt truy cập (Visits Stats)
+        require_once ROOT_PATH . '/helpers/TrackerHelper.php';
+        $visitStats = TrackerHelper::getStats($db);
+
         $this->render('admin/dashboard/index', [
             'title' => 'Tổng quan hệ thống',
             'totalRevenue' => $totalRevenue,
@@ -45,7 +49,8 @@ class DashboardController extends Controller {
             'chartLabels' => json_encode($chartLabels),
             'chartDataValues' => json_encode($chartDataValues),
             'recentEnrollments' => $recentEnrollments,
-            'currentYear' => $year
+            'currentYear' => $year,
+            'visitStats' => $visitStats
         ], 'admin');
     }
 

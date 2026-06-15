@@ -307,5 +307,15 @@ CREATE TABLE `assignment_submissions` (
   CONSTRAINT `sub_ibfk_2` FOREIGN KEY (`student_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ============================================================
+-- SITE VISITS TRACKER
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS `site_visits` (
+  `visit_date` date NOT NULL,
+  `visit_count` int(11) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`visit_date`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
 

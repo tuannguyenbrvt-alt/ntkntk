@@ -252,8 +252,18 @@
             <div class="container">
                 <div class="row align-items-center">
                     <div class="col-md-6 text-center text-md-start">
-                        <p style="color:#6e7681;font-size:.83rem;margin:0;">&copy; <?php echo date('Y'); ?> <strong
-                                style="color:#c9a84c;"><?php echo APP_NAME; ?></strong>. All rights reserved.</p>
+                        <?php
+                        require_once ROOT_PATH . '/helpers/TrackerHelper.php';
+                        $__visitStats = TrackerHelper::getStats(Database::getInstance()->getConnection());
+                        ?>
+                        <p style="color:#6e7681;font-size:.83rem;margin:0;">
+                            &copy; <?php echo date('Y'); ?> <strong style="color:#c9a84c;"><?php echo APP_NAME; ?></strong>. All rights reserved.
+                            <span class="ms-3 d-md-inline-block d-block mt-2 mt-md-0" style="color: #8b949e;">
+                                <i class="bi bi-eye-fill text-warning me-1"></i> Hôm nay: <strong class="text-light"><?php echo number_format($__visitStats['today']); ?></strong>
+                                <span class="mx-2 text-secondary">|</span>
+                                <i class="bi bi-graph-up-arrow text-success me-1"></i> Tổng truy cập: <strong class="text-light"><?php echo number_format($__visitStats['total']); ?></strong>
+                            </span>
+                        </p>
                     </div>
                     <div class="col-md-6 text-center text-md-end mt-1 mt-md-0">
                         <a href="<?php echo APP_URL; ?>/post?slug=chinh-sach-bao-mat"
