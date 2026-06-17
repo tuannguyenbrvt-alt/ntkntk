@@ -317,5 +317,11 @@ CREATE TABLE IF NOT EXISTS `site_visits` (
   PRIMARY KEY (`visit_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `site_online` (
+  `session_id` varchar(255) NOT NULL,
+  `last_activity` int(11) NOT NULL,
+  PRIMARY KEY (`session_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 COMMIT;
 

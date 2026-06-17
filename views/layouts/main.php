@@ -23,6 +23,15 @@
         body {
             font-family: 'Inter', sans-serif;
         }
+        @keyframes pulse-dot {
+            0% { opacity: 0.5; transform: scale(0.9); }
+            50% { opacity: 1; transform: scale(1.1); }
+            100% { opacity: 0.5; transform: scale(0.9); }
+        }
+        .pulse-online {
+            animation: pulse-dot 2s infinite ease-in-out;
+            display: inline-block;
+        }
     </style>
 </head>
 
@@ -259,6 +268,8 @@
                         <p style="color:#6e7681;font-size:.83rem;margin:0;">
                             &copy; <?php echo date('Y'); ?> <strong style="color:#c9a84c;"><?php echo APP_NAME; ?></strong>. All rights reserved.
                             <span class="ms-3 d-md-inline-block d-block mt-2 mt-md-0" style="color: #8b949e;">
+                                <i class="bi bi-circle-fill text-success me-1 pulse-online" style="font-size: 0.55rem; vertical-align: middle;"></i> Đang online: <strong class="text-light"><?php echo number_format($__visitStats['online']); ?></strong>
+                                <span class="mx-2 text-secondary">|</span>
                                 <i class="bi bi-eye-fill text-warning me-1"></i> Hôm nay: <strong class="text-light"><?php echo number_format($__visitStats['today']); ?></strong>
                                 <span class="mx-2 text-secondary">|</span>
                                 <i class="bi bi-graph-up-arrow text-success me-1"></i> Tổng truy cập: <strong class="text-light"><?php echo number_format($__visitStats['total']); ?></strong>

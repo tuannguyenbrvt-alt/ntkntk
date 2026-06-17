@@ -40,6 +40,7 @@ try {
 
     // Ghi nhận lượt truy cập trang web (Visitor Tracker)
     require_once 'helpers/TrackerHelper.php';
+    TrackerHelper::trackOnline($__db);
     TrackerHelper::recordVisit($__db);
 } catch (Exception $__e) {
     // Bỏ qua lỗi kết nối DB để không ảnh hưởng luồng chính

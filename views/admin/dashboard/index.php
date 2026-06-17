@@ -92,7 +92,7 @@
                         <i class="bi bi-eye fs-5"></i>
                     </div>
                 </div>
-                <small class="text-white-50"><i class="bi bi-calendar-event me-1"></i> Lượt truy cập trong ngày</small>
+                <small class="text-white-50"><i class="bi bi-circle-fill me-1" style="font-size: 0.55rem; vertical-align: middle; color: #2ecc71;"></i> Đang online: <strong><?php echo number_format($visitStats['online']); ?></strong></small>
             </div>
             <i class="bi bi-eye-fill position-absolute text-white opacity-10" style="font-size: 6rem; right: -15px; bottom: -20px;"></i>
         </div>
