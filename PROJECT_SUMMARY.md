@@ -30,6 +30,9 @@
 * **Đăng ký Học viên Toàn diện:**
   - Biểu mẫu đăng ký mới hỗ trợ xác minh trùng khớp mật khẩu (`confirm_password`).
   - Yêu cầu điền đầy đủ các thông tin quan trọng khác như: **Số điện thoại** (bắt buộc), **Ngày sinh**, **Địa chỉ**, **Nghề nghiệp / Lớp học** (lưu trực tiếp vào bảng `users`).
+* **Quản lý & Kích hoạt Học viên (MỚI NÂNG CẤP):**
+  - **Tạo học viên mới (Super Admin)**: Chỉ tài khoản có quyền `super_admin` mới được truy cập trang `/admin/students/create` và tạo học viên mới. Biểu mẫu đăng ký xác thực đầy đủ các thông tin quan trọng, giữ lại dữ liệu cũ khi gặp lỗi validate.
+  - **Cấp khóa học trực tiếp (Super Admin)**: Tích hợp nút và modal "Cấp khóa học" ngay trong trang chi tiết học viên. Cho phép Super Admin kích hoạt thủ công bất kỳ khóa học nào với giá tiền tùy chỉnh. Tự động chuyển đổi các đăng ký trạng thái chờ duyệt (`pending`) hiện tại sang đã kích hoạt (`active`) để tránh tạo bản ghi trùng lặp.
 * **Đăng nhập Google OAuth2:**
   - Tích hợp đăng nhập/đăng ký một chạm với tài khoản Google (Gmail) sử dụng cURL thuần, nhẹ nhàng và an toàn tối đa.
   - Tự động tạo hồ sơ học viên mới trong DB nếu chưa tồn tại.
@@ -83,4 +86,4 @@
   - Xem xét chuyển đổi cơ chế polling sang WebSockets (hoặc Server-Sent Events) nếu quy mô lượt truy cập đồng thời tăng cao.
 
 ---
-*(Lần cập nhật cuối: 08/06/2026)*
+*(Lần cập nhật cuối: 26/06/2026)*
