@@ -1,3 +1,10 @@
+<?php if (isset($_SESSION['success'])): ?>
+    <div class="alert alert-success alert-dismissible fade show mb-4"><i class="bi bi-check-circle me-2"></i><?php echo $_SESSION['success']; unset($_SESSION['success']); ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+<?php endif; ?>
+<?php if (isset($_SESSION['error'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show mb-4"><i class="bi bi-exclamation-triangle me-2"></i><?php echo $_SESSION['error']; unset($_SESSION['error']); ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+<?php endif; ?>
+
 <div class="row">
     <div class="col-md-4 mb-4">
         <div class="card shadow-sm border-0 rounded-4">
@@ -61,7 +68,14 @@
             <!-- TAB 1: ĐĂNG KÝ & THANH TOÁN -->
             <div class="tab-pane fade show active" id="enrollment-pane" role="tabpanel" aria-labelledby="enrollment-tab">
                 <div class="card shadow-sm border-0 rounded-4">
-                    <div class="card-header bg-white p-4 fw-bold border-bottom-0 fs-5"><i class="bi bi-clock-history text-primary me-2"></i> Lịch sử Đăng ký & Thanh toán</div>
+                    <div class="card-header bg-white p-4 fw-bold border-bottom-0 fs-5 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <span><i class="bi bi-clock-history text-primary me-2"></i> Lịch sử Đăng ký & Thanh toán</span>
+                        <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'super_admin'): ?>
+                            <button type="button" class="btn btn-sm btn-success rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#grantCourseModal">
+                                <i class="bi bi-journal-plus me-1"></i> Cấp khóa học
+                            </button>
+                        <?php endif; ?>
+                    </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0">
@@ -351,3 +365,66 @@
             </div>
         </div>
 </div>
+
+<?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'super_admin'): ?>
+<!-- Modal Cấp khóa học -->
+<div class="modal fade" id="grantCourseModal" tabindex="-1" aria-labelledby="grantCourseModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content rounded-4 border-0 shadow">
+            <div class="modal-header border-0 pb-0">
+                <h5 class="modal-title fw-bold" id="grantCourseModalLabel">Cấp khóa học cho học viên</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="<?php echo APP_URL; ?>/admin/students/enroll" method="POST">
+                <div class="modal-body p-4">
+                    <input type="hidden" name="student_id" value="<?php echo $student['id']; ?>">
+                    <div class="mb-3 text-center">
+                        <div class="fw-bold fs-5 mb-1"><?php echo htmlspecialchars($student['full_name']); ?></div>
+                        <div class="text-muted small mb-4"><?php echo htmlspecialchars($student['email']); ?></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Chọn khóa học:</label>
+                        <select name="course_id" id="grant_course_select" class="form-select rounded-3 p-3" required>
+                            <option value="">-- Chọn khóa học --</option>
+                            <?php foreach ($courses as $c): ?>
+                                <option value="<?php echo $c['id']; ?>" data-price="<?php echo floatval($c['price']); ?>">
+                                    <?php echo htmlspecialchars($c['title']); ?> (<?php echo number_format($c['price']); ?> đ)
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Số tiền thanh toán (VNĐ):</label>
+                        <input type="number" name="price_paid" id="grant_price_input" class="form-control rounded-3 p-3" min="0" value="0" required>
+                    </div>
+                    <div class="alert alert-info small border-0 py-2">
+                        <i class="bi bi-info-circle-fill me-2"></i> Lưu ý: Hệ thống sẽ tự động kích hoạt khóa học này cho học viên với số tiền đã nhập (mặc định lấy theo giá khóa học).
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Đóng</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold">Kích hoạt ngay</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var courseSelect = document.getElementById('grant_course_select');
+    var priceInput = document.getElementById('grant_price_input');
+    if (courseSelect && priceInput) {
+        courseSelect.addEventListener('change', function() {
+            var selectedOption = this.options[this.selectedIndex];
+            var price = selectedOption.getAttribute('data-price');
+            if (price !== null) {
+                priceInput.value = parseInt(price);
+            } else {
+                priceInput.value = 0;
+            }
+        });
+    }
+});
+</script>
+<?php endif; ?>

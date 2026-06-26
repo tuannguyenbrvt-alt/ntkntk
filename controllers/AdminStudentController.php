@@ -164,6 +164,12 @@ class AdminStudentController extends Controller {
         $stmtAsgResults->execute([$id]);
         $asgResults = $stmtAsgResults->fetchAll();
 
+        $courses = [];
+        if ($_SESSION['role'] === 'super_admin') {
+            $stmtAllCourses = $db->query("SELECT id, title, price FROM courses ORDER BY title ASC");
+            $courses = $stmtAllCourses->fetchAll();
+        }
+
         $this->render('admin/students/show', [
             'title' => 'Chi tiết Hồ sơ Học viên',
             'student' => $student,
@@ -173,7 +179,8 @@ class AdminStudentController extends Controller {
             'quizStats' => $quizStats,
             'asgStats' => $asgStats,
             'quizResults' => $quizResults,
-            'asgResults' => $asgResults
+            'asgResults' => $asgResults,
+            'courses' => $courses
         ], 'admin');
     }
 
@@ -265,5 +272,177 @@ class AdminStudentController extends Controller {
         
         $_SESSION['success'] = 'Cập nhật hồ sơ học viên thành công.';
         $this->redirect('/admin/students/show?id=' . $id);
+    }
+
+    public function create() {
+        if ($_SESSION['role'] !== 'super_admin') {
+            $_SESSION['error'] = 'Chỉ có Super Admin mới có quyền truy cập trang này.';
+            $this->redirect('/admin/students');
+            return;
+        }
+
+        $old = $_SESSION['old_student_input'] ?? [];
+        unset($_SESSION['old_student_input']);
+
+        $this->render('admin/students/create', [
+            'title' => 'Thêm Học viên mới',
+            'old' => $old
+        ], 'admin');
+    }
+
+    public function store() {
+        if ($_SESSION['role'] !== 'super_admin') {
+            $_SESSION['error'] = 'Chỉ có Super Admin mới có quyền thực hiện chức năng này.';
+            $this->redirect('/admin/students');
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/admin/students');
+            return;
+        }
+
+        $username = trim($_POST['username'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $email = trim($_POST['email'] ?? '');
+        $full_name = trim($_POST['full_name'] ?? '');
+        $phone = trim($_POST['phone'] ?? '');
+        $dob = !empty($_POST['dob']) ? $_POST['dob'] : null;
+        $address = trim($_POST['address'] ?? '');
+        $profession = trim($_POST['profession'] ?? '');
+
+        // Validate
+        if (strlen($username) < 4) {
+            $_SESSION['error'] = 'Tên đăng nhập phải chứa tối thiểu 4 ký tự.';
+            $_SESSION['old_student_input'] = $_POST;
+            $this->redirect('/admin/students/create');
+            return;
+        }
+
+        if (strlen($password) < 6) {
+            $_SESSION['error'] = 'Mật khẩu phải chứa tối thiểu 6 ký tự.';
+            $_SESSION['old_student_input'] = $_POST;
+            $this->redirect('/admin/students/create');
+            return;
+        }
+
+        if (empty($full_name)) {
+            $_SESSION['error'] = 'Họ và tên không được để trống.';
+            $_SESSION['old_student_input'] = $_POST;
+            $this->redirect('/admin/students/create');
+            return;
+        }
+
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $_SESSION['error'] = 'Email không hợp lệ.';
+            $_SESSION['old_student_input'] = $_POST;
+            $this->redirect('/admin/students/create');
+            return;
+        }
+
+        if (empty($phone)) {
+            $_SESSION['error'] = 'Số điện thoại không được để trống.';
+            $_SESSION['old_student_input'] = $_POST;
+            $this->redirect('/admin/students/create');
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Kiểm tra xem username hoặc email đã tồn tại chưa
+        $stmtCheck = $db->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+        $stmtCheck->execute([$username, $email]);
+        if ($stmtCheck->fetch()) {
+            $_SESSION['error'] = 'Tên đăng nhập hoặc Email đã tồn tại.';
+            $_SESSION['old_student_input'] = $_POST;
+            $this->redirect('/admin/students/create');
+            return;
+        }
+
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $db->prepare("INSERT INTO users (username, password, email, full_name, phone, dob, address, profession, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'student')");
+
+        if ($stmt->execute([$username, $hashedPassword, $email, $full_name, $phone ?: null, $dob, $address ?: null, $profession ?: null])) {
+            $_SESSION['success'] = 'Thêm học viên mới thành công!';
+            $this->redirect('/admin/students');
+        } else {
+            $_SESSION['error'] = 'Lỗi hệ thống khi lưu thông tin học viên.';
+            $_SESSION['old_student_input'] = $_POST;
+            $this->redirect('/admin/students/create');
+        }
+    }
+
+    public function enrollCourse() {
+        if ($_SESSION['role'] !== 'super_admin') {
+            $_SESSION['error'] = 'Chỉ có Super Admin mới có quyền thực hiện chức năng này.';
+            $this->redirect('/admin/students');
+            return;
+        }
+
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/admin/students');
+            return;
+        }
+
+        $student_id = (int)($_POST['student_id'] ?? 0);
+        $course_id = (int)($_POST['course_id'] ?? 0);
+        $price_paid = !empty($_POST['price_paid']) ? floatval($_POST['price_paid']) : 0;
+
+        if (!$student_id || !$course_id) {
+            $_SESSION['error'] = 'Dữ liệu không hợp lệ.';
+            $this->redirect('/admin/students');
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Kiểm tra học viên
+        $stmtStu = $db->prepare("SELECT id FROM users WHERE id = ? AND role = 'student'");
+        $stmtStu->execute([$student_id]);
+        if (!$stmtStu->fetch()) {
+            $_SESSION['error'] = 'Không tìm thấy học viên.';
+            $this->redirect('/admin/students');
+            return;
+        }
+
+        // Kiểm tra khóa học
+        $stmtCourse = $db->prepare("SELECT id, title FROM courses WHERE id = ?");
+        $stmtCourse->execute([$course_id]);
+        $course = $stmtCourse->fetch();
+        if (!$course) {
+            $_SESSION['error'] = 'Không tìm thấy khóa học.';
+            $this->redirect('/admin/students/show?id=' . $student_id);
+            return;
+        }
+
+        // Kiểm tra đăng ký hiện tại
+        $stmtCheck = $db->prepare("SELECT id, status FROM enrollments WHERE student_id = ? AND course_id = ? ORDER BY created_at DESC LIMIT 1");
+        $stmtCheck->execute([$student_id, $course_id]);
+        $existing = $stmtCheck->fetch();
+
+        if ($existing) {
+            if ($existing['status'] === 'active') {
+                $_SESSION['error'] = 'Học viên đã được kích hoạt khóa học này rồi.';
+                $this->redirect('/admin/students/show?id=' . $student_id);
+                return;
+            } elseif ($existing['status'] === 'pending') {
+                $stmtUpdate = $db->prepare("UPDATE enrollments SET status = 'active', price_paid = ?, payment_method = 'super_admin_grant', tx_code = ? WHERE id = ?");
+                $tx_code = 'NTK_GRANT_' . time() . rand(10, 99);
+                $stmtUpdate->execute([$price_paid, $tx_code, $existing['id']]);
+                $_SESSION['success'] = 'Đã duyệt kích hoạt khóa học "' . $course['title'] . '" thành công!';
+                $this->redirect('/admin/students/show?id=' . $student_id);
+                return;
+            }
+        }
+
+        $tx_code = 'NTK_GRANT_' . time() . rand(10, 99);
+        $stmtInsert = $db->prepare("INSERT INTO enrollments (student_id, course_id, status, price_paid, payment_method, tx_code) VALUES (?, ?, 'active', ?, 'super_admin_grant', ?)");
+        if ($stmtInsert->execute([$student_id, $course_id, $price_paid, $tx_code])) {
+            $_SESSION['success'] = 'Cấp khóa học "' . $course['title'] . '" thành công!';
+        } else {
+            $_SESSION['error'] = 'Lỗi hệ thống khi cấp khóa học.';
+        }
+
+        $this->redirect('/admin/students/show?id=' . $student_id);
     }
 }

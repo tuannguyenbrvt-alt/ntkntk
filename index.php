@@ -116,6 +116,9 @@ $router->post('/admin/users/delete', 'AdminUserController@delete');
 
 // Admin Student CRM
 $router->get('/admin/students', 'AdminStudentController@index');
+$router->get('/admin/students/create', 'AdminStudentController@create');
+$router->post('/admin/students/store', 'AdminStudentController@store');
+$router->post('/admin/students/enroll', 'AdminStudentController@enrollCourse');
 $router->get('/admin/students/show', 'AdminStudentController@show');
 $router->post('/admin/students/update', 'AdminStudentController@update');
 $router->get('/admin/students/quiz-attempt', 'AdminStudentController@quizAttempt');

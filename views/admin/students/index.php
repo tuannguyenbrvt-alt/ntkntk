@@ -1,14 +1,26 @@
 <div class="card shadow-sm border-0">
     <div class="card-header bg-white p-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
         <h5 class="mb-0 fw-bold text-primary"><i class="bi bi-people me-2"></i> Danh sách Học viên (CRM)</h5>
-        <form action="" method="GET" class="d-flex align-items-center gap-1">
-            <input type="text" name="q" class="form-control form-control-sm rounded-pill px-3" placeholder="Tìm kiếm học viên..." value="<?php echo htmlspecialchars($search ?? ''); ?>" style="width: 220px;">
-            <?php if (!empty($search)): ?>
-                <a href="?" class="btn btn-sm btn-outline-secondary rounded-pill" title="Xóa tìm kiếm"><i class="bi bi-x-lg"></i></a>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <?php if (isset($_SESSION['role']) && $_SESSION['role'] === 'super_admin'): ?>
+                <a href="<?php echo APP_URL; ?>/admin/students/create" class="btn btn-sm btn-success rounded-pill px-3"><i class="bi bi-person-plus me-1"></i> Thêm học viên</a>
             <?php endif; ?>
-            <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-search"></i> Tìm</button>
-        </form>
+            <form action="" method="GET" class="d-flex align-items-center gap-1">
+                <input type="text" name="q" class="form-control form-control-sm rounded-pill px-3" placeholder="Tìm kiếm học viên..." value="<?php echo htmlspecialchars($search ?? ''); ?>" style="width: 220px;">
+                <?php if (!empty($search)): ?>
+                    <a href="?" class="btn btn-sm btn-outline-secondary rounded-pill" title="Xóa tìm kiếm"><i class="bi bi-x-lg"></i></a>
+                <?php endif; ?>
+                <button type="submit" class="btn btn-sm btn-primary rounded-pill px-3"><i class="bi bi-search"></i> Tìm</button>
+            </form>
+        </div>
     </div>
+    
+    <?php if (isset($_SESSION['success'])): ?>
+        <div class="alert alert-success alert-dismissible fade show m-3 mb-0"><i class="bi bi-check-circle me-2"></i><?php echo $_SESSION['success']; unset($_SESSION['success']); ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <?php endif; ?>
+    <?php if (isset($_SESSION['error'])): ?>
+        <div class="alert alert-danger alert-dismissible fade show m-3 mb-0"><i class="bi bi-exclamation-triangle me-2"></i><?php echo $_SESSION['error']; unset($_SESSION['error']); ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+    <?php endif; ?>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
