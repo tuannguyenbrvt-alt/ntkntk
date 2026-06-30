@@ -111,6 +111,8 @@ class AdminChatController extends Controller {
             return;
         }
 
+        session_write_close(); // Giải phóng session lock sớm để tránh nghẽn luồng tải trang khác
+
         $db = Database::getInstance()->getConnection();
 
         // Lấy tin nhắn

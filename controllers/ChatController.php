@@ -15,6 +15,8 @@ class ChatController extends Controller {
         }
 
         $student_id = $_SESSION['user_id'];
+        session_write_close(); // Giải phóng session lock sớm để tránh nghẽn luồng tải trang khác
+
         $db = Database::getInstance()->getConnection();
 
         // Lấy danh sách khóa học đang theo học để hiển thị lựa chọn chat với giáo viên khóa đó
@@ -109,6 +111,9 @@ class ChatController extends Controller {
             return;
         }
 
+        $user_id = $_SESSION['user_id'] ?? null;
+        session_write_close(); // Giải phóng session lock sớm để tránh nghẽn luồng tải trang khác
+
         $db = Database::getInstance()->getConnection();
 
         // Lấy tin nhắn
@@ -117,10 +122,9 @@ class ChatController extends Controller {
         $messages = $stmt->fetchAll();
 
         // Đánh dấu các tin nhắn gửi từ admin/giáo viên là đã đọc đối với học sinh/khách
-        if (isset($_SESSION['user_id'])) {
-            $student_id = $_SESSION['user_id'];
+        if ($user_id !== null) {
             $db->prepare("UPDATE chat_messages SET is_read = 1 WHERE thread_id = ? AND sender_id != ?")
-               ->execute([$thread_id, $student_id]);
+               ->execute([$thread_id, $user_id]);
         } else {
             $db->prepare("UPDATE chat_messages SET is_read = 1 WHERE thread_id = ? AND sender_id IS NOT NULL")
                ->execute([$thread_id]);
@@ -429,11 +433,15 @@ class ChatController extends Controller {
     // Lấy tổng số tin nhắn chưa đọc của học viên/khách
     public function getUnreadCount() {
         header('Content-Type: application/json');
+        $user_id = $_SESSION['user_id'] ?? null;
+        $guest_thread_id = $_SESSION['guest_chat_thread_id'] ?? null;
+        session_write_close(); // Giải phóng session lock sớm để tránh nghẽn luồng tải trang khác
+
         $db = Database::getInstance()->getConnection();
         $total_unread = 0;
 
-        if (isset($_SESSION['user_id'])) {
-            $student_id = $_SESSION['user_id'];
+        if ($user_id !== null) {
+            $student_id = $user_id;
             $stmt = $db->prepare("
                 SELECT COUNT(*) 
                 FROM chat_messages m
@@ -445,8 +453,8 @@ class ChatController extends Controller {
             ");
             $stmt->execute([$student_id, $student_id]);
             $total_unread = (int)$stmt->fetchColumn();
-        } else if (isset($_SESSION['guest_chat_thread_id'])) {
-            $thread_id = $_SESSION['guest_chat_thread_id'];
+        } else if ($guest_thread_id !== null) {
+            $thread_id = $guest_thread_id;
             $stmt = $db->prepare("
                 SELECT COUNT(*) 
                 FROM chat_messages 

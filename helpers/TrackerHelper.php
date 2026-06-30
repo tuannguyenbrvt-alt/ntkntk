@@ -109,14 +109,22 @@ class TrackerHelper {
         }
 
         $now = time();
+        if (isset($_SESSION['last_online_track']) && ($now - $_SESSION['last_online_track']) <= 60) {
+            return;
+        }
+
         try {
             $stmt = $db->prepare("INSERT INTO site_online (session_id, last_activity) VALUES (?, ?) ON DUPLICATE KEY UPDATE last_activity = ?");
             $stmt->execute([$sessionId, $now, $now]);
 
-            // Dọn dẹp các session cũ quá 5 phút (300 giây)
-            $expired = $now - 300;
-            $stmtDel = $db->prepare("DELETE FROM site_online WHERE last_activity < ?");
-            $stmtDel->execute([$expired]);
+            $_SESSION['last_online_track'] = $now;
+
+            // Dọn dẹp các session cũ quá 5 phút (300 giây) - Chỉ chạy ngẫu nhiên 1% số lượt truy cập để giảm tải ghi/xóa database
+            if (mt_rand(1, 100) === 1) {
+                $expired = $now - 300;
+                $stmtDel = $db->prepare("DELETE FROM site_online WHERE last_activity < ?");
+                $stmtDel->execute([$expired]);
+            }
         } catch (PDOException $e) {
             // Tự động sửa lỗi (self-healing) nếu bảng site_online chưa tồn tại
             if ($e->getCode() === '42S02' || strpos($e->getMessage(), '1146') !== false) {
@@ -124,12 +132,15 @@ class TrackerHelper {
                     $db->exec("CREATE TABLE IF NOT EXISTS `site_online` (
                       `session_id` varchar(255) NOT NULL,
                       `last_activity` int(11) NOT NULL,
-                      PRIMARY KEY (`session_id`)
+                      PRIMARY KEY (`session_id`),
+                      KEY `idx_last_activity` (`last_activity`)
                     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
                     
                     // Thử lại
                     $stmt = $db->prepare("INSERT INTO site_online (session_id, last_activity) VALUES (?, ?) ON DUPLICATE KEY UPDATE last_activity = ?");
                     $stmt->execute([$sessionId, $now, $now]);
+
+                    $_SESSION['last_online_track'] = $now;
                 } catch (Exception $innerEx) {
                     // Bỏ qua để không làm gián đoạn người dùng
                 }
