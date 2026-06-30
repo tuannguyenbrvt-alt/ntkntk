@@ -62,6 +62,15 @@
   - **Giao diện cây bình luận (Nested Replies)**: Component dùng chung `views/shared/comments.php` hiển thị phân cấp bình luận đẹp mắt và hỗ trợ gửi bình luận, trả lời (reply) nhanh, sửa hoặc xóa bình luận bằng AJAX không reload trang.
   - **Bảo mật và Phân quyền**: Thành viên đăng nhập được bình luận trực tiếp (tự động duyệt) và có quyền Sửa/Xóa bình luận của mình. Khách vãng lai chỉ xem được các bình luận được phê duyệt công khai với khách (`is_public_to_guest = 1`), và chỉ được bình luận trên Bài viết khi cung cấp Họ tên và SĐT (tin nhắn chờ duyệt `status = 'pending'`).
   - **Dashboard Điều duyệt Bình luận**: Admin Panel tích hợp trang `/admin/comments` và bộ đếm badge ở sidebar để duyệt bình luận của khách, bật/tắt quyền hiển thị với khách, hoặc xóa bất kỳ bình luận nào.
+* **Tối ưu hóa hiệu năng & giảm tải Database (MỚI NÂNG CẤP):**
+  - **Mở khóa Session sớm (PHP Session Locking):** Gọi `session_write_close()` ngay sau khi lấy thông tin xác thực từ session trong các AJAX endpoints lấy thông tin unread count, tải tin nhắn và danh sách chat. Tránh việc trình duyệt bị nghẽn luồng xếp hàng khi người dùng vừa chạy polling ngầm vừa tải trang chính.
+  - **Giảm tải ghi/xóa Online Tracker:** Giới hạn tần suất ghi vào bảng `site_online` xuống tối đa 1 lần/phút cho mỗi phiên truy cập. Giảm tần suất chạy lệnh `DELETE` dọn dẹp các session hết hạn xuống còn xác suất 1% thay vì chạy 100% trên mọi request.
+  - **Tối ưu chỉ mục (Index) Database:** Đánh chỉ mục `idx_last_activity` cho cột `last_activity` của bảng `site_online` giúp loại bỏ hoàn toàn việc MySQL quét toàn bộ bảng (Full Table Scan) khi đếm hoặc xóa session hết hạn.
+  - **Script tự động nâng cấp database:** Thêm script `run_optimize_migration.php` chạy trực tiếp trên hosting để tạo index cho database thật mà không làm ảnh hưởng đến dữ liệu hiện có.
+* **Tính năng Sao chép Đề cương Khóa học - LMS Clone (MỚI NÂNG CẤP):**
+  - Hỗ trợ nhân bản sâu (Deep Copy) toàn bộ Phần, Chương, Bài học cùng các nội dung đi kèm (tin nhắn/văn bản, video, tệp PDF đính kèm, bài tập tự luận/nộp file, đề trắc nghiệm) từ các khóa học trước đó.
+  - **Sao chép Ngân hàng câu hỏi độc lập:** Nhân bản các câu hỏi và đáp án liên kết trong `question_bank` sang khóa học đích tự động để tránh lỗi liên kết khóa ngoại khi xóa khóa học cũ.
+  - Tích hợp giao diện trực quan gồm 3 nút sao chép tương ứng với 3 cấp độ (Phần, Chương, Bài học) và modals Bootstrap 5 gọi AJAX lấy cấu trúc động từ khóa học nguồn.
 
 ## 3. Cấu trúc Database cần chú ý
 - **Tên ĐÚNG:** `course_parts`, `course_chapters`, `course_lessons`, `course_progress` (KHÔNG DÙNG: `parts`, `chapters`, `lessons`).
@@ -86,4 +95,4 @@
   - Xem xét chuyển đổi cơ chế polling sang WebSockets (hoặc Server-Sent Events) nếu quy mô lượt truy cập đồng thời tăng cao.
 
 ---
-*(Lần cập nhật cuối: 26/06/2026)*
+*(Lần cập nhật cuối: 30/06/2026)*
