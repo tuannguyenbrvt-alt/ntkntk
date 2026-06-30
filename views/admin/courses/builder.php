@@ -4,7 +4,10 @@
             <h5 class="mb-0 fw-bold text-primary">Đề cương Khóa học: <?php echo htmlspecialchars($course['title']); ?></h5>
             <small class="text-muted"><a href="<?php echo APP_URL; ?>/admin/courses" class="text-decoration-none"><i class="bi bi-arrow-left"></i> Quay lại Danh sách</a></small>
         </div>
-        <button class="btn btn-primary" onclick="showModal('addPartModal')"><i class="bi bi-plus-circle me-1"></i> Thêm Phần mới</button>
+        <div>
+            <button class="btn btn-outline-primary me-2" onclick="showImportPartModal()"><i class="bi bi-copy me-1"></i> Sao chép Phần từ KH khác</button>
+            <button class="btn class-add-part btn-primary" onclick="showModal('addPartModal')"><i class="bi bi-plus-circle me-1"></i> Thêm Phần mới</button>
+        </div>
     </div>
     <div class="card-body bg-light">
         <?php foreach($parts as $part): ?>
@@ -28,6 +31,7 @@
                         </form>
 
                         <button class="btn btn-sm btn-outline-warning me-1" onclick="showEditPartModal(<?php echo $part['id']; ?>, '<?php echo addslashes(htmlspecialchars($part['title'])); ?>')"><i class="bi bi-pencil"></i> Sửa</button>
+                        <button class="btn btn-sm btn-outline-secondary me-1" onclick="showImportChapterModal(<?php echo $part['id']; ?>)"><i class="bi bi-copy me-1"></i> Sao chép Chương</button>
                         <button class="btn btn-sm btn-outline-primary me-2" onclick="showChapterModal(<?php echo $part['id']; ?>)"><i class="bi bi-plus"></i> Thêm Chương</button>
                         <form action="<?php echo APP_URL; ?>/admin/courses/content/deletePart" method="POST" class="d-inline" onsubmit="return confirm('Xóa toàn bộ Phần này?');">
                             <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
@@ -66,6 +70,7 @@
                                             </div>
                                             <div>
                                                 <button class="btn btn-sm btn-outline-warning me-1" onclick="showEditChapterModal(<?php echo $chapter['id']; ?>, '<?php echo addslashes(htmlspecialchars($chapter['title'])); ?>')"><i class="bi bi-pencil"></i> Sửa chương</button>
+                                                <button class="btn btn-sm btn-outline-success me-1" onclick="showImportLessonModal(<?php echo $chapter['id']; ?>)"><i class="bi bi-copy me-1"></i> Sao chép Bài học</button>
                                                 <button class="btn btn-sm btn-success" onclick="showLessonModal(<?php echo $chapter['id']; ?>)"><i class="bi bi-plus"></i> Thêm Bài học</button>
                                                 <form action="<?php echo APP_URL; ?>/admin/courses/content/deleteChapter" method="POST" class="d-inline ms-1" onsubmit="return confirm('Xóa Chương này?');">
                                                     <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
@@ -536,6 +541,113 @@
     </div>
 </div>
 
+<!-- Import Part Modal -->
+<div class="modal fade" id="importPartModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="<?php echo APP_URL; ?>/admin/courses/content/importPart" method="POST" class="modal-content">
+            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+            <div class="modal-header bg-primary bg-opacity-10">
+                <h5 class="modal-title fw-bold text-primary"><i class="bi bi-copy me-2"></i>Sao chép Phần từ Khóa học khác</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-dark text-start">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Chọn Khóa học nguồn</label>
+                    <select class="form-select" id="import_part_source_course" onchange="loadStructureForImport(this.value, 'part')">
+                        <option value="">-- Chọn khóa học --</option>
+                        <?php foreach($allCourses as $c): ?>
+                            <option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['title']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Chọn Phần để sao chép</label>
+                    <select class="form-select" name="source_part_id" id="import_part_source_part" required>
+                        <option value="">-- Trước tiên hãy chọn khóa học nguồn --</option>
+                    </select>
+                    <div class="form-text text-danger mt-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>Hành động này sẽ sao chép toàn bộ các Chương, Bài học, Đề trắc nghiệm, Bài tập và tệp đính kèm của Phần được chọn sang khóa học hiện tại.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Bắt đầu sao chép</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Import Chapter Modal -->
+<div class="modal fade" id="importChapterModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="<?php echo APP_URL; ?>/admin/courses/content/importChapter" method="POST" class="modal-content">
+            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+            <input type="hidden" name="part_id" id="import_chapter_target_part_id">
+            <div class="modal-header bg-primary bg-opacity-10">
+                <h5 class="modal-title fw-bold text-primary"><i class="bi bi-copy me-2"></i>Sao chép Chương từ Khóa học khác</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-dark text-start">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Chọn Khóa học nguồn</label>
+                    <select class="form-select" id="import_chapter_source_course" onchange="loadStructureForImport(this.value, 'chapter')">
+                        <option value="">-- Chọn khóa học --</option>
+                        <?php foreach($allCourses as $c): ?>
+                            <option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['title']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Chọn Chương để sao chép</label>
+                    <select class="form-select" name="source_chapter_id" id="import_chapter_source_chapter" required>
+                        <option value="">-- Trước tiên hãy chọn khóa học nguồn --</option>
+                    </select>
+                    <div class="form-text text-danger mt-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>Hành động này sẽ sao chép toàn bộ Bài học, Đề trắc nghiệm, Bài tập và tệp đính kèm của Chương được chọn.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Bắt đầu sao chép</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Import Lesson Modal -->
+<div class="modal fade" id="importLessonModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="<?php echo APP_URL; ?>/admin/courses/content/importLesson" method="POST" class="modal-content">
+            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+            <input type="hidden" name="chapter_id" id="import_lesson_target_chapter_id">
+            <div class="modal-header bg-primary bg-opacity-10">
+                <h5 class="modal-title fw-bold text-primary"><i class="bi bi-copy me-2"></i>Sao chép Bài học từ Khóa học khác</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-dark text-start">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Chọn Khóa học nguồn</label>
+                    <select class="form-select" id="import_lesson_source_course" onchange="loadStructureForImport(this.value, 'lesson')">
+                        <option value="">-- Chọn khóa học --</option>
+                        <?php foreach($allCourses as $c): ?>
+                            <option value="<?php echo $c['id']; ?>"><?php echo htmlspecialchars($c['title']); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Chọn Bài học để sao chép</label>
+                    <select class="form-select" name="source_lesson_id" id="import_lesson_source_lesson" required>
+                        <option value="">-- Trước tiên hãy chọn khóa học nguồn --</option>
+                    </select>
+                    <div class="form-text text-danger mt-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>Hành động này sẽ sao chép Bài học kèm theo các Đề trắc nghiệm, Bài tập tự luận và Tệp đính kèm.</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Bắt đầu sao chép</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     function showModal(id) { new bootstrap.Modal(document.getElementById(id)).show(); }
 
@@ -727,5 +839,113 @@
             div.classList.add('d-none');
             inp.required = false;
         }
+    }
+
+    function showImportPartModal() {
+        document.getElementById('import_part_source_course').value = '';
+        document.getElementById('import_part_source_part').innerHTML = '<option value="">-- Trước tiên hãy chọn khóa học nguồn --</option>';
+        showModal('importPartModal');
+    }
+
+    function showImportChapterModal(targetPartId) {
+        document.getElementById('import_chapter_target_part_id').value = targetPartId;
+        document.getElementById('import_chapter_source_course').value = '';
+        document.getElementById('import_chapter_source_chapter').innerHTML = '<option value="">-- Trước tiên hãy chọn khóa học nguồn --</option>';
+        showModal('importChapterModal');
+    }
+
+    function showImportLessonModal(targetChapterId) {
+        document.getElementById('import_lesson_target_chapter_id').value = targetChapterId;
+        document.getElementById('import_lesson_source_course').value = '';
+        document.getElementById('import_lesson_source_lesson').innerHTML = '<option value="">-- Trước tiên hãy chọn khóa học nguồn --</option>';
+        showModal('importLessonModal');
+    }
+
+    function loadStructureForImport(courseId, type) {
+        let selectElement;
+        if (type === 'part') {
+            selectElement = document.getElementById('import_part_source_part');
+        } else if (type === 'chapter') {
+            selectElement = document.getElementById('import_chapter_source_chapter');
+        } else if (type === 'lesson') {
+            selectElement = document.getElementById('import_lesson_source_lesson');
+        }
+
+        if (!courseId) {
+            selectElement.innerHTML = '<option value="">-- Trước tiên hãy chọn khóa học nguồn --</option>';
+            return;
+        }
+
+        selectElement.innerHTML = '<option value="">⏳ Đang tải cấu trúc...</option>';
+
+        fetch(`<?php echo APP_URL; ?>/api/courses/get-structure?course_id=${courseId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (!data.ok) {
+                    selectElement.innerHTML = `<option value="">❌ Lỗi: ${data.error}</option>`;
+                    return;
+                }
+
+                let html = '<option value="">-- Chọn một mục --</option>';
+
+                if (type === 'part') {
+                    if (data.parts.length === 0) {
+                        html = '<option value="">(Khóa học này chưa có Phần nào)</option>';
+                    } else {
+                        data.parts.forEach(p => {
+                            html += `<option value="${p.id}">Phần: ${escapeHtml(p.title)}</option>`;
+                        });
+                    }
+                } else if (type === 'chapter') {
+                    let hasChapters = false;
+                    data.parts.forEach(p => {
+                        if (p.chapters.length > 0) {
+                            html += `<optgroup label="Phần: ${escapeHtml(p.title)}">`;
+                            p.chapters.forEach(c => {
+                                hasChapters = true;
+                                html += `<option value="${c.id}">Chương: ${escapeHtml(c.title)}</option>`;
+                            });
+                            html += `</optgroup>`;
+                        }
+                    });
+                    if (!hasChapters) {
+                        html = '<option value="">(Khóa học này chưa có Chương nào)</option>';
+                    }
+                } else if (type === 'lesson') {
+                    let hasLessons = false;
+                    data.parts.forEach(p => {
+                        p.chapters.forEach(c => {
+                            if (c.lessons.length > 0) {
+                                html += `<optgroup label="Chương: ${escapeHtml(c.title)}">`;
+                                c.lessons.forEach(l => {
+                                    hasLessons = true;
+                                    html += `<option value="${l.id}">Bài học: ${escapeHtml(l.title)}</option>`;
+                                });
+                                html += `</optgroup>`;
+                            }
+                        });
+                    });
+                    if (!hasLessons) {
+                        html = '<option value="">(Khóa học này chưa có Bài học nào)</option>';
+                    }
+                }
+
+                selectElement.innerHTML = html;
+            })
+            .catch(err => {
+                selectElement.innerHTML = '<option value="">❌ Lỗi kết nối máy chủ</option>';
+            });
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        var map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.replace(/[&<>"']/g, function(m) { return map[m]; });
     }
 </script>

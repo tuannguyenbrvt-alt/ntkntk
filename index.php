@@ -84,6 +84,11 @@ $router->post('/admin/courses/delete', 'AdminCourseController@delete');
 $router->get('/admin/courses/builder', 'AdminCourseController@builder');
 
 // Admin LMS Content Builder
+$router->get('/api/courses/get-structure', 'AdminCourseContentController@getCourseStructure');
+$router->post('/admin/courses/content/importPart', 'AdminCourseContentController@importPart');
+$router->post('/admin/courses/content/importChapter', 'AdminCourseContentController@importChapter');
+$router->post('/admin/courses/content/importLesson', 'AdminCourseContentController@importLesson');
+
 $router->post('/admin/courses/content/storePart', 'AdminCourseContentController@storePart');
 $router->post('/admin/courses/content/updatePart', 'AdminCourseContentController@updatePart');
 $router->post('/admin/courses/content/deletePart', 'AdminCourseContentController@deletePart');

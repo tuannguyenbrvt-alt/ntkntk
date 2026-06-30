@@ -196,10 +196,15 @@ class AdminCourseController extends Controller {
             }
         }
 
+        $stmtAllCourses = $db->prepare("SELECT id, title FROM courses WHERE id != ? ORDER BY title ASC");
+        $stmtAllCourses->execute([$id]);
+        $allCourses = $stmtAllCourses->fetchAll();
+
         $this->render('admin/courses/builder', [
             'title' => 'Cấu trúc Khóa học: ' . htmlspecialchars($course['title']),
             'course' => $course,
-            'parts' => $parts
+            'parts' => $parts,
+            'allCourses' => $allCourses
         ], 'admin');
     }
 }

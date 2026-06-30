@@ -442,4 +442,299 @@ class AdminCourseContentController extends Controller {
         
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
+
+    // API Lấy cấu trúc khóa học (Phần -> Chương -> Bài học) dưới dạng JSON
+    public function getCourseStructure() {
+        header('Content-Type: application/json');
+        $course_id = (int)($_GET['course_id'] ?? 0);
+        if (!$course_id) {
+            echo json_encode(['ok' => false, 'error' => 'Khóa học không hợp lệ']);
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        // Lấy danh sách phần
+        $stmtParts = $db->prepare("SELECT id, title FROM course_parts WHERE course_id = ? ORDER BY sort_order ASC, id ASC");
+        $stmtParts->execute([$course_id]);
+        $parts = $stmtParts->fetchAll();
+
+        foreach ($parts as &$part) {
+            // Lấy danh sách chương của phần
+            $stmtChapters = $db->prepare("SELECT id, title FROM course_chapters WHERE part_id = ? ORDER BY sort_order ASC, id ASC");
+            $stmtChapters->execute([$part['id']]);
+            $part['chapters'] = $stmtChapters->fetchAll();
+
+            foreach ($part['chapters'] as &$chapter) {
+                // Lấy danh sách bài học của chương
+                $stmtLessons = $db->prepare("SELECT id, title FROM course_lessons WHERE chapter_id = ? ORDER BY sort_order ASC, id ASC");
+                $stmtLessons->execute([$chapter['id']]);
+                $chapter['lessons'] = $stmtLessons->fetchAll();
+            }
+        }
+
+        echo json_encode([
+            'ok' => true,
+            'parts' => $parts
+        ]);
+    }
+
+    // Thực hiện nhân bản bài học và các tài nguyên đi kèm
+    private function cloneLesson($db, $old_lesson_id, $new_chapter_id, $new_course_id) {
+        $stmt = $db->prepare("SELECT * FROM course_lessons WHERE id = ?");
+        $stmt->execute([$old_lesson_id]);
+        $oldLesson = $stmt->fetch();
+        if (!$oldLesson) return false;
+
+        $orderQuery = $db->prepare("SELECT IFNULL(MAX(sort_order), -1) + 1 FROM course_lessons WHERE chapter_id = ?");
+        $orderQuery->execute([$new_chapter_id]);
+        $nextOrder = (int)$orderQuery->fetchColumn();
+
+        $stmtInsert = $db->prepare("INSERT INTO course_lessons (chapter_id, title, is_free_preview, allow_comments, sort_order) VALUES (?, ?, ?, ?, ?)");
+        $stmtInsert->execute([
+            $new_chapter_id,
+            $oldLesson['title'],
+            $oldLesson['is_free_preview'],
+            $oldLesson['allow_comments'] ?? 0,
+            $nextOrder
+        ]);
+        $new_lesson_id = $db->lastInsertId();
+
+        // Sao chép lesson_items
+        $stmtItems = $db->prepare("SELECT * FROM lesson_items WHERE lesson_id = ? ORDER BY sort_order ASC, id ASC");
+        $stmtItems->execute([$old_lesson_id]);
+        $items = $stmtItems->fetchAll();
+        foreach ($items as $item) {
+            $stmtInsItem = $db->prepare("INSERT INTO lesson_items (lesson_id, type, content, sort_order) VALUES (?, ?, ?, ?)");
+            $stmtInsItem->execute([
+                $new_lesson_id,
+                $item['type'],
+                $item['content'],
+                $item['sort_order']
+            ]);
+        }
+
+        // Sao chép lesson_attachments
+        $stmtAttach = $db->prepare("SELECT * FROM lesson_attachments WHERE lesson_id = ? ORDER BY id ASC");
+        $stmtAttach->execute([$old_lesson_id]);
+        $attachments = $stmtAttach->fetchAll();
+        foreach ($attachments as $attach) {
+            $stmtInsAttach = $db->prepare("INSERT INTO lesson_attachments (lesson_id, name, file_path, file_size) VALUES (?, ?, ?, ?)");
+            $stmtInsAttach->execute([
+                $new_lesson_id,
+                $attach['name'],
+                $attach['file_path'],
+                $attach['file_size']
+            ]);
+        }
+
+        // Sao chép quizzes và liên kết ngân hàng câu hỏi độc lập
+        $stmtQuizzes = $db->prepare("SELECT * FROM quizzes WHERE lesson_id = ? ORDER BY id ASC");
+        $stmtQuizzes->execute([$old_lesson_id]);
+        $quizzes = $stmtQuizzes->fetchAll();
+        foreach ($quizzes as $quiz) {
+            $stmtInsQuiz = $db->prepare("INSERT INTO quizzes (lesson_id, title, description, time_limit_minutes, pass_score, max_attempts, shuffle_questions, shuffle_options) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmtInsQuiz->execute([
+                $new_lesson_id,
+                $quiz['title'],
+                $quiz['description'],
+                $quiz['time_limit_minutes'],
+                $quiz['pass_score'],
+                $quiz['max_attempts'],
+                $quiz['shuffle_questions'],
+                $quiz['shuffle_options']
+            ]);
+            $new_quiz_id = $db->lastInsertId();
+
+            // Sao chép câu hỏi trong đề trắc nghiệm
+            $stmtQQ = $db->prepare("SELECT * FROM quiz_questions WHERE quiz_id = ? ORDER BY sort_order ASC, id ASC");
+            $stmtQQ->execute([$quiz['id']]);
+            $quizQuestions = $stmtQQ->fetchAll();
+
+            foreach ($quizQuestions as $qq) {
+                // Sao chép câu hỏi gốc sang ngân hàng câu hỏi của khóa học đích
+                $stmtQB = $db->prepare("SELECT * FROM question_bank WHERE id = ?");
+                $stmtQB->execute([$qq['bank_question_id']]);
+                $oldQB = $stmtQB->fetch();
+
+                if ($oldQB) {
+                    $stmtInsQB = $db->prepare("INSERT INTO question_bank (course_id, question_text, question_type, created_by) VALUES (?, ?, ?, ?)");
+                    $stmtInsQB->execute([
+                        $new_course_id,
+                        $oldQB['question_text'],
+                        $oldQB['question_type'],
+                        $_SESSION['user_id']
+                    ]);
+                    $new_bank_question_id = $db->lastInsertId();
+
+                    // Sao chép đáp án câu hỏi
+                    $stmtQBO = $db->prepare("SELECT * FROM question_bank_options WHERE question_id = ? ORDER BY sort_order ASC, id ASC");
+                    $stmtQBO->execute([$qq['bank_question_id']]);
+                    $options = $stmtQBO->fetchAll();
+                    foreach ($options as $opt) {
+                        $stmtInsQBO = $db->prepare("INSERT INTO question_bank_options (question_id, option_text, is_correct, sort_order) VALUES (?, ?, ?, ?)");
+                        $stmtInsQBO->execute([
+                            $new_bank_question_id,
+                            $opt['option_text'],
+                            $opt['is_correct'],
+                            $opt['sort_order']
+                        ]);
+                    }
+
+                    // Đăng ký câu hỏi vào đề trắc nghiệm mới
+                    $stmtInsQQ = $db->prepare("INSERT INTO quiz_questions (quiz_id, bank_question_id, sort_order) VALUES (?, ?, ?)");
+                    $stmtInsQQ->execute([
+                        $new_quiz_id,
+                        $new_bank_question_id,
+                        $qq['sort_order']
+                    ]);
+                }
+            }
+        }
+
+        // Sao chép assignments
+        $stmtAsgn = $db->prepare("SELECT * FROM assignments WHERE lesson_id = ? ORDER BY id ASC");
+        $stmtAsgn->execute([$old_lesson_id]);
+        $assignments = $stmtAsgn->fetchAll();
+        foreach ($assignments as $asgn) {
+            $stmtInsAsgn = $db->prepare("INSERT INTO assignments (lesson_id, title, description, type, max_score, due_date, drive_folder_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmtInsAsgn->execute([
+                $new_lesson_id,
+                $asgn['title'],
+                $asgn['description'],
+                $asgn['type'],
+                $asgn['max_score'],
+                $asgn['due_date'],
+                $asgn['drive_folder_id'] ?? null
+            ]);
+        }
+
+        return $new_lesson_id;
+    }
+
+    // Thực hiện nhân bản chương và các bài học trong đó
+    private function cloneChapter($db, $old_chapter_id, $new_part_id, $new_course_id) {
+        $stmt = $db->prepare("SELECT * FROM course_chapters WHERE id = ?");
+        $stmt->execute([$old_chapter_id]);
+        $oldChapter = $stmt->fetch();
+        if (!$oldChapter) return false;
+
+        $orderQuery = $db->prepare("SELECT IFNULL(MAX(sort_order), -1) + 1 FROM course_chapters WHERE part_id = ?");
+        $orderQuery->execute([$new_part_id]);
+        $nextOrder = (int)$orderQuery->fetchColumn();
+
+        $stmtInsert = $db->prepare("INSERT INTO course_chapters (part_id, title, sort_order) VALUES (?, ?, ?)");
+        $stmtInsert->execute([
+            $new_part_id,
+            $oldChapter['title'],
+            $nextOrder
+        ]);
+        $new_chapter_id = $db->lastInsertId();
+
+        $stmtLessons = $db->prepare("SELECT id FROM course_lessons WHERE chapter_id = ? ORDER BY sort_order ASC, id ASC");
+        $stmtLessons->execute([$old_chapter_id]);
+        $lessons = $stmtLessons->fetchAll();
+        foreach ($lessons as $lesson) {
+            $this->cloneLesson($db, $lesson['id'], $new_chapter_id, $new_course_id);
+        }
+
+        return $new_chapter_id;
+    }
+
+    // Thực hiện nhân bản phần và các chương trong đó
+    private function clonePart($db, $old_part_id, $new_course_id) {
+        $stmt = $db->prepare("SELECT * FROM course_parts WHERE id = ?");
+        $stmt->execute([$old_part_id]);
+        $oldPart = $stmt->fetch();
+        if (!$oldPart) return false;
+
+        $orderQuery = $db->prepare("SELECT IFNULL(MAX(sort_order), -1) + 1 FROM course_parts WHERE course_id = ?");
+        $orderQuery->execute([$new_course_id]);
+        $nextOrder = (int)$orderQuery->fetchColumn();
+
+        $stmtInsert = $db->prepare("INSERT INTO course_parts (course_id, title, sort_order) VALUES (?, ?, ?)");
+        $stmtInsert->execute([
+            $new_course_id,
+            $oldPart['title'],
+            $nextOrder
+        ]);
+        $new_part_id = $db->lastInsertId();
+
+        $stmtChapters = $db->prepare("SELECT id FROM course_chapters WHERE part_id = ? ORDER BY sort_order ASC, id ASC");
+        $stmtChapters->execute([$old_part_id]);
+        $chapters = $stmtChapters->fetchAll();
+        foreach ($chapters as $chapter) {
+            $this->cloneChapter($db, $chapter['id'], $new_part_id, $new_course_id);
+        }
+
+        return $new_part_id;
+    }
+
+    // Handler POST Sao chép Phần
+    public function importPart() {
+        $old_part_id = (int)($_POST['source_part_id'] ?? 0);
+        $course_id = (int)($_POST['course_id'] ?? 0);
+
+        if ($old_part_id > 0 && $course_id > 0) {
+            $db = Database::getInstance()->getConnection();
+            $db->beginTransaction();
+            try {
+                $this->clonePart($db, $old_part_id, $course_id);
+                $db->commit();
+                $_SESSION['success'] = 'Sao chép phần thành công!';
+            } catch (Exception $e) {
+                $db->rollBack();
+                $_SESSION['error'] = 'Lỗi sao chép phần: ' . $e->getMessage();
+            }
+        } else {
+            $_SESSION['error'] = 'Dữ liệu không hợp lệ.';
+        }
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
+
+    // Handler POST Sao chép Chương
+    public function importChapter() {
+        $old_chapter_id = (int)($_POST['source_chapter_id'] ?? 0);
+        $part_id = (int)($_POST['part_id'] ?? 0);
+        $course_id = (int)($_POST['course_id'] ?? 0);
+
+        if ($old_chapter_id > 0 && $part_id > 0 && $course_id > 0) {
+            $db = Database::getInstance()->getConnection();
+            $db->beginTransaction();
+            try {
+                $this->cloneChapter($db, $old_chapter_id, $part_id, $course_id);
+                $db->commit();
+                $_SESSION['success'] = 'Sao chép chương thành công!';
+            } catch (Exception $e) {
+                $db->rollBack();
+                $_SESSION['error'] = 'Lỗi sao chép chương: ' . $e->getMessage();
+            }
+        } else {
+            $_SESSION['error'] = 'Dữ liệu không hợp lệ.';
+        }
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
+
+    // Handler POST Sao chép Bài học
+    public function importLesson() {
+        $old_lesson_id = (int)($_POST['source_lesson_id'] ?? 0);
+        $chapter_id = (int)($_POST['chapter_id'] ?? 0);
+        $course_id = (int)($_POST['course_id'] ?? 0);
+
+        if ($old_lesson_id > 0 && $chapter_id > 0 && $course_id > 0) {
+            $db = Database::getInstance()->getConnection();
+            $db->beginTransaction();
+            try {
+                $this->cloneLesson($db, $old_lesson_id, $chapter_id, $course_id);
+                $db->commit();
+                $_SESSION['success'] = 'Sao chép bài học thành công!';
+            } catch (Exception $e) {
+                $db->rollBack();
+                $_SESSION['error'] = 'Lỗi sao chép bài học: ' . $e->getMessage();
+            }
+        } else {
+            $_SESSION['error'] = 'Dữ liệu không hợp lệ.';
+        }
+        $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
 }
