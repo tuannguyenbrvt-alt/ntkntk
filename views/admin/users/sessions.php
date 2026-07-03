@@ -183,7 +183,7 @@
                     <li class="page-item <?php echo $page == $i ? 'active' : ''; ?>">
                         <a class="page-link" href="<?php echo APP_URL; ?>/admin/sessions?page=<?php echo $i; ?>&q=<?php echo urlencode($search); ?>&status=<?php echo urlencode($statusFilter); ?>"><?php echo $i; ?></a>
                     </li>
-                <?php endphp; ?>
+                <?php endfor; ?>
                 
                 <!-- Nút trang sau -->
                 <li class="page-item <?php echo $page >= $totalPages ? 'disabled' : ''; ?>">
