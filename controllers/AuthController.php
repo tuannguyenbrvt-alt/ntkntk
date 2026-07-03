@@ -23,6 +23,10 @@ class AuthController extends Controller {
             $_SESSION['full_name'] = $user['full_name'];
             $_SESSION['avatar'] = $user['avatar'] ?? null;
 
+            // Ghi nhận lịch sử đăng nhập
+            require_once ROOT_PATH . '/helpers/TrackerHelper.php';
+            TrackerHelper::recordLogin($db, $user['id']);
+
             if ($user['role'] === 'super_admin' || $user['role'] === 'admin') {
                 $this->redirect('/admin/dashboard');
             } else {
@@ -231,6 +235,10 @@ class AuthController extends Controller {
             $_SESSION['role'] = $user['role'];
             $_SESSION['full_name'] = $user['full_name'];
             
+            // Ghi nhận lịch sử đăng nhập
+            require_once ROOT_PATH . '/helpers/TrackerHelper.php';
+            TrackerHelper::recordLogin($db, $user['id']);
+            
             if (empty($user['avatar']) && !empty($avatar)) {
                 $db->prepare("UPDATE users SET avatar = ? WHERE id = ?")->execute([$avatar, $user['id']]);
                 $_SESSION['avatar'] = $avatar;
@@ -267,6 +275,10 @@ class AuthController extends Controller {
                 $_SESSION['full_name'] = $fullName;
                 $_SESSION['avatar'] = $avatar;
                 
+                // Ghi nhận lịch sử đăng nhập
+                require_once ROOT_PATH . '/helpers/TrackerHelper.php';
+                TrackerHelper::recordLogin($db, $newUserId);
+                
                 $_SESSION['success'] = 'Đăng nhập thành công bằng Google! Tài khoản của bạn đã được khởi tạo tự động.';
                 $this->redirect('/');
                 return;
@@ -279,6 +291,10 @@ class AuthController extends Controller {
     }
 
     public function logout() {
+        $db = Database::getInstance()->getConnection();
+        require_once ROOT_PATH . '/helpers/TrackerHelper.php';
+        TrackerHelper::recordLogout($db);
+
         session_destroy();
         $this->redirect('/login');
     }

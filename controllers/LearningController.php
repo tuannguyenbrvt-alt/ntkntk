@@ -79,6 +79,10 @@ class LearningController extends Controller {
             $stmtCheckProg = $db->prepare("SELECT id FROM course_progress WHERE student_id = ? AND lesson_id = ? AND is_completed = 1");
             $stmtCheckProg->execute([$_SESSION['user_id'], $current_lesson['id']]);
             if ($stmtCheckProg->fetch()) $is_completed = true;
+
+            // Ghi nhận bài học đã mở xem trong phiên
+            require_once ROOT_PATH . '/helpers/TrackerHelper.php';
+            TrackerHelper::recordLessonView($db, $current_lesson['id']);
         }
 
         $this->render('learning/index', [

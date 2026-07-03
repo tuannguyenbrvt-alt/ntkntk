@@ -27,6 +27,10 @@ try {
             $__stmt = $__db->prepare("UPDATE users SET last_active_at = NOW() WHERE id = ?");
             $__stmt->execute([$_SESSION['user_id']]);
             $_SESSION['last_active_update'] = $__now;
+
+            // Cập nhật hoạt động cuối cùng của session và chạy dọn dẹp các session offline
+            require_once 'helpers/TrackerHelper.php';
+            TrackerHelper::updateSessionActivity($__db);
         }
     }
     // Đối với khách vãng lai đang chat
@@ -118,6 +122,10 @@ $router->post('/admin/enrollments/delete', 'EnrollmentController@adminDelete');
 $router->get('/admin/users', 'AdminUserController@index');
 $router->post('/admin/users/update-role', 'AdminUserController@updateRole');
 $router->post('/admin/users/delete', 'AdminUserController@delete');
+
+// Admin User Sessions (Lịch sử truy cập)
+$router->get('/admin/sessions', 'AdminUserController@sessions');
+$router->get('/admin/sessions/detail', 'AdminUserController@sessionDetail');
 
 // Admin Student CRM
 $router->get('/admin/students', 'AdminStudentController@index');

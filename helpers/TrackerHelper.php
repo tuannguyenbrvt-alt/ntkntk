@@ -192,4 +192,122 @@ class TrackerHelper {
 
         return $stats;
     }
+
+    /**
+     * Ghi nhận phiên đăng nhập của người dùng.
+     * 
+     * @param PDO $db Kết nối cơ sở dữ liệu
+     * @param int $userId ID người dùng
+     */
+    public static function recordLogin($db, $userId) {
+        if (!$db || !$userId) {
+            return;
+        }
+        try {
+            $sessionId = session_id();
+            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? null;
+            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? null;
+
+            $stmt = $db->prepare("INSERT INTO user_sessions (user_id, session_id, ip_address, user_agent, login_at, last_activity_at, status) VALUES (?, ?, ?, ?, NOW(), NOW(), 'active')");
+            $stmt->execute([$userId, $sessionId, $ipAddress, $userAgent]);
+            
+            $_SESSION['user_session_db_id'] = $db->lastInsertId();
+        } catch (Exception $e) {
+            // Cô lập lỗi để tránh làm gián đoạn đăng nhập
+        }
+    }
+
+    /**
+     * Ghi nhận khi người dùng chủ động đăng xuất.
+     * 
+     * @param PDO $db Kết nối cơ sở dữ liệu
+     */
+    public static function recordLogout($db) {
+        if (!$db) {
+            return;
+        }
+        try {
+            $sessionDbId = $_SESSION['user_session_db_id'] ?? null;
+            if ($sessionDbId) {
+                $stmt = $db->prepare("UPDATE user_sessions SET logout_at = NOW(), status = 'logged_out' WHERE id = ? AND status = 'active'");
+                $stmt->execute([$sessionDbId]);
+            } else {
+                $sessionId = session_id();
+                if ($sessionId) {
+                    $stmt = $db->prepare("UPDATE user_sessions SET logout_at = NOW(), status = 'logged_out' WHERE session_id = ? AND status = 'active'");
+                    $stmt->execute([$sessionId]);
+                }
+            }
+        } catch (Exception $e) {
+            // Cô lập lỗi
+        }
+    }
+
+    /**
+     * Ghi nhận bài học người dùng đã mở xem trong phiên.
+     * 
+     * @param PDO $db Kết nối cơ sở dữ liệu
+     * @param int $lessonId ID bài học
+     */
+    public static function recordLessonView($db, $lessonId) {
+        if (!$db || !$lessonId) {
+            return;
+        }
+        try {
+            $sessionDbId = $_SESSION['user_session_db_id'] ?? null;
+            if (!$sessionDbId && isset($_SESSION['user_id'])) {
+                $sessionId = session_id();
+                $stmt = $db->prepare("SELECT id FROM user_sessions WHERE user_id = ? AND session_id = ? AND status = 'active' ORDER BY id DESC LIMIT 1");
+                $stmt->execute([$_SESSION['user_id'], $sessionId]);
+                $sessionDbId = $stmt->fetchColumn();
+                if ($sessionDbId) {
+                    $_SESSION['user_session_db_id'] = $sessionDbId;
+                }
+            }
+
+            if ($sessionDbId) {
+                $stmt = $db->prepare("INSERT IGNORE INTO user_session_lessons (user_session_id, lesson_id, viewed_at) VALUES (?, ?, NOW())");
+                $stmt->execute([$sessionDbId, $lessonId]);
+            }
+        } catch (Exception $e) {
+            // Cô lập lỗi
+        }
+    }
+
+    /**
+     * Cập nhật thời gian hoạt động cuối cùng của session và dọn dẹp các session đã offline.
+     * 
+     * @param PDO $db Kết nối cơ sở dữ liệu
+     */
+    public static function updateSessionActivity($db) {
+        if (!$db) {
+            return;
+        }
+        try {
+            $sessionDbId = $_SESSION['user_session_db_id'] ?? null;
+            
+            if ($sessionDbId) {
+                $stmt = $db->prepare("UPDATE user_sessions SET last_activity_at = NOW() WHERE id = ? AND status = 'active'");
+                $stmt->execute([$sessionDbId]);
+            } else if (isset($_SESSION['user_id'])) {
+                $sessionId = session_id();
+                $stmt = $db->prepare("SELECT id FROM user_sessions WHERE user_id = ? AND session_id = ? AND status = 'active' ORDER BY id DESC LIMIT 1");
+                $stmt->execute([$_SESSION['user_id'], $sessionId]);
+                $sessionDbId = $stmt->fetchColumn();
+                if ($sessionDbId) {
+                    $_SESSION['user_session_db_id'] = $sessionDbId;
+                    $stmtUpdate = $db->prepare("UPDATE user_sessions SET last_activity_at = NOW() WHERE id = ? AND status = 'active'");
+                    $stmtUpdate->execute([$sessionDbId]);
+                }
+            }
+
+            // Garbage Collector: Dọn dẹp session đã hết hạn (> 15 phút không hoạt động) ngẫu nhiên 1% số request
+            if (mt_rand(1, 100) === 1) {
+                $stmtClean = $db->prepare("UPDATE user_sessions SET status = 'expired', logout_at = last_activity_at WHERE status = 'active' AND last_activity_at < (NOW() - INTERVAL 15 MINUTE)");
+                $stmtClean->execute();
+            }
+        } catch (Exception $e) {
+            // Cô lập lỗi
+        }
+    }
 }
