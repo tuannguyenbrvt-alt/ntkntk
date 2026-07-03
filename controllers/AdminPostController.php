@@ -56,6 +56,8 @@ class AdminPostController extends Controller {
         }
 
         $allow_comments = isset($_POST['allow_comments']) ? 1 : 0;
+        $is_pinned = isset($_POST['is_pinned']) ? 1 : 0;
+        $is_pinned = ($type === 'blog') ? $is_pinned : 0;
 
         $db = Database::getInstance()->getConnection();
         
@@ -66,8 +68,8 @@ class AdminPostController extends Controller {
             $slug .= '-' . time();
         }
 
-        $stmt = $db->prepare("INSERT INTO posts (title, slug, content, thumbnail, type, status, author_id, allow_comments) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        if ($stmt->execute([$title, $slug, $content, $thumbnail, $type, $status, $author_id, $allow_comments])) {
+        $stmt = $db->prepare("INSERT INTO posts (title, slug, content, thumbnail, type, status, author_id, allow_comments, is_pinned) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt->execute([$title, $slug, $content, $thumbnail, $type, $status, $author_id, $allow_comments, $is_pinned])) {
             $_SESSION['success'] = 'Thêm bài viết thành công!';
             $this->redirect('/admin/posts');
         } else {
@@ -125,6 +127,8 @@ class AdminPostController extends Controller {
         }
 
         $allow_comments = isset($_POST['allow_comments']) ? 1 : 0;
+        $is_pinned = isset($_POST['is_pinned']) ? 1 : 0;
+        $is_pinned = ($type === 'blog') ? $is_pinned : 0;
 
         $stmtCheck = $db->prepare("SELECT id FROM posts WHERE slug = ? AND id != ?");
         $stmtCheck->execute([$slug, $id]);
@@ -132,8 +136,8 @@ class AdminPostController extends Controller {
             $slug .= '-' . time();
         }
 
-        $stmt = $db->prepare("UPDATE posts SET title = ?, slug = ?, content = ?, thumbnail = ?, type = ?, status = ?, allow_comments = ? WHERE id = ?");
-        if ($stmt->execute([$title, $slug, $content, $thumbnail, $type, $status, $allow_comments, $id])) {
+        $stmt = $db->prepare("UPDATE posts SET title = ?, slug = ?, content = ?, thumbnail = ?, type = ?, status = ?, allow_comments = ?, is_pinned = ? WHERE id = ?");
+        if ($stmt->execute([$title, $slug, $content, $thumbnail, $type, $status, $allow_comments, $is_pinned, $id])) {
             $_SESSION['success'] = 'Cập nhật thành công!';
             $this->redirect('/admin/posts');
         } else {
@@ -148,6 +152,34 @@ class AdminPostController extends Controller {
         $stmt = $db->prepare("DELETE FROM posts WHERE id = ?");
         $stmt->execute([$id]);
         $_SESSION['success'] = 'Đã xóa bài viết!';
+        $this->redirect('/admin/posts');
+    }
+
+    public function togglePin() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/admin/posts');
+            return;
+        }
+        $id = (int)($_POST['id'] ?? 0);
+        $db = Database::getInstance()->getConnection();
+        
+        $stmt = $db->prepare("SELECT is_pinned, type FROM posts WHERE id = ?");
+        $stmt->execute([$id]);
+        $post = $stmt->fetch();
+        
+        if ($post) {
+            if ($post['type'] !== 'blog') {
+                $_SESSION['error'] = 'Chỉ có thể ghim bài viết dạng Blog.';
+                $this->redirect('/admin/posts');
+                return;
+            }
+            $newPin = $post['is_pinned'] ? 0 : 1;
+            $stmtUpdate = $db->prepare("UPDATE posts SET is_pinned = ? WHERE id = ?");
+            $stmtUpdate->execute([$newPin, $id]);
+            $_SESSION['success'] = $newPin ? 'Đã ghim bài viết lên đầu trang thành công!' : 'Đã bỏ ghim bài viết.';
+        } else {
+            $_SESSION['error'] = 'Không tìm thấy bài viết.';
+        }
         $this->redirect('/admin/posts');
     }
 }

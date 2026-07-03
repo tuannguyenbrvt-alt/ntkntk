@@ -37,6 +37,12 @@
                             </td>
                             <td>
                                 <strong><?php echo htmlspecialchars($course['title']); ?></strong>
+                                <form action="<?php echo APP_URL; ?>/admin/courses/toggle-pin" method="POST" class="d-inline ms-1">
+                                    <input type="hidden" name="id" value="<?php echo $course['id']; ?>">
+                                    <button type="submit" class="btn btn-link p-0 border-0 align-baseline" title="<?php echo $course['is_pinned'] ? 'Bỏ ghim khóa học' : 'Ghim khóa học lên đầu'; ?>">
+                                        <i class="bi <?php echo $course['is_pinned'] ? 'bi-pin-angle-fill text-danger' : 'bi-pin-angle text-muted'; ?> fs-6"></i>
+                                    </button>
+                                </form>
                             </td>
                             <td>
                                 <?php if($course['price'] > 0): ?>

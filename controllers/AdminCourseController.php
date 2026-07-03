@@ -71,9 +71,10 @@ class AdminCourseController extends Controller {
         }
 
         $allow_comments = isset($_POST['allow_comments']) ? 1 : 0;
+        $is_pinned = isset($_POST['is_pinned']) ? 1 : 0;
 
-        $stmt = $db->prepare("INSERT INTO courses (title, slug, description, thumbnail, price, original_price, status, author_id, allow_comments) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        if ($stmt->execute([$title, $slug, $description, $thumbnail, $price, $original_price, $status, $author_id, $allow_comments])) {
+        $stmt = $db->prepare("INSERT INTO courses (title, slug, description, thumbnail, price, original_price, status, author_id, allow_comments, is_pinned) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt->execute([$title, $slug, $description, $thumbnail, $price, $original_price, $status, $author_id, $allow_comments, $is_pinned])) {
             $courseId = $db->lastInsertId();
             $_SESSION['success'] = 'Thêm khóa học thành công! Vui lòng xây dựng đề cương.';
             // Chuyển tới giao diện Builder
@@ -140,9 +141,10 @@ class AdminCourseController extends Controller {
         }
 
         $allow_comments = isset($_POST['allow_comments']) ? 1 : 0;
+        $is_pinned = isset($_POST['is_pinned']) ? 1 : 0;
 
-        $stmt = $db->prepare("UPDATE courses SET title = ?, slug = ?, description = ?, thumbnail = ?, price = ?, original_price = ?, status = ?, allow_comments = ? WHERE id = ?");
-        if ($stmt->execute([$title, $slug, $description, $thumbnail, $price, $original_price, $status, $allow_comments, $id])) {
+        $stmt = $db->prepare("UPDATE courses SET title = ?, slug = ?, description = ?, thumbnail = ?, price = ?, original_price = ?, status = ?, allow_comments = ?, is_pinned = ? WHERE id = ?");
+        if ($stmt->execute([$title, $slug, $description, $thumbnail, $price, $original_price, $status, $allow_comments, $is_pinned, $id])) {
             $_SESSION['success'] = 'Cập nhật thành công!';
             $this->redirect('/admin/courses');
         } else {
@@ -206,5 +208,28 @@ class AdminCourseController extends Controller {
             'parts' => $parts,
             'allCourses' => $allCourses
         ], 'admin');
+    }
+
+    public function togglePin() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+            $this->redirect('/admin/courses');
+            return;
+        }
+        $id = (int)($_POST['id'] ?? 0);
+        $db = Database::getInstance()->getConnection();
+        
+        $stmt = $db->prepare("SELECT is_pinned FROM courses WHERE id = ?");
+        $stmt->execute([$id]);
+        $course = $stmt->fetch();
+        
+        if ($course) {
+            $newPin = $course['is_pinned'] ? 0 : 1;
+            $stmtUpdate = $db->prepare("UPDATE courses SET is_pinned = ? WHERE id = ?");
+            $stmtUpdate->execute([$newPin, $id]);
+            $_SESSION['success'] = $newPin ? 'Đã ghim khóa học lên đầu trang thành công!' : 'Đã bỏ ghim khóa học.';
+        } else {
+            $_SESSION['error'] = 'Không tìm thấy khóa học.';
+        }
+        $this->redirect('/admin/courses');
     }
 }

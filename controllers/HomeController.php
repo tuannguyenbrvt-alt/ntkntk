@@ -3,12 +3,12 @@ class HomeController extends Controller {
     public function index() {
         $db = Database::getInstance()->getConnection();
 
-        // Lấy 6 khóa học nổi bật đang xuất bản
-        $stmtCourses = $db->query("SELECT * FROM courses WHERE status = 'published' ORDER BY created_at DESC LIMIT 6");
+        // Lấy 6 khóa học nổi bật đang xuất bản (ưu tiên được ghim lên trước)
+        $stmtCourses = $db->query("SELECT * FROM courses WHERE status = 'published' ORDER BY is_pinned DESC, created_at DESC LIMIT 6");
         $featuredCourses = $stmtCourses->fetchAll();
 
-        // Lấy 3 bài viết mới nhất
-        $stmtPosts = $db->query("SELECT p.*, u.full_name as author_name FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.status = 'published' AND p.type = 'blog' ORDER BY p.created_at DESC LIMIT 3");
+        // Lấy 3 bài viết mới nhất (ưu tiên được ghim lên trước)
+        $stmtPosts = $db->query("SELECT p.*, u.full_name as author_name FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.status = 'published' AND p.type = 'blog' ORDER BY p.is_pinned DESC, p.created_at DESC LIMIT 3");
         $latestPosts = $stmtPosts->fetchAll();
 
         $this->render('home/index', [

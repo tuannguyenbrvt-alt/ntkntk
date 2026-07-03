@@ -2,7 +2,7 @@
 class CourseController extends Controller {
     public function index() {
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT c.*, u.full_name as author_name FROM courses c LEFT JOIN users u ON c.author_id = u.id WHERE c.status = 'published' ORDER BY c.created_at DESC");
+        $stmt = $db->query("SELECT c.*, u.full_name as author_name FROM courses c LEFT JOIN users u ON c.author_id = u.id WHERE c.status = 'published' ORDER BY c.is_pinned DESC, c.created_at DESC");
         $courses = $stmt->fetchAll();
 
         $this->render('courses/index', [

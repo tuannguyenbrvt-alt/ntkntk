@@ -37,7 +37,16 @@
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <strong><?php echo htmlspecialchars($post['title']); ?></strong><br>
+                                <strong><?php echo htmlspecialchars($post['title']); ?></strong>
+                                <?php if ($post['type'] == 'blog'): ?>
+                                    <form action="<?php echo APP_URL; ?>/admin/posts/toggle-pin" method="POST" class="d-inline ms-1">
+                                        <input type="hidden" name="id" value="<?php echo $post['id']; ?>">
+                                        <button type="submit" class="btn btn-link p-0 border-0 align-baseline" title="<?php echo $post['is_pinned'] ? 'Bỏ ghim bài viết' : 'Ghim bài viết lên đầu'; ?>">
+                                            <i class="bi <?php echo $post['is_pinned'] ? 'bi-pin-angle-fill text-danger' : 'bi-pin-angle text-muted'; ?> fs-6"></i>
+                                        </button>
+                                    </form>
+                                <?php endif; ?>
+                                <br>
                                 <small class="text-muted"><a href="<?php echo APP_URL; ?>/post?slug=<?php echo $post['slug']; ?>" target="_blank" class="text-decoration-none"><?php echo htmlspecialchars($post['slug']); ?></a></small>
                             </td>
                             <td><?php echo htmlspecialchars($post['author_name']); ?></td>

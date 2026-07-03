@@ -54,6 +54,11 @@
                         <input class="form-check-input" type="checkbox" name="allow_comments" id="allow_comments" value="1" <?php echo (!isset($post) || $post['allow_comments'] == 1) ? 'checked' : ''; ?>>
                         <label class="form-check-label fw-semibold" for="allow_comments">Cho phép bình luận</label>
                     </div>
+
+                    <div class="mb-3 form-check form-switch" id="pin-switch-container">
+                        <input class="form-check-input" type="checkbox" name="is_pinned" id="is_pinned" value="1" <?php echo (isset($post) && $post['is_pinned'] == 1) ? 'checked' : ''; ?>>
+                        <label class="form-check-label fw-semibold" for="is_pinned">Ghim bài viết lên đầu</label>
+                    </div>
                     
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Ảnh đại diện (Thumbnail)</label>
@@ -140,6 +145,22 @@
                     document.getElementById('post-slug').value = slug;
                 }
             });
+        }
+
+        // JS logic ẩn hiện nút ghim dựa theo loại bài viết
+        var typeSelect = document.querySelector('select[name="type"]');
+        var pinSwitch = document.getElementById('pin-switch-container');
+        if (typeSelect && pinSwitch) {
+            function togglePinSwitch() {
+                if (typeSelect.value === 'page') {
+                    pinSwitch.style.display = 'none';
+                    document.getElementById('is_pinned').checked = false;
+                } else {
+                    pinSwitch.style.display = 'block';
+                }
+            }
+            typeSelect.addEventListener('change', togglePinSwitch);
+            togglePinSwitch(); // Run on load
         }
     });
 </script>

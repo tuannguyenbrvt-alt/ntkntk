@@ -58,6 +58,11 @@
                         <label class="form-check-label fw-semibold" for="allow_comments">Cho phép bình luận</label>
                     </div>
                     
+                    <div class="mb-3 form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="is_pinned" id="is_pinned" value="1" <?php echo (isset($course) && $course['is_pinned'] == 1) ? 'checked' : ''; ?>>
+                        <label class="form-check-label fw-semibold" for="is_pinned">Ghim khóa học lên đầu</label>
+                    </div>
+                    
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Ảnh đại diện (Thumbnail)</label>
                         <?php if(isset($course) && $course['thumbnail']): ?>

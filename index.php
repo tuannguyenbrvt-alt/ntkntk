@@ -77,6 +77,7 @@ $router->post('/admin/posts/store', 'AdminPostController@store');
 $router->get('/admin/posts/edit', 'AdminPostController@edit');
 $router->post('/admin/posts/update', 'AdminPostController@update');
 $router->post('/admin/posts/delete', 'AdminPostController@delete');
+$router->post('/admin/posts/toggle-pin', 'AdminPostController@togglePin');
 
 // Admin LMS Routes
 $router->get('/admin/courses', 'AdminCourseController@index');
@@ -85,6 +86,7 @@ $router->post('/admin/courses/store', 'AdminCourseController@store');
 $router->get('/admin/courses/edit', 'AdminCourseController@edit');
 $router->post('/admin/courses/update', 'AdminCourseController@update');
 $router->post('/admin/courses/delete', 'AdminCourseController@delete');
+$router->post('/admin/courses/toggle-pin', 'AdminCourseController@togglePin');
 $router->get('/admin/courses/builder', 'AdminCourseController@builder');
 
 // Admin LMS Content Builder

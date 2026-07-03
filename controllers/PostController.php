@@ -2,7 +2,7 @@
 class PostController extends Controller {
     public function index() {
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->query("SELECT p.*, u.full_name as author_name FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.status = 'published' AND p.type = 'blog' ORDER BY p.created_at DESC");
+        $stmt = $db->query("SELECT p.*, u.full_name as author_name FROM posts p LEFT JOIN users u ON p.author_id = u.id WHERE p.status = 'published' AND p.type = 'blog' ORDER BY p.is_pinned DESC, p.created_at DESC");
         $posts = $stmt->fetchAll();
 
         $this->render('posts/index', [
