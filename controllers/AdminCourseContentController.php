@@ -29,8 +29,17 @@ class AdminCourseContentController extends Controller {
         $id = $_POST['id'] ?? 0;
         $course_id = $_POST['course_id'] ?? 0;
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("DELETE FROM course_parts WHERE id = ?");
-        $stmt->execute([$id]);
+        try {
+            $db->beginTransaction();
+            $this->performDeletePart($db, $id);
+            $db->commit();
+            $_SESSION['success'] = 'Xóa phần thành công!';
+        } catch (Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            $_SESSION['error'] = 'Lỗi khi xóa phần: ' . $e->getMessage();
+        }
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
 
@@ -58,8 +67,17 @@ class AdminCourseContentController extends Controller {
         $id = $_POST['id'] ?? 0;
         $course_id = $_POST['course_id'] ?? 0;
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("DELETE FROM course_chapters WHERE id = ?");
-        $stmt->execute([$id]);
+        try {
+            $db->beginTransaction();
+            $this->performDeleteChapter($db, $id);
+            $db->commit();
+            $_SESSION['success'] = 'Xóa chương thành công!';
+        } catch (Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            $_SESSION['error'] = 'Lỗi khi xóa chương: ' . $e->getMessage();
+        }
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
 
@@ -91,8 +109,17 @@ class AdminCourseContentController extends Controller {
         $id = $_POST['id'] ?? 0;
         $course_id = $_POST['course_id'] ?? 0;
         $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare("DELETE FROM course_lessons WHERE id = ?");
-        $stmt->execute([$id]);
+        try {
+            $db->beginTransaction();
+            $this->performDeleteLesson($db, $id);
+            $db->commit();
+            $_SESSION['success'] = 'Xóa bài học thành công!';
+        } catch (Exception $e) {
+            if ($db->inTransaction()) {
+                $db->rollBack();
+            }
+            $_SESSION['error'] = 'Lỗi khi xóa bài học: ' . $e->getMessage();
+        }
         $this->redirect('/admin/courses/builder?id=' . $course_id);
     }
 
@@ -736,5 +763,87 @@ class AdminCourseContentController extends Controller {
             $_SESSION['error'] = 'Dữ liệu không hợp lệ.';
         }
         $this->redirect('/admin/courses/builder?id=' . $course_id);
+    }
+
+    private function performDeletePart($db, $part_id) {
+        $chapterStmt = $db->prepare("SELECT id FROM course_chapters WHERE part_id = ?");
+        $chapterStmt->execute([$part_id]);
+        $chapters = $chapterStmt->fetchAll();
+        foreach ($chapters as $chapter) {
+            $this->performDeleteChapter($db, $chapter['id']);
+        }
+        $db->prepare("DELETE FROM course_parts WHERE id = ?")->execute([$part_id]);
+    }
+
+    private function performDeleteChapter($db, $chapter_id) {
+        $lessonStmt = $db->prepare("SELECT id FROM course_lessons WHERE chapter_id = ?");
+        $lessonStmt->execute([$chapter_id]);
+        $lessons = $lessonStmt->fetchAll();
+        foreach ($lessons as $lesson) {
+            $this->performDeleteLesson($db, $lesson['id']);
+        }
+        $db->prepare("DELETE FROM course_chapters WHERE id = ?")->execute([$chapter_id]);
+    }
+
+    private function performDeleteLesson($db, $lesson_id) {
+        // 1. Delete course progress
+        $db->prepare("DELETE FROM course_progress WHERE lesson_id = ?")->execute([$lesson_id]);
+
+        // 2. Delete comments (replies first, then parents)
+        $db->prepare("DELETE FROM comments WHERE lesson_id = ? AND parent_id IS NOT NULL")->execute([$lesson_id]);
+        $db->prepare("DELETE FROM comments WHERE lesson_id = ?")->execute([$lesson_id]);
+
+        // 3. Delete quizzes & attempts & attempt answers
+        $quizStmt = $db->prepare("SELECT id FROM quizzes WHERE lesson_id = ?");
+        $quizStmt->execute([$lesson_id]);
+        $quizzes = $quizStmt->fetchAll();
+        foreach ($quizzes as $quiz) {
+            $quiz_id = $quiz['id'];
+            $db->prepare("DELETE FROM quiz_attempt_answers WHERE attempt_id IN (SELECT id FROM quiz_attempts WHERE quiz_id = ?)")->execute([$quiz_id]);
+            $db->prepare("DELETE FROM quiz_attempts WHERE quiz_id = ?")->execute([$quiz_id]);
+            $db->prepare("DELETE FROM quiz_questions WHERE quiz_id = ?")->execute([$quiz_id]);
+            $db->prepare("DELETE FROM lesson_items WHERE type = 'quiz' AND content = ?")->execute([$quiz_id]);
+            $db->prepare("DELETE FROM quizzes WHERE id = ?")->execute([$quiz_id]);
+        }
+
+        // 4. Delete assignments & submissions
+        $asgnStmt = $db->prepare("SELECT id FROM assignments WHERE lesson_id = ?");
+        $asgnStmt->execute([$lesson_id]);
+        $assignments = $asgnStmt->fetchAll();
+        foreach ($assignments as $asgn) {
+            $asgn_id = $asgn['id'];
+            $db->prepare("DELETE FROM assignment_submissions WHERE assignment_id = ?")->execute([$asgn_id]);
+            $db->prepare("DELETE FROM lesson_items WHERE type IN ('assignment_essay', 'assignment_file') AND content = ?")->execute([$asgn_id]);
+            $db->prepare("DELETE FROM assignments WHERE id = ?")->execute([$asgn_id]);
+        }
+
+        // 5. Delete lesson items & physical PDF files
+        $itemStmt = $db->prepare("SELECT type, content FROM lesson_items WHERE lesson_id = ?");
+        $itemStmt->execute([$lesson_id]);
+        $items = $itemStmt->fetchAll();
+        foreach ($items as $item) {
+            if ($item['type'] === 'pdf') {
+                $filePath = ROOT_PATH . '/' . ltrim($item['content'], '/');
+                if (file_exists($filePath)) {
+                    @unlink($filePath);
+                }
+            }
+        }
+        $db->prepare("DELETE FROM lesson_items WHERE lesson_id = ?")->execute([$lesson_id]);
+
+        // 6. Delete attachments & physical files
+        $attStmt = $db->prepare("SELECT file_path FROM lesson_attachments WHERE lesson_id = ?");
+        $attStmt->execute([$lesson_id]);
+        $attachments = $attStmt->fetchAll();
+        foreach ($attachments as $att) {
+            $filePath = ROOT_PATH . '/' . ltrim($att['file_path'], '/');
+            if (file_exists($filePath)) {
+                @unlink($filePath);
+            }
+        }
+        $db->prepare("DELETE FROM lesson_attachments WHERE lesson_id = ?")->execute([$lesson_id]);
+
+        // 7. Delete the lesson itself
+        $db->prepare("DELETE FROM course_lessons WHERE id = ?")->execute([$lesson_id]);
     }
 }
