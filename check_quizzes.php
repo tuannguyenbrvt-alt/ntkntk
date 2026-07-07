@@ -8,29 +8,29 @@ header('Content-Type: text/plain; charset=utf-8');
 try {
     $db = Database::getInstance()->getConnection();
     
-    echo "=== CLEANING UP QUIZ 119 ===\n";
+    echo "=== DISSECTING QUIZ 120 ===\n";
     
-    // 1. Delete from lesson_items
-    $stmt1 = $db->prepare("DELETE FROM lesson_items WHERE type = 'quiz' AND content = '119'");
-    $stmt1->execute();
-    echo "Deleted from lesson_items: " . $stmt1->rowCount() . " rows.\n";
+    // 1. Get quiz questions rows
+    $stmtQQ = $db->prepare("SELECT * FROM quiz_questions WHERE quiz_id = 120 ORDER BY sort_order ASC");
+    $stmtQQ->execute();
+    $qqRows = $stmtQQ->fetchAll();
+    echo "Total rows in quiz_questions for quiz 120: " . count($qqRows) . "\n";
     
-    // 2. Delete from quiz_questions
-    $stmt2 = $db->prepare("DELETE FROM quiz_questions WHERE quiz_id = 119");
-    $stmt2->execute();
-    echo "Deleted from quiz_questions: " . $stmt2->rowCount() . " rows.\n";
+    // 2. Try the join query
+    $stmtJoin = $db->prepare("
+        SELECT qq.id as qq_id, qb.id as qb_id, qb.question_text, qb.question_type 
+        FROM quiz_questions qq 
+        JOIN question_bank qb ON qq.bank_question_id=qb.id 
+        WHERE qq.quiz_id=120 
+        ORDER BY qq.sort_order ASC
+    ");
+    $stmtJoin->execute();
+    $joinRows = $stmtJoin->fetchAll();
+    echo "Total questions returned by JOIN query: " . count($joinRows) . "\n";
     
-    // 3. Delete from quizzes
-    $stmt3 = $db->prepare("DELETE FROM quizzes WHERE id = 119");
-    $stmt3->execute();
-    echo "Deleted from quizzes: " . $stmt3->rowCount() . " rows.\n";
-    
-    echo "\n=== REMAINING QUIZZES FOR LESSON 283 ===\n";
-    $stmtQuizzes = $db->prepare("SELECT * FROM quizzes WHERE lesson_id = 283 ORDER BY id DESC");
-    $stmtQuizzes->execute();
-    $quizzes = $stmtQuizzes->fetchAll();
-    foreach ($quizzes as $quiz) {
-        echo "Quiz ID: {$quiz['id']} | Title: {$quiz['title']}\n";
+    // 3. Dump the questions to verify escaping
+    foreach ($joinRows as $idx => $row) {
+        echo ($idx + 1) . ". QB ID: {$row['qb_id']} | Text: " . htmlspecialchars($row['question_text']) . "\n";
     }
 
 } catch (Exception $e) {
