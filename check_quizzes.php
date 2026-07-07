@@ -8,29 +8,36 @@ header('Content-Type: text/plain; charset=utf-8');
 try {
     $db = Database::getInstance()->getConnection();
     
-    echo "=== CLEANING UP QUIZ 122 ===\n";
+    echo "=== DISSECTING QUIZ 123 ===\n";
     
-    // 1. Delete from lesson_items
-    $stmt1 = $db->prepare("DELETE FROM lesson_items WHERE type = 'quiz' AND content = '122'");
-    $stmt1->execute();
-    echo "Deleted from lesson_items: " . $stmt1->rowCount() . " rows.\n";
+    // 1. Get quiz questions rows
+    $stmtQQ = $db->prepare("SELECT * FROM quiz_questions WHERE quiz_id = 123 ORDER BY sort_order ASC");
+    $stmtQQ->execute();
+    $qqRows = $stmtQQ->fetchAll();
+    echo "Total rows in quiz_questions for quiz 123: " . count($qqRows) . "\n";
     
-    // 2. Delete from quiz_questions
-    $stmt2 = $db->prepare("DELETE FROM quiz_questions WHERE quiz_id = 122");
-    $stmt2->execute();
-    echo "Deleted from quiz_questions: " . $stmt2->rowCount() . " rows.\n";
+    // 2. Try the join query
+    $stmtJoin = $db->prepare("
+        SELECT qq.id as qq_id, qb.id as qb_id, qb.question_text, qb.question_type 
+        FROM quiz_questions qq 
+        JOIN question_bank qb ON qq.bank_question_id=qb.id 
+        WHERE qq.quiz_id=123 
+        ORDER BY qq.sort_order ASC
+    ");
+    $stmtJoin->execute();
+    $joinRows = $stmtJoin->fetchAll();
+    echo "Total questions returned by JOIN query: " . count($joinRows) . "\n";
     
-    // 3. Delete from quizzes
-    $stmt3 = $db->prepare("DELETE FROM quizzes WHERE id = 122");
-    $stmt3->execute();
-    echo "Deleted from quizzes: " . $stmt3->rowCount() . " rows.\n";
-    
-    echo "\n=== REMAINING QUIZZES FOR LESSON 285 ===\n";
-    $stmtQuizzes = $db->prepare("SELECT * FROM quizzes WHERE lesson_id = 285 ORDER BY id DESC");
-    $stmtQuizzes->execute();
-    $quizzes = $stmtQuizzes->fetchAll();
-    foreach ($quizzes as $quiz) {
-        echo "Quiz ID: {$quiz['id']} | Title: {$quiz['title']}\n";
+    // 3. Print the answer mapping for first 5 questions
+    foreach (array_slice($joinRows, 0, 5) as $idx => $row) {
+        echo ($idx + 1) . ". QB ID: {$row['qb_id']} | Text: " . htmlspecialchars($row['question_text']) . "\n";
+        
+        $stmtOpt = $db->prepare("SELECT id, option_text, is_correct FROM question_bank_options WHERE question_id = ? ORDER BY sort_order ASC");
+        $stmtOpt->execute([$row['qb_id']]);
+        $opts = $stmtOpt->fetchAll();
+        foreach ($opts as $opt) {
+            echo "   - [ " . ($opt['is_correct'] ? "X" : " ") . " ] " . htmlspecialchars($opt['option_text']) . "\n";
+        }
     }
 
 } catch (Exception $e) {
