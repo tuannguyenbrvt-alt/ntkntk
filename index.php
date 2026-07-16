@@ -223,6 +223,7 @@ $router->get('/quiz/result', 'QuizController@result');
 // Student - Assignment
 $router->post('/assignment/submitEssay', 'AssignmentController@submitEssay');
 $router->post('/assignment/submitFile', 'AssignmentController@submitFile');
+$router->post('/assignment/deleteFile', 'AssignmentController@deleteFile');
 $router->get('/assignment/result', 'AssignmentController@result');
 
 // Progress & Lookup

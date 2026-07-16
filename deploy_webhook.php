@@ -31,6 +31,8 @@ $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, $repoZipUrl);
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
 curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
 curl_setopt($ch, CURLOPT_TIMEOUT, 60);
 $zipContent = curl_exec($ch);

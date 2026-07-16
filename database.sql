@@ -307,6 +307,23 @@ CREATE TABLE `assignment_submissions` (
   CONSTRAINT `sub_ibfk_2` FOREIGN KEY (`student_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `assignment_submission_files` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `submission_id` int(11) NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `file_drive_url` varchar(500) DEFAULT NULL,
+  `file_drive_id` varchar(100) DEFAULT NULL,
+  `content` longtext DEFAULT NULL COMMENT 'Lỗi chi tiết nếu tải lên Drive thất bại',
+  `score` decimal(5,2) DEFAULT NULL,
+  `feedback` text DEFAULT NULL,
+  `status` enum('pending','graded') NOT NULL DEFAULT 'pending',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `submission_id` (`submission_id`),
+  CONSTRAINT `sub_files_ibfk_1` FOREIGN KEY (`submission_id`) REFERENCES `assignment_submissions` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================================
 -- SITE VISITS TRACKER
 -- ============================================================

@@ -70,13 +70,64 @@ class AdminAssignmentController extends Controller {
         $sub = $db->prepare("SELECT s.*, u.full_name, u.phone, a.title as asgn_title, a.max_score, a.type, a.id as assignment_id FROM assignment_submissions s JOIN users u ON s.student_id = u.id JOIN assignments a ON s.assignment_id = a.id WHERE s.id = ?");
         $sub->execute([$sub_id]); $sub = $sub->fetch();
         if (!$sub) { $this->redirect('/admin/courses'); return; }
-        $this->render('admin/assignments/grade', ['title' => 'Cham diem: '.$sub['full_name'], 'sub' => $sub, 'course_id' => $course_id], 'admin');
+
+        $subFiles = [];
+        if ($sub['type'] === 'file') {
+            $fStmt = $db->prepare("SELECT * FROM assignment_submission_files WHERE submission_id = ? ORDER BY created_at ASC");
+            $fStmt->execute([$sub_id]);
+            $subFiles = $fStmt->fetchAll();
+        }
+
+        $this->render('admin/assignments/grade', [
+            'title' => 'Cham diem: '.$sub['full_name'], 
+            'sub' => $sub, 
+            'subFiles' => $subFiles, 
+            'course_id' => $course_id
+        ], 'admin');
     }
 
     public function storeGrade() {
         $sub_id = $_POST['sub_id'] ?? 0; $assignment_id = $_POST['assignment_id'] ?? 0; $course_id = $_POST['course_id'] ?? 0;
         $db = Database::getInstance()->getConnection();
-        $db->prepare("UPDATE assignment_submissions SET score=?, feedback=?, status='graded', graded_at=NOW(), graded_by=? WHERE id=?")->execute([(float)($_POST['score'] ?? 0), $_POST['feedback'] ?? '', $_SESSION['user_id'], $sub_id]);
+
+        // Lay loai bai tap
+        $aStmt = $db->prepare("SELECT type FROM assignments WHERE id = ?");
+        $aStmt->execute([$assignment_id]);
+        $asgnType = $aStmt->fetchColumn();
+
+        if ($asgnType === 'file') {
+            $fileScores = $_POST['file_scores'] ?? [];
+            $fileFeedbacks = $_POST['file_feedbacks'] ?? [];
+            $totalScore = 0;
+            $fileCount = 0;
+
+            foreach ($fileScores as $fileId => $score) {
+                $feedback = $fileFeedbacks[$fileId] ?? '';
+                $db->prepare("UPDATE assignment_submission_files SET score = ?, feedback = ?, status = 'graded' WHERE id = ?")
+                   ->execute([(float)$score, $feedback, $fileId]);
+                $totalScore += (float)$score;
+                $fileCount++;
+            }
+
+            // Lay diem tong quan tu form gui len (hoac tinh trung binh neu khong nhap)
+            $overallScore = isset($_POST['score']) ? (float)$_POST['score'] : ($fileCount > 0 ? $totalScore : 0);
+            $overallFeedback = $_POST['feedback'] ?? '';
+
+            // Cap nhat trang thai graded neu tat ca cac file da duoc cham diem
+            $pendingStmt = $db->prepare("SELECT COUNT(*) FROM assignment_submission_files WHERE submission_id = ? AND status = 'pending'");
+            $pendingStmt->execute([$sub_id]);
+            $pendingCount = (int)$pendingStmt->fetchColumn();
+
+            $status = ($pendingCount === 0) ? 'graded' : 'pending';
+
+            $db->prepare("UPDATE assignment_submissions SET score=?, feedback=?, status=?, graded_at=NOW(), graded_by=? WHERE id=?")
+               ->execute([$overallScore, $overallFeedback, $status, $_SESSION['user_id'], $sub_id]);
+        } else {
+            // Tu luan
+            $db->prepare("UPDATE assignment_submissions SET score=?, feedback=?, status='graded', graded_at=NOW(), graded_by=? WHERE id=?")
+               ->execute([(float)($_POST['score'] ?? 0), $_POST['feedback'] ?? '', $_SESSION['user_id'], $sub_id]);
+        }
+
         $_SESSION['success'] = 'Da cham diem thanh cong!';
         // Neu den tu trang pending, tra ve pending
         if (!empty($_POST['from_pending'])) {

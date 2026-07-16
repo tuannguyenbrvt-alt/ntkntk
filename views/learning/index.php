@@ -129,6 +129,12 @@
                             if ($asgn_info):
                                 $sub = $db->prepare("SELECT * FROM assignment_submissions WHERE assignment_id=? AND student_id=?");
                                 $sub->execute([$asgn_id, $_SESSION['user_id']]); $my_sub = $sub->fetch();
+                                $my_sub_files = [];
+                                if ($my_sub && $asgn_info['type'] === 'file') {
+                                    $sfStmt = $db->prepare("SELECT * FROM assignment_submission_files WHERE submission_id = ? ORDER BY created_at ASC");
+                                    $sfStmt->execute([$my_sub['id']]);
+                                    $my_sub_files = $sfStmt->fetchAll();
+                                }
                             ?>
                             <div class="mb-4 p-4 rounded" style="background:#1a1a2e;border:2px solid <?php echo $asgn_info['type']==='essay' ? '#28a745' : '#17a2b8'; ?>;">
                                 <div class="d-flex align-items-center gap-3 mb-3">
@@ -155,36 +161,67 @@
                                      <div class="p-3 rounded mb-3 text-white-50 small text-start" style="background:#111;border-left:3px solid #444;"><?php echo $asgn_info['description']; ?></div>
                                  <?php endif; ?>
 
-                                <?php if($my_sub && $my_sub['status'] === 'graded'): ?>
-                                    <!-- Da cham diem -->
-                                    <div class="p-3 rounded mb-3" style="background:#0d2e0d;border:1px solid #28a745;">
-                                        <div class="text-success fw-bold">✅ Đã được chấm điểm: <span class="fs-5"><?php echo $my_sub['score']; ?>/<?php echo $asgn_info['max_score']; ?></span></div>
-                                        <?php if(!empty($my_sub['file_name'])): ?>
-                                            <div class="text-white-50 small mt-2">
-                                                <i class="bi bi-file-earmark-check me-1 text-info"></i>File bài làm: 
-                                                <?php if($my_sub['file_drive_url']): ?>
-                                                    <a href="<?php echo htmlspecialchars($my_sub['file_drive_url']); ?>" target="_blank" class="text-info text-decoration-underline fw-semibold"><?php echo htmlspecialchars($my_sub['file_name']); ?></a>
-                                                <?php else: ?>
-                                                    <span class="text-danger fw-semibold"><?php echo htmlspecialchars($my_sub['file_name']); ?> (Lỗi tải lên Google Drive)</span>
-                                                <?php endif; ?>
+                                <?php if($my_sub): ?>
+                                    <!-- Hien thi ket qua tong quan -->
+                                    <?php if($my_sub['status'] === 'graded'): ?>
+                                        <div class="p-3 rounded mb-3" style="background:#0d2e0d;border:1px solid #28a745;">
+                                            <div class="text-success fw-bold text-start">✅ Đã được chấm điểm: <span class="fs-5"><?php echo $my_sub['score']; ?>/<?php echo $asgn_info['max_score']; ?></span></div>
+                                            <?php if($my_sub['feedback']): ?>
+                                                <div class="text-white-50 small mt-2 text-start"><i class="bi bi-chat-quote me-1"></i>Nhận xét chung: <?php echo htmlspecialchars($my_sub['feedback']); ?></div>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="alert alert-warning py-2 mb-3 text-start"><i class="bi bi-hourglass me-2"></i>Có bài nộp đang chờ giáo viên chấm điểm.</div>
+                                    <?php endif; ?>
+
+                                    <!-- Hien thi tung file da nop (neu co) -->
+                                    <?php if($asgn_info['type'] === 'file' && !empty($my_sub_files)): ?>
+                                        <div class="mb-4">
+                                            <h6 class="text-white fw-bold mb-3 small text-start"><i class="bi bi-folder2-open text-info me-2"></i>Danh sách file đã nộp:</h6>
+                                            <div class="d-flex flex-column gap-2">
+                                                <?php foreach($my_sub_files as $index => $file): ?>
+                                                    <div class="p-3 rounded border border-secondary border-opacity-25 d-flex align-items-center justify-content-between flex-wrap gap-2 text-start" style="background:#111;">
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <span class="badge bg-secondary rounded-circle" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center;"><?php echo $index + 1; ?></span>
+                                                            <div class="text-start">
+                                                                <?php if($file['file_drive_url']): ?>
+                                                                    <a href="<?php echo htmlspecialchars($file['file_drive_url']); ?>" target="_blank" class="text-info text-decoration-underline fw-semibold small"><?php echo htmlspecialchars($file['file_name']); ?></a>
+                                                                <?php else: ?>
+                                                                    <span class="text-danger fw-semibold small"><?php echo htmlspecialchars($file['file_name']); ?> (Lỗi tải lên Drive)</span>
+                                                                <?php endif; ?>
+                                                                
+                                                                <div class="mt-1 small">
+                                                                    <?php if($file['status'] === 'graded'): ?>
+                                                                        <span class="text-success font-monospace fw-bold"><i class="bi bi-check-circle me-1"></i><?php echo $file['score']; ?> đ</span>
+                                                                        <?php if($file['feedback']): ?>
+                                                                            <span class="text-muted ms-2">| Nhận xét: <?php echo htmlspecialchars($file['feedback']); ?></span>
+                                                                        <?php endif; ?>
+                                                                    <?php else: ?>
+                                                                        <span class="text-warning small"><i class="bi bi-hourglass-split me-1"></i>Đang chờ chấm</span>
+                                                                    <?php endif; ?>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <?php if($file['status'] === 'pending'): ?>
+                                                                <form method="POST" action="<?php echo APP_URL; ?>/assignment/deleteFile" class="d-inline m-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa file này không?');">
+                                                                    <input type="hidden" name="file_id" value="<?php echo $file['id']; ?>">
+                                                                    <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+                                                                    <input type="hidden" name="lesson_id" value="<?php echo $current_lesson['id']; ?>">
+                                                                    <button type="submit" class="btn btn-sm btn-outline-danger py-0 px-2 small"><i class="bi bi-trash"></i> Xóa</button>
+                                                                </form>
+                                                            <?php endif; ?>
+                                                        </div>
+                                                    </div>
+                                                <?php endforeach; ?>
                                             </div>
-                                        <?php endif; ?>
-                                        <?php if($my_sub['feedback']): ?>
-                                            <div class="text-white-50 small mt-2"><i class="bi bi-chat-quote me-1"></i>Nhận xét: <?php echo htmlspecialchars($my_sub['feedback']); ?></div>
-                                        <?php endif; ?>
-                                    </div>
-                                <?php elseif($my_sub && $my_sub['file_drive_id'] === 'error'): ?>
-                                    <!-- Loi upload Google Drive -->
-                                    <div class="alert alert-danger py-3 mb-3">
-                                        <div class="fw-bold"><i class="bi bi-exclamation-triangle-fill me-2"></i>Lỗi nộp bài tập</div>
-                                        <div class="mt-2 text-danger fw-semibold">Phát sinh lỗi trong Quá trình nộp file bài tập. Bài làm của bạn chưa được nộp thành công lên Drive. Hệ thống đã báo lỗi đến giáo viên để khắc phục cấu hình. Vui lòng thử chọn file và nộp lại ở phía dưới.</div>
-                                    </div>
-                                <?php elseif($my_sub): ?>
-                                    <div class="alert alert-warning py-2"><i class="bi bi-hourglass me-2"></i>Đã nộp bài — Đang chờ giáo viên chấm điểm.</div>
+                                        </div>
+                                    <?php endif; ?>
                                 <?php endif; ?>
 
-                                <?php if(!$my_sub || $my_sub['status'] === 'pending'): ?>
-                                    <?php if($asgn_info['type'] === 'essay'): ?>
+                                <!-- Form nop bai / nop them file -->
+                                <?php if($asgn_info['type'] === 'essay'): ?>
+                                    <?php if(!$my_sub || $my_sub['status'] === 'pending'): ?>
                                         <form method="POST" action="<?php echo APP_URL; ?>/assignment/submitEssay">
                                             <input type="hidden" name="assignment_id" value="<?php echo $asgn_id; ?>">
                                             <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
@@ -192,29 +229,20 @@
                                             <textarea name="content" class="form-control mb-3" rows="8" style="background:#111;color:#eee;border-color:#444;" placeholder="Nhập bài làm của bạn tại đây..." required><?php echo htmlspecialchars($my_sub['content'] ?? ''); ?></textarea>
                                             <button type="submit" class="btn btn-success"><i class="bi bi-send me-1"></i><?php echo $my_sub ? 'Cập nhật bài làm' : 'Nộp bài'; ?></button>
                                         </form>
-                                    <?php else: ?>
-                                        <form method="POST" action="<?php echo APP_URL; ?>/assignment/submitFile" enctype="multipart/form-data">
-                                            <input type="hidden" name="assignment_id" value="<?php echo $asgn_id; ?>">
-                                            <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
-                                            <input type="hidden" name="lesson_id" value="<?php echo $current_lesson['id']; ?>">
-                                            <input type="hidden" name="drive_folder_id" value="<?php echo htmlspecialchars($asgn_info['drive_folder_id'] ?? ''); ?>">
-                                            <?php if($my_sub && $my_sub['file_name']): ?>
-                                                <div class="text-white-50 small mb-2">
-                                                    <i class="bi bi-file-check me-1 text-info"></i>File đã chọn nộp trước: 
-                                                    <?php if($my_sub['file_drive_url']): ?>
-                                                        <a href="<?php echo htmlspecialchars($my_sub['file_drive_url']); ?>" target="_blank" class="text-info text-decoration-underline fw-semibold"><?php echo htmlspecialchars($my_sub['file_name']); ?></a>
-                                                    <?php else: ?>
-                                                        <span class="text-danger fw-semibold"><?php echo htmlspecialchars($my_sub['file_name']); ?> (Lỗi tải lên Drive)</span>
-                                                    <?php endif; ?>
-                                                </div>
-                                            <?php endif; ?>
-                                            <div class="input-group mb-3">
-                                                <input type="file" name="submission_file" class="form-control" style="background:#111;color:#eee;border-color:#444;" required>
-                                                <button type="submit" class="btn btn-info text-white"><i class="bi bi-cloud-upload me-1"></i><?php echo ($my_sub && $my_sub['file_drive_id'] !== 'error') ? 'Nộp lại' : 'Nộp file'; ?></button>
-                                            </div>
-                                            <small class="text-muted">Tối đa 50MB. File sẽ được lưu trên Google Drive.</small>
-                                        </form>
                                     <?php endif; ?>
+                                <?php else: ?>
+                                    <form method="POST" action="<?php echo APP_URL; ?>/assignment/submitFile" enctype="multipart/form-data">
+                                        <input type="hidden" name="assignment_id" value="<?php echo $asgn_id; ?>">
+                                        <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">
+                                        <input type="hidden" name="lesson_id" value="<?php echo $current_lesson['id']; ?>">
+                                        <input type="hidden" name="drive_folder_id" value="<?php echo htmlspecialchars($asgn_info['drive_folder_id'] ?? ''); ?>">
+                                        
+                                        <div class="input-group mb-3">
+                                            <input type="file" name="submission_files[]" class="form-control" style="background:#111;color:#eee;border-color:#444;" multiple required>
+                                            <button type="submit" class="btn btn-info text-white"><i class="bi bi-cloud-upload me-1"></i>Nộp file</button>
+                                        </div>
+                                        <small class="text-muted d-block text-start">Tối đa 50MB. Hỗ trợ chọn nộp nhiều file cùng một lúc (hoặc nộp thêm file). File được lưu trên Google Drive.</small>
+                                    </form>
                                 <?php endif; ?>
                             </div>
                             <?php endif; ?>
