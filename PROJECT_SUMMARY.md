@@ -12,11 +12,12 @@
 
 ## 2. Các tính năng cốt lõi đã hoàn thiện
 * **Cấu trúc Khóa học:** Khóa học -> Phần (Parts) -> Chương (Chapters) -> Bài học (Lessons) -> Nội dung (Items: Text, Quiz, Assignment...).
-* **Hệ thống Nộp bài tập (Assignments):**
+* **Hệ thống Nộp bài tập (Assignments) (MỚI NÂNG CẤP):**
   - Hỗ trợ nộp bài **Tự luận** và **Upload File**.
-  - **Tích hợp Google Drive & Báo lỗi thông minh:** File bài làm chỉ lưu trực tiếp trên Google Drive để tránh tốn dung lượng máy chủ.
-  - **Cơ chế báo lỗi:** Nếu xảy ra sự cố upload lên Drive (do hết hạn token, lỗi 403, 404, lỗi kết nối API...), hệ thống tự động ghi lại lịch sử lỗi chi tiết kỹ thuật vào cơ sở dữ liệu (`file_drive_id = 'error'`) và chuyển thông tin lỗi cho Giáo viên. Học viên chỉ nhận được thông báo rút gọn, thân thiện và tiếp tục hiển thị form để nộp lại sau khi giáo viên sửa cấu hình.
-  - **Liên kết tải file học sinh:** Tích hợp liên kết thẻ `<a>` cho học viên click để tự tải/xem lại file bài làm của mình trên Google Drive sau khi nộp thành công.
+  - **Nộp nhiều file lũy tiến và Chấm điểm/Nhận xét từng file:** Học viên có thể nộp nhiều file cho một nội dung bài tập theo hình thức lũy tiến (nộp trước một số file, đợi chấm, sau đó tiếp tục nộp thêm file mới cho các câu tiếp theo) mà không bị ghi đè hay mất dữ liệu cũ. Học viên có thể tự xóa/rút lại các file bài làm nếu giáo viên chưa chấm điểm.
+  - **Chấm điểm riêng lẻ từng file:** Giáo viên xem, nhập điểm và nhận xét chi tiết cho từng file bài làm độc lập. Điểm tổng của toàn bộ bài nộp sẽ tự động được gợi ý dựa trên tổng điểm của các file thành phần (không vượt quá điểm tối đa của bài tập) và giáo viên vẫn có thể chỉnh sửa thủ công.
+  - **Tích hợp Google Drive & Báo lỗi thông minh:** File bài làm lưu trên Google Drive để tiết kiệm dung lượng máy chủ. Nếu có lỗi khi upload, hệ thống ghi chi tiết lỗi vào cơ sở dữ liệu và hiển thị thân thiện với học sinh để nộp lại.
+  - **Tự động hóa nâng cấp CSDL:** Cung cấp tệp `update_db.php` để tự động nâng cấp cấu trúc cơ sở dữ liệu và di chuyển an toàn toàn bộ dữ liệu file bài nộp cũ sang bảng mới `assignment_submission_files` khi deploy lên hosting chính thức.
 * **Làm mới quyền Google Drive cho Admin (MỚI NÂNG CẤP):**
   - Tích hợp trang làm mới tự động quyền truy cập Drive tại `/admin/setup-drive-oauth` hoặc qua nút **"Cấu hình & Cấp lại quyền Google Drive"** trên dashboard chấm bài của giáo viên.
   - Tự động đọc và sử dụng đúng cặp Client ID/Secret chuyên dụng của Drive (`533283503649-...`) để yêu cầu cấp quyền offline, giải quyết lỗi hết hạn token (`invalid_grant`), sau đó cập nhật đè token mới vào `config/google-oauth.json`.
@@ -95,4 +96,4 @@
   - Xem xét chuyển đổi cơ chế polling sang WebSockets (hoặc Server-Sent Events) nếu quy mô lượt truy cập đồng thời tăng cao.
 
 ---
-*(Lần cập nhật cuối: 30/06/2026)*
+*(Lần cập nhật cuối: 16/07/2026)*
