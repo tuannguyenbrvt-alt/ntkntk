@@ -65,36 +65,31 @@ class AdminAssignmentController extends Controller {
     }
 
     public function grade() {
-        try {
-            $sub_id = $_GET['sub_id'] ?? 0; $course_id = $_GET['course_id'] ?? 0;
-            $db = Database::getInstance()->getConnection();
-            $sub = $db->prepare("SELECT s.*, u.full_name, u.phone, a.title as asgn_title, a.max_score, a.type, a.id as assignment_id FROM assignment_submissions s JOIN users u ON s.student_id = u.id JOIN assignments a ON s.assignment_id = a.id WHERE s.id = ?");
-            $sub->execute([$sub_id]); $sub = $sub->fetch();
-            if (!$sub) { $this->redirect('/admin/courses'); return; }
+        $sub_id = $_GET['sub_id'] ?? 0; $course_id = $_GET['course_id'] ?? 0;
+        $db = Database::getInstance()->getConnection();
+        $sub = $db->prepare("SELECT s.*, u.full_name, u.phone, a.title as asgn_title, a.max_score, a.type, a.id as assignment_id FROM assignment_submissions s JOIN users u ON s.student_id = u.id JOIN assignments a ON s.assignment_id = a.id WHERE s.id = ?");
+        $sub->execute([$sub_id]); $sub = $sub->fetch();
+        if (!$sub) { $this->redirect('/admin/courses'); return; }
 
-            $subFiles = [];
-            $deletedFiles = [];
-            if ($sub['type'] === 'file') {
-                $fStmt = $db->prepare("SELECT * FROM assignment_submission_files WHERE submission_id = ? AND is_deleted = 0 ORDER BY created_at ASC");
-                $fStmt->execute([$sub_id]);
-                $subFiles = $fStmt->fetchAll();
+        $subFiles = [];
+        $deletedFiles = [];
+        if ($sub['type'] === 'file') {
+            $fStmt = $db->prepare("SELECT * FROM assignment_submission_files WHERE submission_id = ? AND is_deleted = 0 ORDER BY created_at ASC");
+            $fStmt->execute([$sub_id]);
+            $subFiles = $fStmt->fetchAll();
 
-                $dStmt = $db->prepare("SELECT * FROM assignment_submission_files WHERE submission_id = ? AND is_deleted = 1 ORDER BY created_at ASC");
-                $dStmt->execute([$sub_id]);
-                $deletedFiles = $dStmt->fetchAll();
-            }
-
-            $this->render('admin/assignments/grade', [
-                'title' => 'Cham diem: '.$sub['full_name'], 
-                'sub' => $sub, 
-                'subFiles' => $subFiles, 
-                'deletedFiles' => $deletedFiles, 
-                'course_id' => $course_id
-            ], 'admin');
-        } catch (Exception $e) {
-            echo "<h1>System/Database Error:</h1><pre>" . htmlspecialchars($e->getMessage()) . "\n" . htmlspecialchars($e->getTraceAsString()) . "</pre>";
-            die();
+            $dStmt = $db->prepare("SELECT * FROM assignment_submission_files WHERE submission_id = ? AND is_deleted = 1 ORDER BY created_at ASC");
+            $dStmt->execute([$sub_id]);
+            $deletedFiles = $dStmt->fetchAll();
         }
+
+        $this->render('admin/assignments/grade', [
+            'title' => 'Cham diem: '.$sub['full_name'], 
+            'sub' => $sub, 
+            'subFiles' => $subFiles, 
+            'deletedFiles' => $deletedFiles, 
+            'course_id' => $course_id
+        ], 'admin');
     }
 
     public function storeGrade() {
@@ -226,7 +221,7 @@ class AdminAssignmentController extends Controller {
     }
 
     public function deleteFile() {
-        if ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'teacher') {
+        if (!in_array($_SESSION['role'], ['super_admin', 'admin'])) {
             $_SESSION['error'] = 'Bạn không có quyền thực hiện hành động này.';
             $this->redirect('/');
             return;
