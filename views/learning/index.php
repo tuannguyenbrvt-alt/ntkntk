@@ -180,30 +180,36 @@
                                             <h6 class="text-white fw-bold mb-3 small text-start"><i class="bi bi-folder2-open text-info me-2"></i>Danh sách file đã nộp:</h6>
                                             <div class="d-flex flex-column gap-2">
                                                 <?php foreach($my_sub_files as $index => $file): ?>
-                                                    <div class="p-3 rounded border border-secondary border-opacity-25 d-flex align-items-center justify-content-between flex-wrap gap-2 text-start" style="background:#111;">
+                                                    <div class="p-3 rounded border border-secondary border-opacity-25 d-flex align-items-center justify-content-between flex-wrap gap-2 text-start" style="background:#111; <?php echo $file['is_deleted'] ? 'opacity: 0.65; border-color: rgba(220, 53, 69, 0.3) !important;' : ''; ?>">
                                                         <div class="d-flex align-items-center gap-2">
                                                             <span class="badge bg-secondary rounded-circle" style="width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center;"><?php echo $index + 1; ?></span>
                                                             <div class="text-start">
-                                                                <?php if($file['file_drive_url']): ?>
-                                                                    <a href="<?php echo htmlspecialchars($file['file_drive_url']); ?>" target="_blank" class="text-info text-decoration-underline fw-semibold small"><?php echo htmlspecialchars($file['file_name']); ?></a>
+                                                                <?php if($file['is_deleted']): ?>
+                                                                    <span class="text-decoration-line-through text-muted fw-semibold small"><?php echo htmlspecialchars($file['file_name']); ?></span>
+                                                                    <span class="badge bg-danger ms-2"><i class="bi bi-x-circle me-1"></i>Giáo viên đã xóa</span>
+                                                                    <div class="text-danger small mt-1"><i class="bi bi-info-circle me-1"></i>Lý do: <strong><?php echo htmlspecialchars($file['delete_reason'] ?? 'Không có lý do'); ?></strong></div>
                                                                 <?php else: ?>
-                                                                    <span class="text-danger fw-semibold small"><?php echo htmlspecialchars($file['file_name']); ?> (Lỗi tải lên Drive)</span>
-                                                                <?php endif; ?>
-                                                                
-                                                                <div class="mt-1 small">
-                                                                    <?php if($file['status'] === 'graded'): ?>
-                                                                        <span class="text-success font-monospace fw-bold"><i class="bi bi-check-circle me-1"></i><?php echo $file['score']; ?> đ</span>
-                                                                        <?php if($file['feedback']): ?>
-                                                                            <span class="text-muted ms-2">| Nhận xét: <?php echo htmlspecialchars($file['feedback']); ?></span>
-                                                                        <?php endif; ?>
+                                                                    <?php if($file['file_drive_url']): ?>
+                                                                        <a href="<?php echo htmlspecialchars($file['file_drive_url']); ?>" target="_blank" class="text-info text-decoration-underline fw-semibold small"><?php echo htmlspecialchars($file['file_name']); ?></a>
                                                                     <?php else: ?>
-                                                                        <span class="text-warning small"><i class="bi bi-hourglass-split me-1"></i>Đang chờ chấm</span>
+                                                                        <span class="text-danger fw-semibold small"><?php echo htmlspecialchars($file['file_name']); ?> (Lỗi tải lên Drive)</span>
                                                                     <?php endif; ?>
-                                                                </div>
+                                                                    
+                                                                    <div class="mt-1 small">
+                                                                        <?php if($file['status'] === 'graded'): ?>
+                                                                            <span class="text-success font-monospace fw-bold"><i class="bi bi-check-circle me-1"></i><?php echo $file['score']; ?> đ</span>
+                                                                            <?php if($file['feedback']): ?>
+                                                                                <span class="text-muted ms-2">| Nhận xét: <?php echo htmlspecialchars($file['feedback']); ?></span>
+                                                                            <?php endif; ?>
+                                                                        <?php else: ?>
+                                                                            <span class="text-warning small"><i class="bi bi-hourglass-split me-1"></i>Đang chờ chấm</span>
+                                                                        <?php endif; ?>
+                                                                    </div>
+                                                                <?php endif; ?>
                                                             </div>
                                                         </div>
                                                         <div>
-                                                            <?php if($file['status'] === 'pending'): ?>
+                                                            <?php if(!$file['is_deleted'] && $file['status'] === 'pending'): ?>
                                                                 <form method="POST" action="<?php echo APP_URL; ?>/assignment/deleteFile" class="d-inline m-0" onsubmit="return confirm('Bạn có chắc chắn muốn xóa file này không?');">
                                                                     <input type="hidden" name="file_id" value="<?php echo $file['id']; ?>">
                                                                     <input type="hidden" name="course_id" value="<?php echo $course['id']; ?>">

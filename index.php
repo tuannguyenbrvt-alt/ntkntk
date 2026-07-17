@@ -213,6 +213,7 @@ $router->get('/admin/assignments/submissions', 'AdminAssignmentController@submis
 $router->get('/admin/assignments/pending', 'AdminAssignmentController@pending');
 $router->get('/admin/assignments/grade', 'AdminAssignmentController@grade');
 $router->post('/admin/assignments/storeGrade', 'AdminAssignmentController@storeGrade');
+$router->post('/admin/assignments/deleteFile', 'AdminAssignmentController@deleteFile');
 $router->get('/admin/setup-drive-oauth', 'AdminAssignmentController@setupDrive');
 
 // Student - Quiz

@@ -213,7 +213,7 @@ class AssignmentController extends Controller {
         $db->prepare("DELETE FROM assignment_submission_files WHERE id = ?")->execute([$file_id]);
 
         // Cap nhat lai trang thai cua submission tong
-        $checkStmt = $db->prepare("SELECT COUNT(*) FROM assignment_submission_files WHERE submission_id = ?");
+        $checkStmt = $db->prepare("SELECT COUNT(*) FROM assignment_submission_files WHERE submission_id = ? AND is_deleted = 0");
         $checkStmt->execute([$file['submission_id']]);
         $remainingFiles = (int)$checkStmt->fetchColumn();
 
@@ -221,12 +221,12 @@ class AssignmentController extends Controller {
             $db->prepare("UPDATE assignment_submissions SET status='pending', score=NULL, feedback=NULL WHERE id=?")
                ->execute([$file['submission_id']]);
         } else {
-            $pendingStmt = $db->prepare("SELECT COUNT(*) FROM assignment_submission_files WHERE submission_id = ? AND status = 'pending'");
+            $pendingStmt = $db->prepare("SELECT COUNT(*) FROM assignment_submission_files WHERE submission_id = ? AND status = 'pending' AND is_deleted = 0");
             $pendingStmt->execute([$file['submission_id']]);
             $pendingFiles = (int)$pendingStmt->fetchColumn();
             if ($pendingFiles === 0) {
                 // Tinh lai diem trung binh
-                $avgStmt = $db->prepare("SELECT AVG(score) FROM assignment_submission_files WHERE submission_id = ? AND score IS NOT NULL");
+                $avgStmt = $db->prepare("SELECT AVG(score) FROM assignment_submission_files WHERE submission_id = ? AND score IS NOT NULL AND is_deleted = 0");
                 $avgStmt->execute([$file['submission_id']]);
                 $avgScore = $avgStmt->fetchColumn();
                 $db->prepare("UPDATE assignment_submissions SET status='graded', score=? WHERE id=?")

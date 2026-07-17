@@ -66,11 +66,37 @@
                                         </a>
                                     <?php endif; ?>
                                 <?php endif; ?>
+                                <button type="button" class="btn btn-sm btn-outline-danger ms-2 btn-delete-file" data-file-id="<?php echo $file['id']; ?>" data-file-name="<?php echo htmlspecialchars($file['file_name']); ?>">
+                                    <i class="bi bi-trash me-1"></i>Xóa file
+                                </button>
                             </div>
                         </div>
                     <?php endforeach; ?>
                 </div>
             <?php endif; ?>
+        <?php endif; ?>
+
+        <?php if(!empty($deletedFiles)): ?>
+            <div class="mt-4 pt-3 border-top">
+                <h6 class="fw-bold text-danger mb-3 text-start"><i class="bi bi-trash3 me-2"></i>Các file đã bị giáo viên xóa/hủy:</h6>
+                <div class="d-flex flex-column gap-2">
+                    <?php foreach($deletedFiles as $index => $file): ?>
+                        <div class="p-3 border border-danger border-opacity-25 rounded bg-danger bg-opacity-10 d-flex align-items-center justify-content-between flex-wrap gap-2 text-start">
+                            <div class="d-flex align-items-center gap-3">
+                                <i class="bi bi-file-earmark-x text-danger" style="font-size:1.8rem;"></i>
+                                <div>
+                                    <div class="fw-semibold text-danger text-decoration-line-through"><?php echo htmlspecialchars($file['file_name'] ?? 'Không rõ tên file'); ?></div>
+                                    <div class="text-muted small">Nộp lúc: <?php echo date('d/m/Y H:i', strtotime($file['created_at'])); ?></div>
+                                    <div class="text-danger small mt-1 fw-bold"><i class="bi bi-info-circle me-1"></i>Lý do xóa: <?php echo htmlspecialchars($file['delete_reason'] ?? 'Không có lý do'); ?></div>
+                                </div>
+                            </div>
+                            <div class="text-muted small">
+                                Xóa lúc: <?php echo date('d/m/Y H:i', strtotime($file['deleted_at'])); ?>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
         <?php endif; ?>
 
         <div class="text-muted small mt-3">
@@ -136,35 +162,105 @@
 </div>
 </div>
 
-<?php if($sub['type'] === 'file' && !empty($subFiles)): ?>
+<!-- Modal Xóa File -->
+<div class="modal fade" id="deleteFileModal" tabindex="-1" aria-labelledby="deleteFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-3">
+            <form method="POST" action="<?php echo APP_URL; ?>/admin/assignments/deleteFile">
+                <div class="modal-header bg-danger text-white border-0">
+                    <h5 class="modal-title fw-bold" id="deleteFileModalLabel"><i class="bi bi-exclamation-triangle-fill me-2"></i>Xóa file bài nộp</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <input type="hidden" name="file_id" id="modal_delete_file_id" value="">
+                    <input type="hidden" name="sub_id" value="<?php echo $sub['id']; ?>">
+                    <input type="hidden" name="course_id" value="<?php echo $course_id; ?>">
+                    <?php if(!empty($_GET['from_pending'])): ?>
+                        <input type="hidden" name="from_pending" value="1">
+                    <?php endif; ?>
+                    
+                    <p class="text-muted mb-3 text-start">Bạn đang thực hiện xóa file: <strong class="text-dark" id="modal_delete_file_name"></strong></p>
+                    
+                    <div class="mb-3 text-start">
+                        <label class="form-label fw-semibold text-dark">Lý do xóa file *</label>
+                        <select class="form-select mb-2" id="quick_reason_select">
+                            <option value="">-- Chọn lý do có sẵn hoặc tự nhập --</option>
+                            <option value="File bài làm trùng lặp">File bài làm trùng lặp</option>
+                            <option value="Nộp sai file/File không hợp lệ">Nộp sai file/File không hợp lệ</option>
+                            <option value="File bị lỗi/Không thể đọc được">File bị lỗi/Không thể đọc được</option>
+                            <option value="File trống (0 bytes)/Không có nội dung">File trống (0 bytes)/Không có nội dung</option>
+                        </select>
+                        <textarea class="form-control" name="delete_reason" id="modal_delete_reason" rows="3" placeholder="Nhập chi tiết lý do xóa..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger px-4">Xác nhận xóa</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // File scores calculation
     const scoreInputs = document.querySelectorAll('.file-score-input');
     const overallScoreInput = document.querySelector('input[name="score"]');
     const maxScore = parseFloat(<?php echo $sub['max_score']; ?>);
 
-    function updateOverallScore() {
-        let total = 0;
+    if (scoreInputs.length > 0 && overallScoreInput) {
+        function updateOverallScore() {
+            let total = 0;
+            scoreInputs.forEach(input => {
+                const val = parseFloat(input.value);
+                if (!isNaN(val)) {
+                    total += val;
+                }
+            });
+            if (total > maxScore) {
+                total = maxScore;
+            }
+            overallScoreInput.value = total;
+        }
+
+        // Neu chua co diem tong, tu dong tinh luon khi load trang
+        if (overallScoreInput.value === '') {
+            updateOverallScore();
+        }
+
         scoreInputs.forEach(input => {
-            const val = parseFloat(input.value);
-            if (!isNaN(val)) {
-                total += val;
+            input.addEventListener('input', updateOverallScore);
+        });
+    }
+
+    // Modal delete file logic
+    const deleteButtons = document.querySelectorAll('.btn-delete-file');
+    const deleteModalEl = document.getElementById('deleteFileModal');
+    if (deleteModalEl && deleteButtons.length > 0) {
+        const deleteModal = new bootstrap.Modal(deleteModalEl);
+        const modalFileId = document.getElementById('modal_delete_file_id');
+        const modalFileName = document.getElementById('modal_delete_file_name');
+        const modalReason = document.getElementById('modal_delete_reason');
+        const quickSelect = document.getElementById('quick_reason_select');
+
+        deleteButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const fileId = this.getAttribute('data-file-id');
+                const fileName = this.getAttribute('data-file-name');
+                modalFileId.value = fileId;
+                modalFileName.textContent = fileName;
+                modalReason.value = '';
+                quickSelect.value = '';
+                deleteModal.show();
+            });
+        });
+
+        quickSelect.addEventListener('change', function() {
+            if (this.value) {
+                modalReason.value = this.value;
             }
         });
-        if (total > maxScore) {
-            total = maxScore;
-        }
-        overallScoreInput.value = total;
     }
-
-    // Neu chua co diem tong, tu dong tinh luon khi load trang
-    if (overallScoreInput.value === '') {
-        updateOverallScore();
-    }
-
-    scoreInputs.forEach(input => {
-        input.addEventListener('input', updateOverallScore);
-    });
 });
 </script>
-<?php endif; ?>

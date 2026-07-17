@@ -77,6 +77,17 @@ try {
     }
     
     echo "✔️ Di chuyển dữ liệu cũ hoàn tất. Số lượng bản ghi đã di chuyển: <b>$migratedCount</b>.<br>";
+
+    // 3. Thêm các cột hỗ trợ giáo viên xóa file nộp bài vào bảng `assignment_submission_files`
+    $checkCols = $db->query("SHOW COLUMNS FROM `assignment_submission_files` LIKE 'is_deleted'");
+    if (!$checkCols->fetch()) {
+        $db->exec("ALTER TABLE `assignment_submission_files` ADD COLUMN `is_deleted` tinyint(1) NOT NULL DEFAULT 0");
+        $db->exec("ALTER TABLE `assignment_submission_files` ADD COLUMN `delete_reason` text DEFAULT NULL");
+        $db->exec("ALTER TABLE `assignment_submission_files` ADD COLUMN `deleted_by` int(11) DEFAULT NULL");
+        $db->exec("ALTER TABLE `assignment_submission_files` ADD COLUMN `deleted_at` timestamp NULL DEFAULT NULL");
+        echo "✔️ Đã thêm các cột xóa file (`is_deleted`, `delete_reason`, `deleted_by`, `deleted_at`) vào bảng `assignment_submission_files`. <br>";
+    }
+
     echo "🎉 <b>Cập nhật cơ sở dữ liệu thành công rực rỡ!</b> Bạn có thể xóa file này khỏi server sau khi chạy xong.<br>";
 
 } catch (Exception $e) {

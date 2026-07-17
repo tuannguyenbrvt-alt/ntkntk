@@ -72,16 +72,22 @@ class AdminAssignmentController extends Controller {
         if (!$sub) { $this->redirect('/admin/courses'); return; }
 
         $subFiles = [];
+        $deletedFiles = [];
         if ($sub['type'] === 'file') {
-            $fStmt = $db->prepare("SELECT * FROM assignment_submission_files WHERE submission_id = ? ORDER BY created_at ASC");
+            $fStmt = $db->prepare("SELECT * FROM assignment_submission_files WHERE submission_id = ? AND is_deleted = 0 ORDER BY created_at ASC");
             $fStmt->execute([$sub_id]);
             $subFiles = $fStmt->fetchAll();
+
+            $dStmt = $db->prepare("SELECT * FROM assignment_submission_files WHERE submission_id = ? AND is_deleted = 1 ORDER BY created_at ASC");
+            $dStmt->execute([$sub_id]);
+            $deletedFiles = $dStmt->fetchAll();
         }
 
         $this->render('admin/assignments/grade', [
             'title' => 'Cham diem: '.$sub['full_name'], 
             'sub' => $sub, 
             'subFiles' => $subFiles, 
+            'deletedFiles' => $deletedFiles, 
             'course_id' => $course_id
         ], 'admin');
     }
@@ -114,7 +120,7 @@ class AdminAssignmentController extends Controller {
             $overallFeedback = $_POST['feedback'] ?? '';
 
             // Cap nhat trang thai graded neu tat ca cac file da duoc cham diem
-            $pendingStmt = $db->prepare("SELECT COUNT(*) FROM assignment_submission_files WHERE submission_id = ? AND status = 'pending'");
+            $pendingStmt = $db->prepare("SELECT COUNT(*) FROM assignment_submission_files WHERE submission_id = ? AND status = 'pending' AND is_deleted = 0");
             $pendingStmt->execute([$sub_id]);
             $pendingCount = (int)$pendingStmt->fetchColumn();
 
@@ -212,5 +218,87 @@ class AdminAssignmentController extends Controller {
         $_SESSION['oauth2state'] = $params['state'];
         $url = 'https://accounts.google.com/o/oauth2/v2/auth?' . http_build_query($params);
         $this->redirect($url);
+    }
+
+    public function deleteFile() {
+        if ($_SESSION['role'] !== 'admin' && $_SESSION['role'] !== 'teacher') {
+            $_SESSION['error'] = 'Bạn không có quyền thực hiện hành động này.';
+            $this->redirect('/');
+            return;
+        }
+
+        $file_id = (int)($_POST['file_id'] ?? 0);
+        $sub_id = (int)($_POST['sub_id'] ?? 0);
+        $course_id = (int)($_POST['course_id'] ?? 0);
+        $delete_reason = trim($_POST['delete_reason'] ?? '');
+        $from_pending = !empty($_POST['from_pending']) ? 1 : 0;
+
+        if (empty($delete_reason)) {
+            $_SESSION['error'] = 'Vui lòng cung cấp lý do xóa file.';
+            $this->redirect('/admin/assignments/grade?sub_id=' . $sub_id . '&course_id=' . $course_id . ($from_pending ? '&from_pending=1' : ''));
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+
+        $stmt = $db->prepare("SELECT * FROM assignment_submission_files WHERE id = ?");
+        $stmt->execute([$file_id]);
+        $file = $stmt->fetch();
+
+        if (!$file) {
+            $_SESSION['error'] = 'Không tìm thấy file bài làm.';
+            $this->redirect('/admin/assignments/grade?sub_id=' . $sub_id . '&course_id=' . $course_id . ($from_pending ? '&from_pending=1' : ''));
+            return;
+        }
+
+        if (!empty($file['file_drive_id']) && $file['file_drive_id'] !== 'error') {
+            try {
+                require_once ROOT_PATH . '/helpers/GoogleDriveHelper.php';
+                $creds = GoogleDriveHelper::loadCredentials();
+                GoogleDriveHelper::deleteFile($file['file_drive_id'], $creds);
+            } catch (Exception $e) {
+                error_log("Failed to delete Google Drive file: " . $e->getMessage());
+            }
+        }
+
+        $db->prepare("
+            UPDATE assignment_submission_files 
+            SET is_deleted = 1, 
+                delete_reason = ?, 
+                deleted_by = ?, 
+                deleted_at = NOW(),
+                status = 'graded',
+                score = NULL,
+                feedback = NULL
+            WHERE id = ?
+        ")->execute([$delete_reason, $_SESSION['user_id'], $file_id]);
+
+        $checkStmt = $db->prepare("SELECT COUNT(*) FROM assignment_submission_files WHERE submission_id = ? AND is_deleted = 0");
+        $checkStmt->execute([$sub_id]);
+        $remainingFiles = (int)$checkStmt->fetchColumn();
+
+        if ($remainingFiles === 0) {
+            $db->prepare("UPDATE assignment_submissions SET status='pending', score=NULL, feedback=NULL WHERE id=?")
+               ->execute([$sub_id]);
+        } else {
+            $pendingStmt = $db->prepare("SELECT COUNT(*) FROM assignment_submission_files WHERE submission_id = ? AND status = 'pending' AND is_deleted = 0");
+            $pendingStmt->execute([$sub_id]);
+            $pendingFiles = (int)$pendingStmt->fetchColumn();
+
+            if ($pendingFiles === 0) {
+                $avgStmt = $db->prepare("SELECT AVG(score) FROM assignment_submission_files WHERE submission_id = ? AND score IS NOT NULL AND is_deleted = 0");
+                $avgStmt->execute([$sub_id]);
+                $avgScore = $avgStmt->fetchColumn();
+
+                $db->prepare("UPDATE assignment_submissions SET status='graded', score=? WHERE id=?")
+                   ->execute([$avgScore !== null ? (float)$avgScore : null, $sub_id]);
+            } else {
+                $db->prepare("UPDATE assignment_submissions SET status='pending', score=NULL WHERE id=?")
+                   ->execute([$sub_id]);
+            }
+        }
+
+        $_SESSION['success'] = 'Đã xóa file bài làm thành công và lưu lý do.';
+        $this->redirect('/admin/assignments/grade?sub_id=' . $sub_id . '&course_id=' . $course_id . ($from_pending ? '&from_pending=1' : ''));
     }
 }
