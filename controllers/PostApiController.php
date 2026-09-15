@@ -281,4 +281,204 @@ class PostApiController extends Controller {
             ]);
         }
     }
+
+    public function update() {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $inputData = [];
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+
+        if (stripos($contentType, 'application/json') !== false) {
+            $rawInput = file_get_contents('php://input');
+            $inputData = json_decode($rawInput, true) ?? [];
+        } else {
+            $inputData = $_POST;
+        }
+
+        $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? ($inputData['api_key'] ?? '');
+        if (empty($apiKey) || $apiKey !== API_SECRET_KEY) {
+            http_response_code(403);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Xác thực không hợp lệ. API Key không chính xác.'
+            ]);
+            return;
+        }
+
+        $slug = trim($inputData['slug'] ?? '');
+        $id = intval($inputData['id'] ?? 0);
+
+        if (empty($slug) && empty($id)) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Cần cung cấp slug hoặc id của bài viết để cập nhật.'
+            ]);
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        if (!empty($slug)) {
+            $stmtFind = $db->prepare("SELECT * FROM posts WHERE slug = ?");
+            $stmtFind->execute([$slug]);
+        } else {
+            $stmtFind = $db->prepare("SELECT * FROM posts WHERE id = ?");
+            $stmtFind->execute([$id]);
+        }
+        $post = $stmtFind->fetch();
+
+        if (!$post) {
+            http_response_code(404);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Không tìm thấy bài viết để cập nhật.'
+            ]);
+            return;
+        }
+
+        $postId = $post['id'];
+        $title = !empty($inputData['title']) ? $inputData['title'] : $post['title'];
+        $content = isset($inputData['content']) ? $inputData['content'] : $post['content'];
+        $status = !empty($inputData['status']) ? $inputData['status'] : $post['status'];
+        $type = !empty($inputData['type']) ? $inputData['type'] : $post['type'];
+        $thumbnailPath = $post['thumbnail'];
+
+        $destinationFolder = 'uploads/posts/';
+        $absoluteDestFolder = ROOT_PATH . '/' . $destinationFolder;
+
+        if (!file_exists($absoluteDestFolder)) {
+            mkdir($absoluteDestFolder, 0755, true);
+        }
+
+        if (isset($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
+            require_once ROOT_PATH . '/helpers/UploadHelper.php';
+            try {
+                $thumbnailPath = UploadHelper::uploadImage($_FILES['thumbnail'], $destinationFolder);
+            } catch (Exception $e) {}
+        } elseif (!empty($inputData['thumbnail_base64'])) {
+            try {
+                $base64Data = $inputData['thumbnail_base64'];
+                if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $typeMatch)) {
+                    $imageType = strtolower($typeMatch[1]);
+                    $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
+                } else {
+                    $imageType = 'png';
+                }
+
+                $decodedData = base64_decode($base64Data);
+                if ($decodedData !== false) {
+                    $filename = uniqid() . '-' . time() . '.' . $imageType;
+                    $fullPath = $absoluteDestFolder . $filename;
+                    if (file_put_contents($fullPath, $decodedData)) {
+                        $thumbnailPath = $destinationFolder . $filename;
+                    }
+                }
+            } catch (Exception $e) {}
+        } elseif (!empty($inputData['thumbnail_url'])) {
+            try {
+                $url = $inputData['thumbnail_url'];
+                $ctx = stream_context_create([
+                    'http' => [
+                        'timeout' => 15,
+                        'user_agent' => 'Mozilla/5.0'
+                    ]
+                ]);
+                $imageData = file_get_contents($url, false, $ctx);
+                if ($imageData !== false) {
+                    $ext = pathinfo(parse_url($url, PHP_URL_PATH), PATHINFO_EXTENSION);
+                    if (empty($ext) || !in_array(strtolower($ext), ['jpg', 'jpeg', 'png', 'gif', 'webp'])) {
+                        $ext = 'png';
+                    }
+                    $filename = uniqid() . '-' . time() . '.' . strtolower($ext);
+                    $fullPath = $absoluteDestFolder . $filename;
+                    if (file_put_contents($fullPath, $imageData)) {
+                        $thumbnailPath = $destinationFolder . $filename;
+                    }
+                }
+            } catch (Exception $e) {}
+        }
+
+        $stmtUpdate = $db->prepare("UPDATE posts SET title = ?, content = ?, thumbnail = ?, type = ?, status = ? WHERE id = ?");
+        if ($stmtUpdate->execute([$title, $content, $thumbnailPath, $type, $status, $postId])) {
+            $postUrl = APP_URL . '/post?slug=' . $post['slug'];
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Cập nhật bài viết thành công!',
+                'post' => [
+                    'id' => $postId,
+                    'title' => $title,
+                    'slug' => $post['slug'],
+                    'url' => $postUrl,
+                    'thumbnail' => $thumbnailPath ? APP_URL . '/' . $thumbnailPath : null,
+                    'status' => $status
+                ]
+            ]);
+        } else {
+            http_response_code(500);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Lỗi cập nhật bài viết trong database.'
+            ]);
+        }
+    }
+
+    public function delete() {
+        header('Content-Type: application/json; charset=utf-8');
+
+        $inputData = [];
+        $contentType = $_SERVER['CONTENT_TYPE'] ?? '';
+
+        if (stripos($contentType, 'application/json') !== false) {
+            $rawInput = file_get_contents('php://input');
+            $inputData = json_decode($rawInput, true) ?? [];
+        } else {
+            $inputData = $_POST;
+        }
+
+        $apiKey = $_SERVER['HTTP_X_API_KEY'] ?? ($inputData['api_key'] ?? '');
+        if (empty($apiKey) || $apiKey !== API_SECRET_KEY) {
+            http_response_code(403);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Xác thực không hợp lệ. API Key không chính xác.'
+            ]);
+            return;
+        }
+
+        $slug = trim($inputData['slug'] ?? '');
+        $id = intval($inputData['id'] ?? 0);
+
+        if (empty($slug) && empty($id)) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Cần cung cấp slug hoặc id của bài viết để xóa.'
+            ]);
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        if (!empty($slug)) {
+            $stmt = $db->prepare("DELETE FROM posts WHERE slug = ?");
+            $executed = $stmt->execute([$slug]);
+        } else {
+            $stmt = $db->prepare("DELETE FROM posts WHERE id = ?");
+            $executed = $stmt->execute([$id]);
+        }
+
+        if ($executed && $stmt->rowCount() > 0) {
+            http_response_code(200);
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Đã xóa bài viết thành công!'
+            ]);
+        } else {
+            http_response_code(404);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Không tìm thấy bài viết hoặc không có bài viết nào bị xóa.'
+            ]);
+        }
+    }
 }
