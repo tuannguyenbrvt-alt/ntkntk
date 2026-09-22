@@ -207,6 +207,8 @@ if (isset($_SESSION['user_id']) && in_array($_SESSION['role'], ['super_admin', '
                     toolbar: 'undo redo | blocks | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | link image media | code help',
                     promotion: false,
                     branding: false,
+                    image_dimensions: false,
+                    content_style: "body { font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; } img { max-width: 100% !important; height: auto !important; } figure.image { max-width: 100% !important; } table { max-width: 100% !important; }",
                     setup: function (editor) {
                         editor.on('change', function () {
                             tinymce.triggerSave();
@@ -222,6 +224,8 @@ if (isset($_SESSION['user_id']) && in_array($_SESSION['role'], ['super_admin', '
                     toolbar: 'undo redo | bold italic | alignleft aligncenter alignright | link image media | removeformat',
                     promotion: false,
                     branding: false,
+                    image_dimensions: false,
+                    content_style: "body { font-family: 'Inter', sans-serif; font-size: 14px; line-height: 1.5; } img { max-width: 100% !important; height: auto !important; } figure.image { max-width: 100% !important; } table { max-width: 100% !important; }",
                     setup: function (editor) {
                         editor.on('change', function () {
                             tinymce.triggerSave();

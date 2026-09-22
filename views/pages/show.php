@@ -48,11 +48,23 @@
 
 <style>
     /* Styling nội dung trang (giữ tỷ lệ ảnh, font chữ...) */
+    .post-content { word-wrap: break-word; overflow-wrap: break-word; }
     .post-content img {
-        max-width: 100%;
-        height: auto;
+        max-width: 100% !important;
+        height: auto !important;
         border-radius: 8px;
-        margin: 15px 0;
+        margin: 15px auto;
+    }
+    .post-content figure {
+        max-width: 100% !important;
+        height: auto !important;
+        margin: 15px auto;
+    }
+    .post-content figure img { display: block; margin: 0 auto; }
+    .post-content table {
+        max-width: 100% !important;
+        overflow-x: auto;
+        display: block;
     }
     .post-content h2, .post-content h3 {
         margin-top: 30px;

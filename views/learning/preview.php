@@ -24,7 +24,7 @@
                                 </div>
                             <?php endif; ?>
                         <?php elseif($item['type'] == 'text'): ?>
-                            <div class="bg-white text-dark p-5 rounded-bottom" style="font-size:1.1rem;">
+                            <div class="bg-white text-dark p-5 rounded-bottom post-content" style="font-size:1.1rem;">
                                 <?php echo $item['content']; ?>
                             </div>
                         <?php endif; ?>

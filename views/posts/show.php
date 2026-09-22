@@ -68,9 +68,12 @@
 
 <style>
 /* CSS Tùy chỉnh cho nội dung bài viết từ TinyMCE */
-.post-content { font-size: 1.1rem; color: #333; }
-.post-content img { max-width: 100%; height: auto; border-radius: 8px; margin: 20px 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-.post-content iframe { max-width: 100%; border-radius: 8px; margin: 20px 0; }
+.post-content { font-size: 1.1rem; color: #333; word-wrap: break-word; overflow-wrap: break-word; }
+.post-content img { max-width: 100% !important; height: auto !important; border-radius: 8px; margin: 20px auto; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+.post-content figure { max-width: 100% !important; height: auto !important; margin: 20px auto; }
+.post-content figure img { display: block; margin: 0 auto; }
+.post-content iframe { max-width: 100% !important; border-radius: 8px; margin: 20px 0; }
+.post-content table { max-width: 100% !important; overflow-x: auto; display: block; }
 .post-content h2, .post-content h3 { margin-top: 30px; margin-bottom: 15px; font-weight: 700; color: #000; }
 .post-content p { margin-bottom: 20px; }
 .post-content ul, .post-content ol { margin-bottom: 20px; padding-left: 20px; }

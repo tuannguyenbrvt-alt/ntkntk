@@ -19,6 +19,9 @@ input[type=radio]:checked + .option-label,
 input[type=checkbox]:checked + .option-label { border-color:#3b82f6; background:#e0f2fe; color:#0369a1; }
 #timer { font-size:1.4rem; font-weight:700; color:#ffd700; }
 .sticky-top-bar { position:sticky; top:0; z-index:100; background:#12122a; border-bottom:1px solid #2d2d44; padding:.75rem 0; }
+.quiz-card img, .option-label img { max-width: 100% !important; height: auto !important; object-fit: contain; }
+.quiz-card figure, .option-label figure { max-width: 100% !important; height: auto !important; }
+.quiz-card table { max-width: 100% !important; overflow-x: auto; display: block; }
 </style>
 </head>
 <body>

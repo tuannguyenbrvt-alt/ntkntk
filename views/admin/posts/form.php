@@ -88,6 +88,8 @@
                 menubar: true,
                 image_title: true,
                 automatic_uploads: true,
+                image_dimensions: false,
+                content_style: "body { font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.6; } img { max-width: 100% !important; height: auto !important; } figure.image { max-width: 100% !important; } table { max-width: 100% !important; }",
                 file_picker_types: 'image media',
                 // ==== Upload ảnh thẳng lên Server (không dùng Base64 nữa) ====
                 images_upload_url: '<?php echo APP_URL; ?>/admin/media/upload',

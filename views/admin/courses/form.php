@@ -88,6 +88,8 @@
                 plugins: 'advlist autolink lists link image charmap preview anchor pagebreak searchreplace wordcount visualblocks visualchars code fullscreen insertdatetime media table',
                 toolbar: 'undo redo | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | code',
                 menubar: false,
+                image_dimensions: false,
+                content_style: "body { font-family: 'Inter', sans-serif; font-size: 15px; line-height: 1.6; } img { max-width: 100% !important; height: auto !important; } figure.image { max-width: 100% !important; } table { max-width: 100% !important; }",
                 setup: function (editor) {
                     editor.on('change', function () {
                         tinymce.triggerSave();

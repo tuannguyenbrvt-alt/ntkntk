@@ -32,7 +32,7 @@
                             <?php endif; ?>
                         <?php elseif($item['type'] == 'text'): ?>
                             <!-- Text/HTML -->
-                            <div class="bg-white text-dark p-4 rounded shadow-sm mb-4" style="font-size:1.1rem;line-height:1.8;">
+                            <div class="bg-white text-dark p-4 rounded shadow-sm mb-4 post-content" style="font-size:1.1rem;line-height:1.8;">
                                 <?php echo $item['content']; ?>
                             </div>
                         <?php elseif($item['type'] == 'pdf'): ?>

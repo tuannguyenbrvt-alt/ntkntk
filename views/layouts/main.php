@@ -32,6 +32,45 @@
             animation: pulse-dot 2s infinite ease-in-out;
             display: inline-block;
         }
+
+        /* ===== Responsive cho nội dung bài viết, trang tĩnh, khóa học từ TinyMCE ===== */
+        .post-content, .rich-content, .lesson-content {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .post-content img,
+        .rich-content img,
+        .lesson-content img,
+        .quiz-card img {
+            max-width: 100% !important;
+            height: auto !important;
+            object-fit: contain;
+        }
+        .post-content figure,
+        .rich-content figure,
+        .lesson-content figure {
+            max-width: 100% !important;
+            height: auto !important;
+            margin-left: auto !important;
+            margin-right: auto !important;
+        }
+        .post-content figure img,
+        .rich-content figure img {
+            display: block;
+            margin: 0 auto;
+        }
+        .post-content iframe,
+        .post-content video,
+        .rich-content iframe,
+        .rich-content video {
+            max-width: 100% !important;
+        }
+        .post-content table,
+        .rich-content table {
+            max-width: 100% !important;
+            overflow-x: auto;
+            display: block;
+        }
     </style>
 </head>
 
