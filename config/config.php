@@ -24,6 +24,18 @@ if (!defined('GOOGLE_REDIRECT_URI')) {
     define('GOOGLE_REDIRECT_URI', APP_URL . '/auth/google/callback');
 }
 
+// Cấu hình Cloudflare Turnstile (Bảo vệ chống bot / Spam đăng ký)
+if (!defined('TURNSTILE_ENABLED')) {
+    define('TURNSTILE_ENABLED', true);
+}
+// Mặc định dùng Dummy/Test Key của Cloudflare (luôn pass) nếu chưa khai báo key thật trong secrets.php
+if (!defined('TURNSTILE_SITE_KEY')) {
+    define('TURNSTILE_SITE_KEY', '1x00000000000000000000AA');
+}
+if (!defined('TURNSTILE_SECRET_KEY')) {
+    define('TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA');
+}
+
 // Cấu hình Database
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'ntknt9be30ca_ntkntk');

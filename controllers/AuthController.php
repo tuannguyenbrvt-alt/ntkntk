@@ -48,6 +48,28 @@ class AuthController extends Controller {
     }
 
     public function postRegister() {
+        // 1. Kiểm tra Honeypot (Bẫy bot ngầm: người dùng thật không nhìn thấy trường này)
+        if (!empty($_POST['website_hp'])) {
+            $this->render('auth/register', [
+                'title' => 'Đăng ký',
+                'error' => 'Phát hiện yêu cầu không hợp lệ (Spam bot).'
+            ], 'main');
+            return;
+        }
+
+        // 2. Xác thực Cloudflare Turnstile (Chống bot tự động)
+        if (defined('TURNSTILE_ENABLED') && TURNSTILE_ENABLED) {
+            $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
+            require_once ROOT_PATH . '/helpers/TurnstileHelper.php';
+            if (!TurnstileHelper::verify($turnstileToken)) {
+                $this->render('auth/register', [
+                    'title' => 'Đăng ký',
+                    'error' => 'Xác thực "Không phải người máy" thất bại hoặc đã hết hạn. Vui lòng thử lại.'
+                ], 'main');
+                return;
+            }
+        }
+
         $username = trim($_POST['username'] ?? '');
         $email = trim($_POST['email'] ?? '');
         $password = $_POST['password'] ?? '';

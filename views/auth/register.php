@@ -9,6 +9,11 @@
                 <?php endif; ?>
                 
                 <form action="<?php echo APP_URL; ?>/register" method="POST" id="registerForm">
+                    <!-- Honeypot field (Bẫy bot ẩn, người dùng thật không nhìn thấy) -->
+                    <div style="display:none;" aria-hidden="true">
+                        <input type="text" name="website_hp" tabindex="-1" autocomplete="off">
+                    </div>
+
                     <h6 class="text-success border-bottom border-secondary border-opacity-25 pb-2 mb-3"><i class="bi bi-shield-lock me-1"></i>Thông tin đăng nhập</h6>
                     <div class="row">
                         <div class="col-md-6 mb-3">
@@ -59,6 +64,12 @@
                         <input type="text" name="profession" class="form-control" style="background:#111;color:#eee;border-color:#444;" placeholder="Ví dụ: Học sinh lớp 12, Sinh viên đại học, Người đi làm..." value="<?php echo htmlspecialchars($_POST['profession'] ?? ''); ?>">
                     </div>
 
+                    <?php if (defined('TURNSTILE_ENABLED') && TURNSTILE_ENABLED): ?>
+                    <div class="mb-3 d-flex justify-content-center">
+                        <div class="cf-turnstile" data-sitekey="<?php echo htmlspecialchars(TURNSTILE_SITE_KEY); ?>" data-theme="dark"></div>
+                    </div>
+                    <?php endif; ?>
+
                     <button type="submit" class="btn btn-success w-100 py-2.5 fw-bold"><i class="bi bi-check-circle-fill me-1"></i>Hoàn tất đăng ký</button>
                     
                     <div class="text-center mt-3 mb-1 text-muted small">— HOẶC ĐĂNG KÝ NHANH —</div>
@@ -89,3 +100,7 @@ document.getElementById('registerForm').addEventListener('submit', function(e) {
     }
 });
 </script>
+
+<?php if (defined('TURNSTILE_ENABLED') && TURNSTILE_ENABLED): ?>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<?php endif; ?>
