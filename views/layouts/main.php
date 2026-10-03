@@ -33,43 +33,94 @@
             display: inline-block;
         }
 
-        /* ===== Responsive cho nội dung bài viết, trang tĩnh, khóa học từ TinyMCE ===== */
+        /* ===== Responsive toàn diện cho nội dung bài viết, trang tĩnh, khóa học, bài học từ TinyMCE ===== */
         .post-content, .rich-content, .lesson-content {
-            word-wrap: break-word;
-            overflow-wrap: break-word;
+            word-wrap: break-word !important;
+            overflow-wrap: break-word !important;
+            word-break: break-word !important;
+            max-width: 100% !important;
+            overflow-x: hidden !important;
         }
+
+        /* Tất cả các thẻ con bên trong post-content không được vượt quá 100% */
+        .post-content *,
+        .rich-content *,
+        .lesson-content * {
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+
+        /* Xử lý triệt để thẻ ảnh img */
         .post-content img,
         .rich-content img,
         .lesson-content img,
         .quiz-card img {
             max-width: 100% !important;
+            width: auto !important;
             height: auto !important;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
             object-fit: contain;
         }
+
+        /* Xử lý thẻ figure khi TinyMCE căn lề hoặc thêm caption */
         .post-content figure,
         .rich-content figure,
         .lesson-content figure {
             max-width: 100% !important;
+            width: auto !important;
             height: auto !important;
             margin-left: auto !important;
             margin-right: auto !important;
+            display: block !important;
         }
         .post-content figure img,
         .rich-content figure img {
             display: block;
             margin: 0 auto;
+            max-width: 100% !important;
+            width: auto !important;
+            height: auto !important;
         }
+
+        /* Video iframe / video */
         .post-content iframe,
         .post-content video,
         .rich-content iframe,
         .rich-content video {
             max-width: 100% !important;
         }
+
+        /* Bảng table tránh làm phình trang trên mobile */
         .post-content table,
-        .rich-content table {
+        .rich-content table,
+        .lesson-content table {
+            width: 100% !important;
             max-width: 100% !important;
-            overflow-x: auto;
-            display: block;
+            overflow-x: auto !important;
+            display: block !important;
+            -webkit-overflow-scrolling: touch !important;
+        }
+        .post-content table td,
+        .post-content table th {
+            max-width: 100% !important;
+            word-break: break-word !important;
+        }
+
+        /* Thẻ pre/code */
+        .post-content pre,
+        .post-content code {
+            white-space: pre-wrap !important;
+            word-break: break-word !important;
+            max-width: 100% !important;
+            overflow-x: auto !important;
+        }
+
+        /* Khắc phục lỗi Flex item bị ép bung ngang do min-width: auto */
+        .learning-area,
+        .col-lg-9 {
+            min-width: 0 !important;
         }
     </style>
 </head>
@@ -1004,6 +1055,38 @@
                 })
                 .catch(() => { m.style.display = 'block'; m.style.color = '#f44336'; m.textContent = '❌ Lỗi kết nối, thử lại sau.'; })
                 .finally(() => { btn.disabled = false; btn.textContent = '📨 Gửi Đăng Ký'; setTimeout(() => m.style.display = 'none', 5000); });
+        });
+
+        // Tự động chuẩn hóa mọi hình ảnh và phần tử đa phương tiện từ TinyMCE trên mobile
+        document.addEventListener("DOMContentLoaded", function () {
+            var containers = document.querySelectorAll('.post-content, .rich-content, .lesson-content');
+            containers.forEach(function (container) {
+                // Xử lý tất cả ảnh
+                container.querySelectorAll('img').forEach(function (img) {
+                    img.style.setProperty('max-width', '100%', 'important');
+                    img.style.setProperty('height', 'auto', 'important');
+                    img.style.setProperty('width', 'auto', 'important');
+                    if (img.getAttribute('width')) {
+                        img.removeAttribute('width');
+                    }
+                    if (img.getAttribute('height')) {
+                        img.removeAttribute('height');
+                    }
+                });
+
+                // Xử lý figure
+                container.querySelectorAll('figure').forEach(function (fig) {
+                    fig.style.setProperty('max-width', '100%', 'important');
+                    fig.style.setProperty('width', 'auto', 'important');
+                });
+
+                // Xử lý các thẻ bọc có inline width lớn hơn container
+                container.querySelectorAll('*').forEach(function (el) {
+                    if (el.style.width && (el.style.width.indexOf('px') !== -1 || el.style.width.indexOf('pt') !== -1)) {
+                        el.style.setProperty('max-width', '100%', 'important');
+                    }
+                });
+            });
         });
     </script>
 </body>

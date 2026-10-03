@@ -1,8 +1,8 @@
 <div class="container-fluid p-0">
     <div class="row g-0">
         <!-- Main Video/Content Area -->
-        <div class="col-lg-9 bg-dark text-white d-flex flex-column" style="min-height: calc(100vh - 60px);">
-            <div class="flex-grow-1 position-relative p-4" style="background: #111;">
+        <div class="col-lg-9 bg-dark text-white d-flex flex-column learning-area" style="min-height: calc(100vh - 60px); min-width: 0; max-width: 100%; overflow-x: hidden;">
+            <div class="flex-grow-1 position-relative p-3 p-md-4" style="background: #111; min-width: 0; max-width: 100%; overflow-x: hidden;">
                 <?php if($current_lesson): ?>
                     <h3 class="fw-bold mb-4"><?php echo htmlspecialchars($current_lesson['title']); ?></h3>
                     
@@ -32,7 +32,7 @@
                             <?php endif; ?>
                         <?php elseif($item['type'] == 'text'): ?>
                             <!-- Text/HTML -->
-                            <div class="bg-white text-dark p-4 rounded shadow-sm mb-4 post-content" style="font-size:1.1rem;line-height:1.8;">
+                            <div class="bg-white text-dark p-3 p-md-4 rounded shadow-sm mb-4 post-content" style="font-size:1.1rem;line-height:1.8; min-width: 0; max-width: 100%; overflow-x: hidden;">
                                 <?php echo $item['content']; ?>
                             </div>
                         <?php elseif($item['type'] == 'pdf'): ?>
@@ -158,7 +158,7 @@
                                 </div>
 
                                 <?php if($asgn_info['description']): ?>
-                                     <div class="p-3 rounded mb-3 text-white-50 small text-start" style="background:#111;border-left:3px solid #444;"><?php echo $asgn_info['description']; ?></div>
+                                     <div class="p-3 rounded mb-3 text-white-50 small text-start post-content" style="background:#111;border-left:3px solid #444; min-width:0; max-width:100%; overflow-x:hidden;"><?php echo $asgn_info['description']; ?></div>
                                  <?php endif; ?>
 
                                 <?php if($my_sub): ?>
