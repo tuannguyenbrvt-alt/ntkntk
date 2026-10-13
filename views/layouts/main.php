@@ -148,11 +148,6 @@
                     $frontendMenuTree = MenuHelper::buildTree($allMenus);
                     echo MenuHelper::renderFrontendMenu($frontendMenuTree);
                     ?>
-                    <li class="nav-item">
-                        <a class="nav-link fw-bold" style="color:#ffd700 !important;" href="<?php echo APP_URL; ?>/post?slug=phan-mem">
-                            <span class="badge bg-danger me-1" style="font-size:0.65rem;vertical-align:middle;">HOT</span>💻 Phần Mềm
-                        </a>
-                    </li>
                     <!-- Search -->
                     <li class="nav-item ms-2">
                         <form action="<?php echo APP_URL; ?>/search" method="GET" class="d-flex">

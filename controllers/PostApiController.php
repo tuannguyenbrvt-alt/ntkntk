@@ -168,8 +168,9 @@ class PostApiController extends Controller {
         }
 
         // 6. Ghi vào database
-        $stmtInsert = $db->prepare("INSERT INTO posts (title, slug, content, thumbnail, type, status, author_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        if ($stmtInsert->execute([$title, $slug, $content, $thumbnailPath, $type, $status, $authorId])) {
+        $isPinned = isset($inputData['is_pinned']) ? intval($inputData['is_pinned']) : 0;
+        $stmtInsert = $db->prepare("INSERT INTO posts (title, slug, content, thumbnail, type, status, author_id, is_pinned) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        if ($stmtInsert->execute([$title, $slug, $content, $thumbnailPath, $type, $status, $authorId, $isPinned])) {
             $postId = $db->lastInsertId();
             $postUrl = APP_URL . '/post?slug=' . $slug;
 
@@ -398,8 +399,9 @@ class PostApiController extends Controller {
             } catch (Exception $e) {}
         }
 
-        $stmtUpdate = $db->prepare("UPDATE posts SET title = ?, content = ?, thumbnail = ?, type = ?, status = ? WHERE id = ?");
-        if ($stmtUpdate->execute([$title, $content, $thumbnailPath, $type, $status, $postId])) {
+        $isPinned = isset($inputData['is_pinned']) ? intval($inputData['is_pinned']) : (isset($post['is_pinned']) ? intval($post['is_pinned']) : 0);
+        $stmtUpdate = $db->prepare("UPDATE posts SET title = ?, content = ?, thumbnail = ?, type = ?, status = ?, is_pinned = ? WHERE id = ?");
+        if ($stmtUpdate->execute([$title, $content, $thumbnailPath, $type, $status, $isPinned, $postId])) {
             $postUrl = APP_URL . '/post?slug=' . $post['slug'];
             http_response_code(200);
             echo json_encode([
