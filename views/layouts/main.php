@@ -189,9 +189,9 @@
                         <li style="display:flex;align-items:center;gap:9px;"><span style="color:#c9a84c;">📍</span><span
                                 style="color:#8b949e;font-size:.88rem;">Long Điền,TP. Hồ Chí Minh</span></li>
                         <li style="display:flex;align-items:center;gap:9px;"><span style="color:#c9a84c;">☎️</span><a
-                                href="tel:0397883255" style="color:#8b949e;text-decoration:none;font-size:.88rem;"
-                                onmouseover="this.style.color='#c9a84c'" onmouseout="this.style.color='#8b949e'">0397
-                                883 255</a></li>
+                                href="tel:0979875712" style="color:#8b949e;text-decoration:none;font-size:.88rem;"
+                                onmouseover="this.style.color='#c9a84c'" onmouseout="this.style.color='#8b949e'">0979
+                                875 712</a></li>
                         <li style="display:flex;align-items:center;gap:9px;"><span style="color:#c9a84c;">📧</span><a
                                 href="mailto:tuannguyen.brvt@gmail.com"
                                 style="color:#8b949e;text-decoration:none;font-size:.88rem;"
@@ -206,7 +206,7 @@
                             style="width:36px;height:36px;border-radius:8px;background:#1877f2;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:1rem;transition:transform .2s;"
                             onmouseover="this.style.transform='translateY(-3px)'"
                             onmouseout="this.style.transform=''">📘</a>
-                        <a href="https://zalo.me/0397883255" target="_blank" title="Zalo"
+                        <a href="https://zalo.me/0979875712" target="_blank" title="Zalo"
                             style="width:36px;height:36px;border-radius:8px;background:#0068ff;display:flex;align-items:center;justify-content:center;text-decoration:none;font-size:1rem;transition:transform .2s;"
                             onmouseover="this.style.transform='translateY(-3px)'"
                             onmouseout="this.style.transform=''">💬</a>
@@ -320,8 +320,8 @@
                         </div>
                     </form>
                     <p style="color:#8b949e;font-size:.8rem;margin-top:8px;text-align:center;">Hoặc gọi: <a
-                            href="tel:0397883255" style="color:#ffd700;font-weight:700;text-decoration:none;">0397 883
-                            255</a></p>
+                            href="tel:0979875712" style="color:#ffd700;font-weight:700;text-decoration:none;">0979 875
+                            712</a></p>
                 </div>
 
                 <!-- Cột 4: Fanpage Facebook -->

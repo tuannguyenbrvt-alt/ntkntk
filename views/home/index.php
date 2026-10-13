@@ -53,13 +53,13 @@
 
                 <!-- Hotline -->
                 <div class="d-flex align-items-center gap-3 mt-4">
-                    <a href="tel:0397883255" class="d-flex align-items-center gap-2 text-decoration-none">
+                    <a href="tel:0979875712" class="d-flex align-items-center gap-2 text-decoration-none">
                         <div class="rounded-circle d-flex align-items-center justify-content-center" style="width:42px;height:42px;background:rgba(255,215,0,.2);border:1px solid rgba(255,215,0,.4);">
                             <span>📞</span>
                         </div>
                         <div>
                             <p class="mb-0 text-white-50 small">Zalo / Hotline</p>
-                            <p class="mb-0 fw-bold text-white" style="font-size:1.1rem;">0397 883 255</p>
+                            <p class="mb-0 fw-bold text-white" style="font-size:1.1rem;">0979 875 712</p>
                         </div>
                     </a>
                 </div>
@@ -93,7 +93,7 @@
 <!-- ===== PROMO ALERT BANNER ===== -->
 <div style="background:linear-gradient(90deg,#ff4500,#ff8c00,#ffd700,#ff8c00,#ff4500);background-size:300%;animation:shimmer 3s linear infinite;padding:14px 0;">
     <p class="text-center mb-0 fw-bold text-white" style="font-size:1rem;letter-spacing:.5px;">
-        ⚠️ SỐ LƯỢNG SUẤT "MUA 1 TẶNG 1" CÓ HẠN — ƯU TIÊN ĐĂNG KÝ SỚM! &nbsp;|&nbsp; ☎️ 0397 883 255
+        ⚠️ SỐ LƯỢNG SUẤT "MUA 1 TẶNG 1" CÓ HẠN — ƯU TIÊN ĐĂNG KÝ SỚM! &nbsp;|&nbsp; ☎️ 0979 875 712
     </p>
 </div>
 
@@ -180,10 +180,10 @@
             Đội ngũ giáo viên tận tâm đã sẵn sàng đồng hành!
         </p>
         <div class="d-flex flex-wrap justify-content-center gap-3">
-            <a href="tel:0397883255" class="btn btn-lg fw-bold px-5 py-3 rounded-pill shadow" style="background:linear-gradient(90deg,#ffd700,#ff8c00);color:#1a1a1a;border:none;">
-                ☎️ Gọi Ngay: 0397 883 255
+            <a href="tel:0979875712" class="btn btn-lg fw-bold px-5 py-3 rounded-pill shadow" style="background:linear-gradient(90deg,#ffd700,#ff8c00);color:#1a1a1a;border:none;">
+                ☎️ Gọi Ngay: 0979 875 712
             </a>
-            <a href="https://zalo.me/0397883255" target="_blank" class="btn btn-lg fw-semibold px-5 py-3 rounded-pill" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);">
+            <a href="https://zalo.me/0979875712" target="_blank" class="btn btn-lg fw-semibold px-5 py-3 rounded-pill" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);">
                 💬 Nhắn Zalo
             </a>
             <a href="https://fb.com/NguyenMinh.edu.vn" target="_blank" class="btn btn-lg fw-semibold px-5 py-3 rounded-pill" style="background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.3);">
@@ -269,7 +269,7 @@
 <?php endif; ?>
 
 <!-- ===== CONTACT STICKY FLOAT ===== -->
-<a href="tel:0397883255" title="Gọi ngay" style="position:fixed;bottom:24px;right:24px;z-index:9999;width:58px;height:58px;background:linear-gradient(135deg,#25D366,#128C7E);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 25px rgba(37,211,102,.5);animation:bounce 2s ease-in-out infinite;text-decoration:none;">
+<a href="tel:0979875712" title="Gọi ngay" style="position:fixed;bottom:24px;right:24px;z-index:9999;width:58px;height:58px;background:linear-gradient(135deg,#25D366,#128C7E);border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 25px rgba(37,211,102,.5);animation:bounce 2s ease-in-out infinite;text-decoration:none;">
     <span style="font-size:26px;">📞</span>
 </a>
 

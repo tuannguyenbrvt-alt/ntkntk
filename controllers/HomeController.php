@@ -13,7 +13,7 @@ class HomeController extends Controller {
 
         $this->render('home/index', [
             'title'          => 'Trang chủ - Trung tâm Ngoại ngữ Tin học Nguyễn Minh',
-            'seo_desc'       => 'Bom tấn mùa hè 2026 - Ưu đãi Kép! Đăng ký 1 khóa Tin học tặng ngay 1 khóa Tiếng Anh. Hotline: 0397 883 255',
+            'seo_desc'       => 'Bom tấn mùa hè 2026 - Ưu đãi Kép! Đăng ký 1 khóa Tin học tặng ngay 1 khóa Tiếng Anh. Hotline: 0979 875 712',
             'featuredCourses'=> $featuredCourses,
             'latestPosts'    => $latestPosts,
         ], 'main');
