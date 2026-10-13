@@ -148,6 +148,11 @@
                     $frontendMenuTree = MenuHelper::buildTree($allMenus);
                     echo MenuHelper::renderFrontendMenu($frontendMenuTree);
                     ?>
+                    <li class="nav-item">
+                        <a class="nav-link fw-bold" style="color:#ffd700 !important;" href="<?php echo APP_URL; ?>/post?slug=phan-mem">
+                            <span class="badge bg-danger me-1" style="font-size:0.65rem;vertical-align:middle;">HOT</span>💻 Phần Mềm
+                        </a>
+                    </li>
                     <!-- Search -->
                     <li class="nav-item ms-2">
                         <form action="<?php echo APP_URL; ?>/search" method="GET" class="d-flex">
@@ -276,6 +281,9 @@
                                 style="color:#8b949e;text-decoration:none;font-size:.88rem;"
                                 onmouseover="this.style.color='#c9a84c'" onmouseout="this.style.color='#8b949e'">📞 Liên
                                 hệ</a></li>
+                        <li><a href="<?php echo APP_URL; ?>/post?slug=phan-mem"
+                                style="color:#ffd700;font-weight:600;text-decoration:none;font-size:.88rem;"
+                                onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#ffd700'">💻 Phần mềm phòng máy LAN</a></li>
                         <li><a href="<?php echo APP_URL; ?>/post?slug=chinh-sach-bao-mat"
                                 style="color:#8b949e;text-decoration:none;font-size:.88rem;"
                                 onmouseover="this.style.color='#c9a84c'" onmouseout="this.style.color='#8b949e'">🔒

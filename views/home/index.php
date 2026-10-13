@@ -147,9 +147,10 @@
                 ['icon'=>'🤖','title'=>'Tin Học Ứng Dụng AI','desc'=>'Bắt kịp làn sóng Trí tuệ nhân tạo thế hệ mới.','tag'=>'AI / Công nghệ','color'=>'#1a6e00'],
                 ['icon'=>'🏅','title'=>'Luyện Thi MOS & HSG','desc'=>'Rinh chứng chỉ quốc tế, làm đẹp hồ sơ năng lực.','tag'=>'Luyện thi','color'=>'#1a6e00'],
                 ['icon'=>'🌐','title'=>'Lập Trình Ứng Dụng / Web','desc'=>'Thiết kế sản phẩm thực tế, làm việc được ngay sau khóa.','tag'=>'Web / App','color'=>'#1a6e00'],
+                ['icon'=>'🚀','title'=>'Phần Mềm Phòng Máy LAN','desc'=>'SpaceTyper đấu gõ 10 ngón & WebTrợGiảng thi trắc nghiệm không cần Internet.','tag'=>'Phần mềm HOT','color'=>'#0284c7','link'=>APP_URL . '/post?slug=phan-mem'],
             ];
             foreach($it as $c): ?>
-            <div class="col-md-4 col-lg-<?php echo count($it) <= 5 ? '4' : '4'; ?>">
+            <div class="col-md-4 col-lg-4">
                 <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden" style="transition:transform .3s,box-shadow .3s;" onmouseover="this.style.transform='translateY(-8px)';this.style.boxShadow='0 20px 50px rgba(26,110,0,.2)'" onmouseout="this.style.transform='';this.style.boxShadow=''">
                     <div style="height:6px;background:<?php echo $c['color']; ?>;"></div>
                     <div class="card-body p-4">
@@ -161,7 +162,7 @@
                         <p class="text-muted mb-0"><?php echo $c['desc']; ?></p>
                     </div>
                     <div class="card-footer bg-transparent border-0 p-4 pt-0">
-                        <a href="<?php echo APP_URL; ?>/courses" class="btn btn-sm rounded-pill px-4 fw-semibold" style="background:rgba(26,110,0,.1);color:#1a6e00;">Xem chi tiết →</a>
+                        <a href="<?php echo $c['link'] ?? (APP_URL . '/courses'); ?>" class="btn btn-sm rounded-pill px-4 fw-semibold" style="background:rgba(26,110,0,.1);color:<?php echo $c['color']; ?>;">Xem chi tiết →</a>
                     </div>
                 </div>
             </div>
