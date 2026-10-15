@@ -283,7 +283,7 @@ class PaymentApiController extends Controller {
             $content = $tx['content'];
             $amount = $tx['amount'];
 
-            // Trích xuất mã đơn hàng dạng EDUxxxx (từ 4 đến 8 chữ số)
+            // 1. Kiểm tra đơn hàng phần mềm bản quyền (EDUxxxx)
             if (preg_match('/(EDU\d{4,8})/i', $content, $matches)) {
                 $orderCode = strtoupper($matches[1]);
 
@@ -293,7 +293,6 @@ class PaymentApiController extends Controller {
 
                 if ($order) {
                     // Kiểm tra số tiền chuyển có đủ với giá trị đơn hàng hay không
-                    // Cho phép nếu số tiền >= đơn hàng
                     if ($amount >= (int)$order['amount']) {
                         $licenseKey = null;
 
@@ -324,10 +323,38 @@ class PaymentApiController extends Controller {
                         ]);
 
                         $processedCount++;
-                        error_log("[WEBHOOK] Khớp đơn hàng {$orderCode} - Đã cấp License Key!");
+                        error_log("[WEBHOOK] Khớp đơn hàng phần mềm {$orderCode} - Đã cấp License Key!");
                     } else {
                         error_log("[WEBHOOK] Đơn hàng {$orderCode} thiếu tiền: chuyển {$amount}, yêu cầu {$order['amount']}");
                     }
+                }
+            }
+            // 2. Kiểm tra đăng ký khóa học trực tuyến (NTK...)
+            elseif (preg_match('/(NTK\w+)/i', $content, $matches)) {
+                $txCode = strtoupper($matches[1]);
+
+                $stmt = $db->prepare("SELECT * FROM enrollments WHERE UPPER(tx_code) = ? LIMIT 1");
+                $stmt->execute([$txCode]);
+                $enrollment = $stmt->fetch();
+
+                if ($enrollment) {
+                    $requiredAmount = (int)$enrollment['price_paid'];
+                    if ($amount >= $requiredAmount) {
+                        // Kích hoạt ngay lập tức cho học viên vào học
+                        $update = $db->prepare("UPDATE enrollments SET 
+                            status = 'active',
+                            payment_method = 'sepay_auto',
+                            updated_at = NOW()
+                            WHERE id = ?");
+                        $update->execute([$enrollment['id']]);
+
+                        $processedCount++;
+                        error_log("[WEBHOOK] Khớp khóa học {$txCode} - Đã tự động kích hoạt cho học viên ID: {$enrollment['student_id']}");
+                    } else {
+                        error_log("[WEBHOOK] Khóa học {$txCode} thiếu tiền: chuyển {$amount}, yêu cầu {$requiredAmount}");
+                    }
+                } else {
+                    error_log("[WEBHOOK] Không tìm thấy khóa học với mã tx_code: {$txCode}");
                 }
             }
         }

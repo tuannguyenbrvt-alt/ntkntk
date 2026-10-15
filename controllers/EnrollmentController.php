@@ -1,6 +1,12 @@
 <?php
 class EnrollmentController extends Controller {
     public function __construct() {
+        // Cho phép gọi API check-status mà không bị redirect HTML
+        $uri = $_SERVER['REQUEST_URI'] ?? '';
+        if (strpos($uri, '/api/enrollment/check-status') !== false) {
+            return;
+        }
+
         if (!isset($_SESSION['user_id'])) {
             $_SESSION['error'] = 'Vui lòng đăng nhập để đăng ký khóa học.';
             $this->redirect('/login');
@@ -30,14 +36,36 @@ class EnrollmentController extends Controller {
                 $this->redirect('/learning?course_id=' . $course_id);
                 return;
             } elseif ($enrollment['status'] == 'pending') {
-                $_SESSION['success'] = 'Bạn đã gửi yêu cầu. Vui lòng chờ Admin duyệt.';
-                $this->redirect('/course?slug=' . $course['slug']);
+                // Nếu đang chờ thanh toán, đưa thẳng học viên tới trang thanh toán để quét mã QR
+                $this->redirect('/enrollment/confirm?id=' . $enrollment['id']);
                 return;
             }
         }
 
-        // Tạo mã giao dịch random
-        $tx_code = 'NTK' . time() . rand(10, 99);
+        // Nếu khóa học Miễn phí -> Kích hoạt ngay lập tức
+        if ((int)$course['price'] <= 0) {
+            $tx_code = 'FREE' . rand(100000, 999999);
+            $stmtInsert = $db->prepare("INSERT INTO enrollments (student_id, course_id, status, price_paid, payment_method, tx_code) VALUES (?, ?, 'active', 0, 'free', ?)");
+            $stmtInsert->execute([$_SESSION['user_id'], $course_id, $tx_code]);
+            $_SESSION['success'] = 'Đăng ký khóa học miễn phí thành công!';
+            $this->redirect('/learning?course_id=' . $course_id);
+            return;
+        }
+
+        // Tạo mã giao dịch NTK + 6 số ngẫu nhiên không trùng lặp
+        $tx_code = '';
+        for ($i = 0; $i < 10; $i++) {
+            $candidate = 'NTK' . rand(100000, 999999);
+            $stmtCheckTx = $db->prepare("SELECT id FROM enrollments WHERE tx_code = ?");
+            $stmtCheckTx->execute([$candidate]);
+            if (!$stmtCheckTx->fetch()) {
+                $tx_code = $candidate;
+                break;
+            }
+        }
+        if (empty($tx_code)) {
+            $tx_code = 'NTK' . time();
+        }
 
         // Lưu vào DB trạng thái pending
         $stmtInsert = $db->prepare("INSERT INTO enrollments (student_id, course_id, status, price_paid, payment_method, tx_code) VALUES (?, ?, 'pending', ?, 'chuyen_khoan', ?)");
@@ -123,5 +151,44 @@ class EnrollmentController extends Controller {
             $_SESSION['success'] = 'Đã xóa đăng ký thành công.';
         }
         $this->redirect('/admin/enrollments');
+    }
+
+    /**
+     * GET /api/enrollment/check-status?id=...&code=...
+     * Kiểm tra trạng thái kích hoạt khóa học thời gian thực
+     */
+    public function checkStatus() {
+        header('Content-Type: application/json; charset=utf-8');
+        $id = (int)($_GET['id'] ?? 0);
+        $tx_code = trim($_GET['code'] ?? '');
+
+        if (!$id && empty($tx_code)) {
+            http_response_code(400);
+            echo json_encode(['status' => 'error', 'message' => 'Thiếu thông tin đăng ký']);
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        if ($id) {
+            $stmt = $db->prepare("SELECT e.*, c.title as course_title, c.slug FROM enrollments e JOIN courses c ON e.course_id = c.id WHERE e.id = ?");
+            $stmt->execute([$id]);
+        } else {
+            $stmt = $db->prepare("SELECT e.*, c.title as course_title, c.slug FROM enrollments e JOIN courses c ON e.course_id = c.id WHERE UPPER(e.tx_code) = ?");
+            $stmt->execute([strtoupper($tx_code)]);
+        }
+
+        $enrollment = $stmt->fetch();
+        if (!$enrollment) {
+            http_response_code(404);
+            echo json_encode(['status' => 'error', 'message' => 'Không tìm thấy lượt đăng ký']);
+            return;
+        }
+
+        echo json_encode([
+            'status' => $enrollment['status'], // 'pending' hoặc 'active'
+            'course_id' => $enrollment['course_id'],
+            'course_title' => $enrollment['course_title'],
+            'learning_url' => APP_URL . '/learning?course_id=' . $enrollment['course_id']
+        ]);
     }
 }

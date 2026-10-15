@@ -181,6 +181,7 @@ $router->get('/api/payment/check-order', 'PaymentApiController@checkOrder');
 $router->post('/api/payment/claim-key', 'PaymentApiController@claimKey');
 $router->post('/api/payment/webhook', 'PaymentApiController@webhook');
 $router->get('/api/payment/webhook', 'PaymentApiController@webhook');
+$router->get('/api/enrollment/check-status', 'EnrollmentController@checkStatus');
 
 // Static Pages
 $router->get('/page', 'PageController@show');
