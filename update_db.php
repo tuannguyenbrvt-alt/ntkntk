@@ -105,7 +105,6 @@ try {
       `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
       `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       PRIMARY KEY (`id`),
-      KEY `order_code` (`order_code`),
       KEY `machine_id` (`machine_id`),
       KEY `status` (`status`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
