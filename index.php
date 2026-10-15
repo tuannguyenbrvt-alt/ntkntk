@@ -175,6 +175,13 @@ $router->post('/api/media/upload', 'PostApiController@uploadMedia');
 $router->get('/api/courses/lessons', 'QuizApiController@getLessons');
 $router->post('/api/quizzes/create', 'QuizApiController@create');
 
+// Payment & License Webhook Routes
+$router->post('/api/payment/create-order', 'PaymentApiController@createOrder');
+$router->get('/api/payment/check-order', 'PaymentApiController@checkOrder');
+$router->post('/api/payment/claim-key', 'PaymentApiController@claimKey');
+$router->post('/api/payment/webhook', 'PaymentApiController@webhook');
+$router->get('/api/payment/webhook', 'PaymentApiController@webhook');
+
 // Static Pages
 $router->get('/page', 'PageController@show');
 

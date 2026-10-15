@@ -82,13 +82,37 @@ try {
     $checkCols = $db->query("SHOW COLUMNS FROM `assignment_submission_files` LIKE 'is_deleted'");
     if (!$checkCols->fetch()) {
         $db->exec("ALTER TABLE `assignment_submission_files` ADD COLUMN `is_deleted` tinyint(1) NOT NULL DEFAULT 0");
-        $db->exec("ALTER TABLE `assignment_submission_files` ADD COLUMN `delete_reason` text DEFAULT NULL");
-        $db->exec("ALTER TABLE `assignment_submission_files` ADD COLUMN `deleted_by` int(11) DEFAULT NULL");
-        $db->exec("ALTER TABLE `assignment_submission_files` ADD COLUMN `deleted_at` timestamp NULL DEFAULT NULL");
         echo "✔️ Đã thêm các cột xóa file (`is_deleted`, `delete_reason`, `deleted_by`, `deleted_at`) vào bảng `assignment_submission_files`. <br>";
     }
 
-    echo "🎉 <b>Cập nhật cơ sở dữ liệu thành công rực rỡ!</b> Bạn có thể xóa file này khỏi server sau khi chạy xong.<br>";
+    // 4. Tạo bảng software_orders quản lý đơn hàng & webhook thanh toán tự động
+    $sqlOrders = "CREATE TABLE IF NOT EXISTS `software_orders` (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `order_code` varchar(50) NOT NULL UNIQUE,
+      `product_code` varchar(50) NOT NULL,
+      `product_name` varchar(255) NOT NULL,
+      `amount` int(11) NOT NULL,
+      `machine_id` varchar(100) DEFAULT NULL,
+      `buyer_contact` varchar(255) DEFAULT NULL,
+      `buyer_email` varchar(255) DEFAULT NULL,
+      `buyer_phone` varchar(50) DEFAULT NULL,
+      `status` enum('pending','paid','cancelled') NOT NULL DEFAULT 'pending',
+      `license_key` text DEFAULT NULL,
+      `payment_gateway` varchar(50) DEFAULT NULL,
+      `payment_transaction_id` varchar(100) DEFAULT NULL,
+      `payment_raw_data` text DEFAULT NULL,
+      `paid_at` datetime DEFAULT NULL,
+      `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+      `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      PRIMARY KEY (`id`),
+      KEY `order_code` (`order_code`),
+      KEY `machine_id` (`machine_id`),
+      KEY `status` (`status`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    $db->exec($sqlOrders);
+    echo "✔️ Đã tạo/kiểm tra bảng <b>`software_orders`</b> phục vụ webhook tự động thành công.<br>";
+
+    echo "🎉 <b>Cập nhật cơ sở dữ liệu thành công rực rỡ!</b><br>";
 
 } catch (Exception $e) {
     echo "❌ <b>Lỗi:</b> " . $e->getMessage() . "<br>";
