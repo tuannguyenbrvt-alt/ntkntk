@@ -23,6 +23,11 @@ class PaymentApiController extends Controller {
             'amount' => 390000,
             'desc' => 'Đấu Trường Luyện Gõ 10 Ngón Cho Phòng Máy Tin Học Mạng LAN'
         ],
+        'SP03' => [
+            'name' => 'SmartWarehouse Mini - Quản Lý Kho & Công Nợ LAN',
+            'amount' => 990000,
+            'desc' => 'Phần Mềm Quản Lý Tồn Kho, Nhập Xuất, Thu Chi & Công Nợ Dùng Vĩnh Viễn Mạng LAN'
+        ],
     ];
 
     /**
