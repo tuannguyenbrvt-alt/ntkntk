@@ -4,6 +4,18 @@
             <div class="card-body p-4 p-md-5">
                 <h3 class="text-center mb-4 fw-bold text-success"><i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập</h3>
                 
+                <?php if (isset($_SESSION['success'])): ?>
+                    <div class="alert alert-success bg-success text-white border-0 fw-semibold text-center mb-3">
+                        <?php echo htmlspecialchars($_SESSION['success']); unset($_SESSION['success']); ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (isset($_SESSION['error'])): ?>
+                    <div class="alert alert-danger bg-danger text-white border-0 fw-semibold text-center mb-3">
+                        <?php echo htmlspecialchars($_SESSION['error']); unset($_SESSION['error']); ?>
+                    </div>
+                <?php endif; ?>
+
                 <?php if (isset($error)): ?>
                     <div class="alert alert-danger bg-danger text-white border-0 fw-semibold text-center mb-3"><?php echo htmlspecialchars($error); ?></div>
                 <?php endif; ?>
@@ -14,7 +26,10 @@
                         <input type="text" name="username" class="form-control" style="background:#111;color:#eee;border-color:#444;" required placeholder="Nhập tên đăng nhập...">
                     </div>
                     <div class="mb-4">
-                        <label class="form-label fw-semibold small text-white-50">Mật khẩu</label>
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label fw-semibold small text-white-50 mb-0">Mật khẩu</label>
+                            <a href="<?php echo APP_URL; ?>/forgot-password" class="text-decoration-none small text-success-subtle">Quên mật khẩu?</a>
+                        </div>
                         <input type="password" name="password" class="form-control" style="background:#111;color:#eee;border-color:#444;" required placeholder="Nhập mật khẩu...">
                     </div>
                     <button type="submit" class="btn btn-success w-100 py-2.5 fw-bold"><i class="bi bi-door-open-fill me-1"></i>Đăng nhập</button>

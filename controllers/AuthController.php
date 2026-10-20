@@ -312,6 +312,171 @@ class AuthController extends Controller {
         }
     }
 
+    public function forgotPassword() {
+        if (isset($_SESSION['user_id'])) {
+            $this->redirect('/');
+            return;
+        }
+        $this->render('auth/forgot_password', ['title' => 'Quên mật khẩu'], 'main');
+    }
+
+    public function postForgotPassword() {
+        // 1. Kiểm tra Honeypot (Bẫy bot ngầm)
+        if (!empty($_POST['website_hp'])) {
+            $this->render('auth/forgot_password', [
+                'title' => 'Quên mật khẩu',
+                'error' => 'Phát hiện yêu cầu không hợp lệ (Spam bot).'
+            ], 'main');
+            return;
+        }
+
+        // 2. Xác thực Cloudflare Turnstile
+        if (defined('TURNSTILE_ENABLED') && TURNSTILE_ENABLED) {
+            $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
+            require_once ROOT_PATH . '/helpers/TurnstileHelper.php';
+            if (!TurnstileHelper::verify($turnstileToken)) {
+                $this->render('auth/forgot_password', [
+                    'title' => 'Quên mật khẩu',
+                    'error' => 'Xác thực "Không phải người máy" thất bại hoặc đã hết hạn. Vui lòng thử lại.'
+                ], 'main');
+                return;
+            }
+        }
+
+        $email = trim($_POST['email'] ?? '');
+        if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $this->render('auth/forgot_password', [
+                'title' => 'Quên mật khẩu',
+                'error' => 'Vui lòng nhập địa chỉ email hợp lệ.'
+            ], 'main');
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT id, username, email, full_name FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+
+        if ($user) {
+            // Xóa các token cũ nếu có
+            $del = $db->prepare("DELETE FROM password_resets WHERE email = ?");
+            $del->execute([$email]);
+
+            // Tạo token mới ngẫu nhiên 64 ký tự hex
+            $token = bin2hex(random_bytes(32));
+            // Thời hạn hết hạn: 30 phút
+            $expiresAt = date('Y-m-d H:i:s', time() + 1800);
+
+            $ins = $db->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)");
+            $ins->execute([$email, $token, $expiresAt]);
+
+            $resetUrl = APP_URL . '/reset-password?token=' . urlencode($token);
+
+            require_once ROOT_PATH . '/helpers/MailHelper.php';
+            $sent = MailHelper::sendPasswordReset($user, $resetUrl);
+            if (!$sent) {
+                error_log("[AuthController] Không thể gửi email đặt lại mật khẩu cho " . $email);
+            }
+        }
+
+        // Luôn trả về thông báo an toàn, bảo vệ danh tính email
+        $this->render('auth/forgot_password', [
+            'title' => 'Quên mật khẩu',
+            'success' => 'Nếu email của bạn tồn tại trong hệ thống, hướng dẫn đặt lại mật khẩu đã được gửi đến hộp thư. Vui lòng kiểm tra Hộp thư đến (hoặc mục Thư rác/Spam).'
+        ], 'main');
+    }
+
+    public function resetPassword() {
+        if (isset($_SESSION['user_id'])) {
+            $this->redirect('/');
+            return;
+        }
+
+        $token = trim($_GET['token'] ?? '');
+        if (empty($token)) {
+            $_SESSION['error'] = 'Mã xác thực đặt lại mật khẩu không hợp lệ.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM password_resets WHERE token = ? AND expires_at > NOW() ORDER BY id DESC LIMIT 1");
+        $stmt->execute([$token]);
+        $resetRecord = $stmt->fetch();
+
+        if (!$resetRecord) {
+            $this->render('auth/reset_password', [
+                'title' => 'Đặt lại mật khẩu',
+                'error' => 'Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn (chỉ có hiệu lực trong 30 phút). Vui lòng gửi lại yêu cầu mới.',
+                'expired' => true
+            ], 'main');
+            return;
+        }
+
+        $this->render('auth/reset_password', [
+            'title' => 'Đặt lại mật khẩu',
+            'token' => $token
+        ], 'main');
+    }
+
+    public function postResetPassword() {
+        $token = trim($_POST['token'] ?? '');
+        $password = $_POST['password'] ?? '';
+        $confirmPassword = $_POST['confirm_password'] ?? '';
+
+        if (empty($token)) {
+            $_SESSION['error'] = 'Mã xác thực đặt lại mật khẩu không hợp lệ.';
+            $this->redirect('/login');
+            return;
+        }
+
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM password_resets WHERE token = ? AND expires_at > NOW() ORDER BY id DESC LIMIT 1");
+        $stmt->execute([$token]);
+        $resetRecord = $stmt->fetch();
+
+        if (!$resetRecord) {
+            $this->render('auth/reset_password', [
+                'title' => 'Đặt lại mật khẩu',
+                'error' => 'Liên kết đặt lại mật khẩu đã hết hạn hoặc không tồn tại. Vui lòng gửi lại yêu cầu.',
+                'expired' => true
+            ], 'main');
+            return;
+        }
+
+        if (strlen($password) < 6) {
+            $this->render('auth/reset_password', [
+                'title' => 'Đặt lại mật khẩu',
+                'error' => 'Mật khẩu mới phải có tối thiểu 6 ký tự.',
+                'token' => $token
+            ], 'main');
+            return;
+        }
+
+        if ($password !== $confirmPassword) {
+            $this->render('auth/reset_password', [
+                'title' => 'Đặt lại mật khẩu',
+                'error' => 'Mật khẩu xác nhận không khớp. Vui lòng nhập lại.',
+                'token' => $token
+            ], 'main');
+            return;
+        }
+
+        // Băm mật khẩu mới
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        // Cập nhật mật khẩu cho học viên
+        $update = $db->prepare("UPDATE users SET password = ? WHERE email = ?");
+        $update->execute([$hashedPassword, $resetRecord['email']]);
+
+        // Xóa token đã hoàn thành
+        $del = $db->prepare("DELETE FROM password_resets WHERE email = ?");
+        $del->execute([$resetRecord['email']]);
+
+        $_SESSION['success'] = 'Đặt lại mật khẩu thành công! Vui lòng đăng nhập bằng mật khẩu mới của bạn.';
+        $this->redirect('/login');
+    }
+
     public function logout() {
         $db = Database::getInstance()->getConnection();
         require_once ROOT_PATH . '/helpers/TrackerHelper.php';

@@ -36,6 +36,26 @@ if (!defined('TURNSTILE_SECRET_KEY')) {
     define('TURNSTILE_SECRET_KEY', '1x0000000000000000000000000000000AA');
 }
 
+// Cấu hình gửi Email qua SMTP (Gmail tuannguyen.brvt@gmail.com)
+if (!defined('SMTP_ENABLED')) {
+    define('SMTP_ENABLED', true);
+}
+if (!defined('SMTP_HOST')) {
+    define('SMTP_HOST', 'smtp.gmail.com');
+}
+if (!defined('SMTP_PORT')) {
+    define('SMTP_PORT', 465); // 465 (SSL) hoặc 587 (TLS)
+}
+if (!defined('SMTP_USER')) {
+    define('SMTP_USER', 'tuannguyen.brvt@gmail.com');
+}
+if (!defined('SMTP_PASS')) {
+    define('SMTP_PASS', ''); // Cấu hình App Password trong secrets.php
+}
+if (!defined('SMTP_FROM_NAME')) {
+    define('SMTP_FROM_NAME', APP_NAME);
+}
+
 // Cấu hình Database
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'ntknt9be30ca_ntkntk');

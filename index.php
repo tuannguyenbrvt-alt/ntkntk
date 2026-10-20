@@ -61,6 +61,10 @@ $router->post('/login', 'AuthController@postLogin');
 $router->get('/register', 'AuthController@register');
 $router->post('/register', 'AuthController@postRegister');
 $router->get('/logout', 'AuthController@logout');
+$router->get('/forgot-password', 'AuthController@forgotPassword');
+$router->post('/forgot-password', 'AuthController@postForgotPassword');
+$router->get('/reset-password', 'AuthController@resetPassword');
+$router->post('/reset-password', 'AuthController@postResetPassword');
 $router->get('/auth/google', 'AuthController@googleRedirect');
 $router->get('/auth/google/callback', 'AuthController@googleCallback');
 

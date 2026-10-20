@@ -111,6 +111,20 @@ try {
     $db->exec($sqlOrders);
     echo "✔️ Đã tạo/kiểm tra bảng <b>`software_orders`</b> phục vụ webhook tự động thành công.<br>";
 
+    // 5. Tạo bảng password_resets quản lý token khôi phục mật khẩu
+    $sqlPasswordResets = "CREATE TABLE IF NOT EXISTS `password_resets` (
+      `id` int(11) NOT NULL AUTO_INCREMENT,
+      `email` varchar(100) NOT NULL,
+      `token` varchar(100) NOT NULL,
+      `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      `expires_at` datetime NOT NULL,
+      PRIMARY KEY (`id`),
+      KEY `email` (`email`),
+      KEY `token` (`token`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;";
+    $db->exec($sqlPasswordResets);
+    echo "✔️ Đã tạo/kiểm tra bảng <b>`password_resets`</b> phục vụ tính năng Quên mật khẩu thành công.<br>";
+
     echo "🎉 <b>Cập nhật cơ sở dữ liệu thành công rực rỡ!</b><br>";
 
 } catch (Exception $e) {
