@@ -28,6 +28,11 @@ class PaymentApiController extends Controller {
             'amount' => 990000,
             'desc' => 'Phần Mềm Quản Lý Tồn Kho, Nhập Xuất, Thu Chi & Công Nợ Dùng Vĩnh Viễn Mạng LAN'
         ],
+        'SP04' => [
+            'name' => 'Trợ Lý Soạn Giảng AI (PowerPoint & Giáo Án Chuẩn)',
+            'amount' => 590000,
+            'desc' => 'Tự động tạo Slide PowerPoint hiệu ứng & ảnh AI Imagen 3 + Giáo án Word chuẩn BGD&ĐT (CV 5512, 2345, TC/CĐ/ĐH) + Trò chơi học tập'
+        ],
     ];
 
     /**
