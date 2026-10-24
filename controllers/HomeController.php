@@ -13,7 +13,7 @@ class HomeController extends Controller {
 
         $this->render('home/index', [
             'title'          => 'Trang chủ - Trung tâm Ngoại ngữ Tin học Nguyễn Minh',
-            'seo_desc'       => 'Hệ sinh thái Giáo dục Công nghệ & Giải pháp Phần mềm Tin học Nguyễn Minh (NTKNTK). Đào tạo Lập trình, AI, Tin học quốc tế, Tiếng Anh thực chiến và Combo phần mềm phòng máy LAN. Hotline: 0979 875 712',
+            'seo_desc'       => 'Hệ sinh thái Giáo dục Công nghệ & Phần mềm Tin học Nguyễn Minh (NTKNTK). Trợ Lý Soạn Giảng AI (Google Gemini - Slide PowerPoint & Giáo án chuẩn 5512), Combo phần mềm phòng máy LAN không cần Internet và Đào tạo Tin học, AI thực chiến. Hotline: 0979 875 712',
 
             'featuredCourses'=> $featuredCourses,
             'latestPosts'    => $latestPosts,
