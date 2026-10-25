@@ -89,9 +89,12 @@ class PaymentApiController extends Controller {
                 $buyerEmail ?: null
             ]);
 
-            // Sinh VietQR QuickLink chuẩn Napas 24/7 (MBBank)
+            // Sinh VietQR QuickLink chuẩn Napas 24/7 (MBBank) - Đồng bộ với tài khoản khóa học
+            $bankId = 'MB';
+            $accountNo = '8875578100615';
+            $accountName = 'NGUYEN MINH TUAN';
             $transferContent = $orderCode;
-            $qrUrl = "https://img.vietqr.io/image/970422-0979875712-compact2.png?amount={$amount}&addInfo=" . urlencode($transferContent) . "&accountName=" . urlencode("NGUYEN MINH TUAN");
+            $qrUrl = "https://img.vietqr.io/image/{$bankId}-{$accountNo}-compact2.png?amount={$amount}&addInfo=" . urlencode($transferContent) . "&accountName=" . urlencode($accountName);
 
             echo json_encode([
                 'status' => 'success',
@@ -100,9 +103,9 @@ class PaymentApiController extends Controller {
                 'product_name' => $productName,
                 'amount' => $amount,
                 'amount_formatted' => number_format($amount, 0, ',', '.') . ' VNĐ',
-                'bank_account' => '0979875712',
+                'bank_account' => $accountNo,
                 'bank_name' => 'MBBank (Ngân Hàng Quân Đội)',
-                'account_name' => 'NGUYEN MINH TUAN',
+                'account_name' => $accountName,
                 'transfer_content' => $transferContent,
                 'qr_url' => $qrUrl,
                 'machine_id' => $machineId
