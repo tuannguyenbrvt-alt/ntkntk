@@ -282,25 +282,33 @@
       <!-- Cột Trái: Giới thiệu SP04 -->
       <div class="col-lg-6">
         <div class="d-inline-flex align-items-center gap-2 mb-3 px-3 py-1 rounded-pill" style="background: rgba(16, 185, 129, 0.2); border: 1px solid rgba(16, 185, 129, 0.45);">
-          <span style="color: #34d399; font-size: 13px; font-weight: 800;">🌟 SẢN PHẨM MỚI ĐỘT PHÁ DÀNH CHO GIÁO VIÊN TOÀN QUỐC</span>
+          <span style="color: #34d399; font-size: 13px; font-weight: 800;">🌟 PHIÊN BẢN 2.0 NÂNG CẤP TOÀN DIỆN DÀNH CHO GIÁO VIÊN</span>
         </div>
 
         <h2 class="display-6 fw-black text-white mb-3 lh-sm">
-          Trợ Lý Soạn Giảng AI<br>
-          <span class="text-gradient-green">PowerPoint, Giáo Án 5512 &amp; Trò Chơi Trong 3 Phút</span>
+          Trợ Lý Soạn Giảng AI 2.0<br>
+          <span class="text-gradient-green">Soạn Giảng, Ma Trận &amp; Ra Đề Thi Chuẩn Bộ</span>
         </h2>
 
         <p class="text-light opacity-75 fs-6 mb-4 lh-base">
-          Giải phóng 90% thời gian soạn bài cho giáo viên từ Tiểu học đến Đại học! Tích hợp mô hình <strong>Google Gemini thế hệ mới</strong>, hoạt động theo cơ chế <strong>Zero-API-Cost</strong> (hoàn toàn không tốn phí mua API key hàng tháng).
+          Giải phóng 90% thời gian cho thầy cô từ Tiểu học đến Đại học! Tích hợp mô hình <strong>Google Gemini thế hệ mới</strong>, hoạt động theo cơ chế <strong>Zero-API-Cost</strong> (hoàn toàn không tốn phí mua API key hàng tháng).
         </p>
 
-        <!-- 4 Điểm Sư Phạm Đắt Giá Nhất -->
+        <!-- 5 Điểm Sư Phạm Đắt Giá Nhất -->
         <div class="d-flex flex-column gap-3 mb-4">
+          <div class="d-flex align-items-start gap-3">
+            <span class="p-2 rounded-circle bg-danger bg-opacity-25 text-warning mt-1"><i class="bi bi-patch-check-fill"></i></span>
+            <div>
+              <strong class="text-white">Ra Đề Thi, Ma Trận &amp; Bản Đặc Tả (Mới Trong Bản 2.0):</strong>
+              <span class="text-white-50"> Lập ma trận tỉ lệ Nhận biết - Thông hiểu - Vận dụng, bản đặc tả chi tiết, sinh đề trắc nghiệm/tự luận đa mã đề kèm đáp án thang điểm chuẩn Bộ GD&amp;ĐT.</span>
+            </div>
+          </div>
+
           <div class="d-flex align-items-start gap-3">
             <span class="p-2 rounded-circle bg-success bg-opacity-25 text-success mt-1"><i class="bi bi-file-earmark-word-fill"></i></span>
             <div>
               <strong class="text-white">Giáo Án Word Chuẩn CV 5512 &amp; 2345:</strong>
-              <span class="text-white-50"> Tự động lập bảng tiến trình 4 hoạt động dạy - học, font Times New Roman 14pt đúng quy định Bộ GD&amp;ĐT.</span>
+              <span class="text-white-50"> Tự động lập bảng tiến trình 4 hoạt động dạy - học, font Times New Roman 14pt đúng quy định sư phạm.</span>
             </div>
           </div>
 
@@ -323,8 +331,8 @@
           <div class="d-flex align-items-start gap-3">
             <span class="p-2 rounded-circle bg-primary bg-opacity-25 text-primary mt-1"><i class="bi bi-shield-check"></i></span>
             <div>
-              <strong class="text-white">Dùng Thử 7 Ngày Miễn Phí &amp; Mua Vĩnh Viễn:</strong>
-              <span class="text-white-50"> Giá ưu đãi giáo viên chỉ <strong>590.000đ</strong>, dùng trọn đời trên máy tính, cập nhật miễn phí.</span>
+              <strong class="text-white">Phân Hạng Linh Hoạt: Bản Tiêu Chuẩn 590k &amp; Bản PRO 890k:</strong>
+              <span class="text-white-50"> Dùng thử 7 ngày miễn phí trọn vẹn PRO. Bản quyền vĩnh viễn theo máy tính giáo viên, cập nhật trọn đời.</span>
             </div>
           </div>
         </div>
@@ -334,10 +342,10 @@
             📥 Tải Bản Dùng Thử 7 Ngày (Drive)
           </a>
           <a href="<?php echo APP_URL; ?>/post?slug=tro-ly-soan-giang-ai-powerpoint-giao-an-chuan-5512" class="btn btn-outline-light btn-lg fw-semibold px-4 py-3 rounded-pill" style="font-size: 15px;">
-            📖 Đọc Bài Viết Chuẩn SEO
+            📖 Chi Tiết Tính Năng 2.0
           </a>
-          <a href="<?php echo APP_URL; ?>/post?slug=phan-mem" class="btn btn-primary btn-lg fw-bold px-4 py-3 rounded-pill shadow-lg" style="background: #0284c7; border: none; font-size: 15px;">
-            💳 Mua Bản Quyền (590k - VietQR)
+          <a href="<?php echo APP_URL; ?>/post?slug=phan-mem" class="btn btn-primary btn-lg fw-bold px-4 py-3 rounded-pill shadow-lg" style="background: linear-gradient(135deg, #7c3aed 0%, #0284c7 100%); border: none; font-size: 15px;">
+            ⚡ Xem Bảng Giá &amp; Kích Hoạt Key
           </a>
         </div>
       </div>
@@ -351,8 +359,8 @@
           
           <div class="position-absolute bottom-0 start-0 m-3 p-3 rounded-3 text-white" style="background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); border: 1px solid rgba(16, 185, 129, 0.4);">
             <div class="d-flex align-items-center gap-2">
-              <span class="badge bg-success">SP04 Commercial v1.0</span>
-              <small class="fw-bold">Tích hợp AI Imagen 3 &amp; Zero-API-Cost</small>
+              <span class="badge bg-success">SP04 Commercial PRO v2.0</span>
+              <small class="fw-bold">Tích hợp Ra Đề Thi 2.0, Imagen 3 &amp; Zero-API-Cost</small>
             </div>
           </div>
         </div>
@@ -382,30 +390,36 @@
       
       <!-- Card SP04: Trợ Lý Soạn Giảng AI -->
       <div class="col-md-6 col-lg-3">
-        <div class="software-product-card p-4 h-100 d-flex flex-column justify-content-between position-relative shadow-sm" style="border-top: 4px solid #10b981;">
+        <div class="software-product-card p-4 h-100 d-flex flex-column justify-content-between position-relative shadow-sm" style="border-top: 4px solid #8b5cf6;">
           <div class="position-absolute top-0 end-0 m-3">
-            <span class="badge software-badge-hot rounded-pill px-2 py-1" style="font-size: 11px;">MỚI NHẤT</span>
+            <span class="badge bg-purple text-white rounded-pill px-2 py-1" style="background: #8b5cf6; font-size: 11px;">PRO 2.0 MỚI</span>
           </div>
           <div>
-            <div class="d-inline-flex p-3 rounded-3 mb-3" style="background: #ecfdf5; color: #10b981; font-size: 28px;">
+            <div class="d-inline-flex p-3 rounded-3 mb-3" style="background: #f5f3ff; color: #8b5cf6; font-size: 28px;">
               <i class="bi bi-robot"></i>
             </div>
-            <h5 class="fw-bold text-dark mb-1">Trợ Lý Soạn Giảng AI</h5>
-            <div class="text-muted small mb-3">Mã gói: <strong>SP04</strong></div>
+            <h5 class="fw-bold text-dark mb-1">Trợ Lý Soạn Giảng AI 2.0</h5>
+            <div class="text-muted small mb-3">Gói: <strong>SP04 &amp; SP04_PRO</strong></div>
             <p class="text-muted small mb-3">
-              Tự động soạn Slide PowerPoint kèm ảnh AI, Giáo án Word chuẩn CV 5512/2345 và Trò chơi tương tác trong 3 phút. Zero API Cost.
+              Slide PPT hiệu ứng &amp; ảnh AI Imagen 3, Giáo án Word 5512/2345 + Phân hệ Ma trận đề, Bản đặc tả chi tiết &amp; Ra đề thi 2.0.
             </p>
-            <div class="d-flex align-items-baseline gap-2 mb-3">
-              <span class="fs-4 fw-black text-danger">590.000 đ</span>
-              <span class="text-muted small text-decoration-line-through">1.200.000 đ</span>
+            <div class="d-flex flex-column mb-3">
+              <div class="d-flex align-items-baseline gap-2">
+                <span class="fs-5 fw-black text-danger">590.000 đ</span>
+                <span class="text-muted small">(Bản Tiêu Chuẩn)</span>
+              </div>
+              <div class="d-flex align-items-baseline gap-2">
+                <span class="fs-5 fw-black text-primary">890.000 đ</span>
+                <span class="text-muted small fw-bold text-success">(Bản PRO 2.0)</span>
+              </div>
             </div>
           </div>
           <div class="d-flex flex-column gap-2 pt-2 border-top">
-            <a href="https://drive.google.com/file/d/1lhrOruTe0Btcbn_SApsXbjS8KDMnTP-f/view?usp=sharing" target="_blank" class="btn btn-outline-success btn-sm rounded-pill fw-bold">
-              📥 Tải Dùng Thử 7 Ngày
+            <a href="https://drive.google.com/file/d/1lhrOruTe0Btcbn_SApsXbjS8KDMnTP-f/view?usp=sharing" target="_blank" class="btn btn-outline-primary btn-sm rounded-pill fw-bold">
+              📥 Tải Dùng Thử 7 Ngày (Pro)
             </a>
-            <a href="<?php echo APP_URL; ?>/post?slug=phan-mem" class="btn btn-success btn-sm rounded-pill fw-bold text-white">
-              ⚡ Kích Hoạt Key (VietQR)
+            <a href="<?php echo APP_URL; ?>/post?slug=phan-mem" class="btn btn-primary btn-sm rounded-pill fw-bold text-white" style="background: #7c3aed; border-color: #7c3aed;">
+              ⚡ Mua Bản Quyền (VietQR)
             </a>
           </div>
         </div>

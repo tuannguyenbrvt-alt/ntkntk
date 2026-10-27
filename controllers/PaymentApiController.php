@@ -29,9 +29,19 @@ class PaymentApiController extends Controller {
             'desc' => 'Phần Mềm Quản Lý Tồn Kho, Nhập Xuất, Thu Chi & Công Nợ Dùng Vĩnh Viễn Mạng LAN'
         ],
         'SP04' => [
-            'name' => 'Trợ Lý Soạn Giảng AI (PowerPoint & Giáo Án Chuẩn)',
+            'name' => 'Trợ Lý Soạn Giảng AI (Bản Tiêu Chuẩn - Slide & Kế Hoạch Bài Dạy 5512)',
             'amount' => 590000,
             'desc' => 'Tự động tạo Slide PowerPoint hiệu ứng & ảnh AI Imagen 3 + Giáo án Word chuẩn BGD&ĐT (CV 5512, 2345, TC/CĐ/ĐH) + Trò chơi học tập'
+        ],
+        'SP04_PRO' => [
+            'name' => 'Trợ Lý Soạn Giảng AI PRO 2.0 (Toàn Diện: Soạn Giảng + Ma Trận & Đề Thi Chuẩn Bộ)',
+            'amount' => 890000,
+            'desc' => 'Bản PRO 2.0 cao cấp nhất: Toàn bộ tính năng Soạn giảng + Phân hệ Ma trận đề, Bản đặc tả chi tiết, Ra đề thi trắc nghiệm & tự luận đa mã đề kèm đáp án chuẩn BGD&ĐT'
+        ],
+        'UP_SP04_PRO' => [
+            'name' => 'Gói Nâng Cấp Lên Bản PRO 2.0 (Dành cho khách đã có Bản Tiêu Chuẩn)',
+            'amount' => 350000,
+            'desc' => 'Nâng cấp từ Bản Tiêu Chuẩn lên Bản PRO 2.0 để mở khóa vĩnh viễn phân hệ Ra đề thi, Ma trận đề và Bản đặc tả chi tiết'
         ],
     ];
 
@@ -148,7 +158,8 @@ class PaymentApiController extends Controller {
 
             // Nếu đơn đã thanh toán nhưng chưa có key và đã có machine_id -> tự động sinh ngay
             if ($order['status'] === 'paid' && empty($order['license_key']) && !empty($order['machine_id'])) {
-                $licenseKey = LicenseHelper::generateKey($order['machine_id'], $order['product_code'], $order['buyer_email'] ?: $order['buyer_contact']);
+                $targetCode = ($order['product_code'] === 'UP_SP04_PRO') ? 'SP04_PRO' : $order['product_code'];
+                $licenseKey = LicenseHelper::generateKey($order['machine_id'], $targetCode, $order['buyer_email'] ?: $order['buyer_contact']);
                 $up = $db->prepare("UPDATE software_orders SET license_key = ? WHERE id = ?");
                 $up->execute([$licenseKey, $order['id']]);
                 $order['license_key'] = $licenseKey;
@@ -208,7 +219,8 @@ class PaymentApiController extends Controller {
             }
 
             // Sinh License Key
-            $licenseKey = LicenseHelper::generateKey($machineId, $order['product_code'], $order['buyer_email'] ?: $order['buyer_contact']);
+            $targetCode = ($order['product_code'] === 'UP_SP04_PRO') ? 'SP04_PRO' : $order['product_code'];
+            $licenseKey = LicenseHelper::generateKey($machineId, $targetCode, $order['buyer_email'] ?: $order['buyer_contact']);
 
             $up = $db->prepare("UPDATE software_orders SET machine_id = ?, license_key = ? WHERE id = ?");
             $up->execute([$machineId, $licenseKey, $order['id']]);
@@ -311,9 +323,10 @@ class PaymentApiController extends Controller {
 
                         // Nếu đơn hàng đã có machine_id -> sinh ngay License Key vĩnh viễn
                         if (!empty($order['machine_id'])) {
+                            $targetCode = ($order['product_code'] === 'UP_SP04_PRO') ? 'SP04_PRO' : $order['product_code'];
                             $licenseKey = LicenseHelper::generateKey(
                                 $order['machine_id'], 
-                                $order['product_code'], 
+                                $targetCode, 
                                 $order['buyer_email'] ?: $order['buyer_contact']
                             );
                         }
