@@ -282,6 +282,88 @@ class MailHelper {
         return self::send($toEmail, $toName, $subject, $body);
     }
 
+    /**
+     * Email gửi mã bản quyền License Key vĩnh viễn cho khách mua phần mềm
+     */
+    public static function sendLicenseKeyEmail(array $order, string $licenseKey): bool {
+        $toEmail = trim($order['buyer_email'] ?? '');
+        if (empty($toEmail) && !empty($order['buyer_contact']) && filter_var($order['buyer_contact'], FILTER_VALIDATE_EMAIL)) {
+            $toEmail = trim($order['buyer_contact']);
+        }
+        if (empty($toEmail)) {
+            return false;
+        }
+
+        $orderCode = htmlspecialchars($order['order_code'] ?? '');
+        $productName = htmlspecialchars($order['product_name'] ?? 'Phần mềm bản quyền');
+        $machineId = htmlspecialchars($order['machine_id'] ?? 'ANY-DEVICE');
+        $amountFormatted = number_format((int)($order['amount'] ?? 0), 0, ',', '.') . ' VNĐ';
+
+        $subject = "🔑 [Bản Quyền Vĩnh Viễn] Khóa License Key đơn hàng {$orderCode} - " . (defined('APP_NAME') ? APP_NAME : 'NTKNTK');
+
+        $body = self::wrapTemplate("
+            <div style='text-align:center;margin-bottom:25px;'>
+                <span style='background:#ecfdf5;color:#059669;padding:6px 16px;border-radius:20px;font-size:12px;font-weight:bold;text-transform:uppercase;letter-spacing:0.5px;'>
+                    🎉 Thanh Toán Thành Công &amp; Đã Cấp Bản Quyền
+                </span>
+                <h2 style='color:#0f172a;margin:12px 0 6px;font-size:22px;'>Khóa Bản Quyền Vĩnh Viễn Của Bạn</h2>
+                <p style='color:#64748b;margin:0;font-size:14px;'>Cảm ơn bạn đã tin tưởng và ủng hộ giải pháp phần mềm tại <strong>" . (defined('APP_NAME') ? APP_NAME : 'NTKNTK') . "</strong>!</p>
+            </div>
+
+            <!-- THÔNG TIN ĐƠN HÀNG -->
+            <div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:25px;font-size:14px;color:#334155;'>
+                <div style='display:flex;justify-content:space-between;margin-bottom:8px;'>
+                    <span style='color:#64748b;'>Sản phẩm:</span>
+                    <strong style='color:#2563eb;'>{$productName}</strong>
+                </div>
+                <div style='display:flex;justify-content:space-between;margin-bottom:8px;'>
+                    <span style='color:#64748b;'>Mã đơn hàng:</span>
+                    <strong style='font-family:monospace;background:#e2e8f0;padding:2px 6px;border-radius:4px;'>{$orderCode}</strong>
+                </div>
+                <div style='display:flex;justify-content:space-between;margin-bottom:8px;'>
+                    <span style='color:#64748b;'>Số tiền đã thanh toán:</span>
+                    <strong style='color:#16a34a;'>{$amountFormatted}</strong>
+                </div>
+                <div style='display:flex;justify-content:space-between;'>
+                    <span style='color:#64748b;'>Mã máy tính (Machine ID):</span>
+                    <strong style='font-family:monospace;color:#0f172a;'>{$machineId}</strong>
+                </div>
+            </div>
+
+            <!-- KHỐI LICENSE KEY NỔI BẬT -->
+            <div style='background:#f0fdf4;border:2px dashed #16a34a;border-radius:12px;padding:22px;text-align:center;margin-bottom:25px;'>
+                <label style='display:block;font-size:13px;font-weight:bold;color:#15803d;text-transform:uppercase;margin-bottom:8px;letter-spacing:0.5px;'>
+                    MÃ KHÓA BẢN QUYỀN (LICENSE KEY):
+                </label>
+                <div style='font-family:Consolas, Monaco, \"Courier New\", monospace;font-size:15px;font-weight:bold;color:#047857;background:#ffffff;padding:12px 14px;border-radius:8px;border:1px solid #bbf7d0;word-break:break-all;user-select:all;'>
+                    " . htmlspecialchars($licenseKey) . "
+                </div>
+                <p style='color:#059669;font-size:12px;margin:8px 0 0;'>💡 Mẹo: Nhấp chuột 3 lần vào dòng chữ trên hoặc bôi đen toàn bộ để sao chép mã Key.</p>
+            </div>
+
+            <!-- HƯỚNG DẪN KÍCH HOẠT 3 BƯỚC -->
+            <div style='background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:18px 20px;font-size:14px;color:#334155;line-height:1.6;'>
+                <h4 style='margin:0 0 10px;color:#0f172a;font-size:15px;'>👉 Hướng dẫn kích hoạt bản quyền trên máy tính:</h4>
+                <ol style='margin:0;padding-left:20px;'>
+                    <li style='margin-bottom:6px;'>Mở thư mục phần mềm trên máy tính của bạn.</li>
+                    <li style='margin-bottom:6px;'>Nhấp đúp chuột chạy file <strong>KICH_HOAT_BAN_QUYEN.bat</strong> (hoặc bấm nút <strong>Cài đặt bản quyền</strong> ngay trên giao diện web phần mềm).</li>
+                    <li style='margin-bottom:6px;'>Dán mã License Key ở trên vào và nhấn <strong>Enter</strong> (hoặc nhấn Kích hoạt) để hoàn tất.</li>
+                </ol>
+                <div style='margin-top:12px;padding-top:12px;border-top:1px dashed #cbd5e1;font-size:13px;color:#64748b;'>
+                    🛡️ <strong>Chính sách bảo hành:</strong> Bản quyền vĩnh viễn theo máy tính. Bạn có thể cập nhật các phiên bản mới của phần mềm mà không lo bị mất khóa bản quyền.
+                </div>
+            </div>
+
+            <!-- LIÊN HỆ HỖ TRỢ KỸ THUẬT -->
+            <div style='text-align:center;margin-top:25px;font-size:13px;color:#64748b;'>
+                Nếu bạn cần hỗ trợ kỹ thuật cài đặt qua UltraViewer/TeamViewer hoặc kích hoạt, vui lòng liên hệ:<br>
+                💬 <strong>Zalo / Điện thoại:</strong> <a href='https://zalo.me/0979875712' style='color:#0284c7;font-weight:bold;text-decoration:none;'>0979 875 712</a> (Thầy Nguyễn Minh Tuấn)
+            </div>
+        ");
+
+        return self::send($toEmail, $order['buyer_contact'] ?: 'Quý Khách Hàng', $subject, $body);
+    }
+
     private static function wrapTemplate(string $content): string {
         $siteName = defined('APP_NAME') ? APP_NAME : 'Trung Tâm Ngoại Ngữ Tin Học Nguyễn Minh';
         return "

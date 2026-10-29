@@ -4,6 +4,7 @@
  * Tích hợp chuẩn VietQR Napas 24/7 (MBBank) + Cổng SePay / Casso
  */
 require_once ROOT_PATH . '/helpers/LicenseHelper.php';
+require_once ROOT_PATH . '/helpers/MailHelper.php';
 
 class PaymentApiController extends Controller {
 
@@ -57,6 +58,28 @@ class PaymentApiController extends Controller {
         $machineId = strtoupper(trim($input['machine_id'] ?? ''));
         $buyerContact = trim($input['buyer_contact'] ?? ($input['buyer_phone'] ?? ''));
         $buyerEmail = trim($input['buyer_email'] ?? '');
+
+        // Bắt buộc khách hàng phải cung cấp Email chính xác để nhận License Key tự động
+        if (empty($buyerEmail)) {
+            // Thử kiểm tra xem buyerContact có phải là email không
+            if (!empty($buyerContact) && filter_var($buyerContact, FILTER_VALIDATE_EMAIL)) {
+                $buyerEmail = $buyerContact;
+            } else {
+                http_response_code(400);
+                echo json_encode([
+                    'status' => 'error',
+                    'message' => 'Vui lòng nhập địa chỉ Email chính xác để hệ thống gửi Khóa bản quyền (License Key) cho bạn!'
+                ], JSON_UNESCAPED_UNICODE);
+                return;
+            }
+        } elseif (!filter_var($buyerEmail, FILTER_VALIDATE_EMAIL)) {
+            http_response_code(400);
+            echo json_encode([
+                'status' => 'error',
+                'message' => 'Định dạng Email không hợp lệ. Vui lòng nhập đúng địa chỉ Email của bạn!'
+            ], JSON_UNESCAPED_UNICODE);
+            return;
+        }
 
         if (!isset(self::$PRODUCT_CATALOG[$productCode])) {
             $productCode = 'COMBO_EDU';
@@ -163,6 +186,10 @@ class PaymentApiController extends Controller {
                 $up = $db->prepare("UPDATE software_orders SET license_key = ? WHERE id = ?");
                 $up->execute([$licenseKey, $order['id']]);
                 $order['license_key'] = $licenseKey;
+                self::sendLicenseEmailOnce($db, $order, $licenseKey);
+            } elseif ($order['status'] === 'paid' && !empty($order['license_key'])) {
+                // Đảm bảo đơn đã paid và có key được gửi email
+                self::sendLicenseEmailOnce($db, $order, $order['license_key']);
             }
 
             echo json_encode([
@@ -224,6 +251,10 @@ class PaymentApiController extends Controller {
 
             $up = $db->prepare("UPDATE software_orders SET machine_id = ?, license_key = ? WHERE id = ?");
             $up->execute([$machineId, $licenseKey, $order['id']]);
+
+            $order['machine_id'] = $machineId;
+            $order['license_key'] = $licenseKey;
+            self::sendLicenseEmailOnce($db, $order, $licenseKey);
 
             echo json_encode([
                 'status' => 'success',
@@ -329,6 +360,7 @@ class PaymentApiController extends Controller {
                                 $targetCode, 
                                 $order['buyer_email'] ?: $order['buyer_contact']
                             );
+                            self::sendLicenseEmailOnce($db, $order, $licenseKey);
                         }
 
                         // Cập nhật trạng thái paid
@@ -390,5 +422,49 @@ class PaymentApiController extends Controller {
             'processed' => $processedCount,
             'message' => "Đã xử lý {$processedCount} giao dịch thành công."
         ], JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * Gửi email chứa License Key cho khách hàng (đảm bảo chỉ gửi 1 lần duy nhất)
+     */
+    private static function sendLicenseEmailOnce($db, $order, $licenseKey) {
+        if (empty($licenseKey)) {
+            return false;
+        }
+
+        $recipientEmail = trim($order['buyer_email'] ?? '');
+        if (empty($recipientEmail) && !empty($order['buyer_contact']) && filter_var($order['buyer_contact'], FILTER_VALIDATE_EMAIL)) {
+            $recipientEmail = trim($order['buyer_contact']);
+        }
+        if (empty($recipientEmail) || !filter_var($recipientEmail, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+
+        // Tự động kiểm tra/tạo cột email_sent_at trong database nếu chưa có
+        try {
+            @$db->exec("ALTER TABLE software_orders ADD COLUMN email_sent_at DATETIME NULL DEFAULT NULL");
+        } catch (Exception $e) {}
+
+        // Kiểm tra nếu đơn hàng đã được gửi email trước đó thì không gửi lại
+        $orderId = (int)$order['id'];
+        $stmt = $db->prepare("SELECT email_sent_at FROM software_orders WHERE id = ? LIMIT 1");
+        $stmt->execute([$orderId]);
+        $row = $stmt->fetch();
+        if ($row && !empty($row['email_sent_at'])) {
+            return true;
+        }
+
+        require_once ROOT_PATH . '/helpers/MailHelper.php';
+        $orderWithKey = $order;
+        $orderWithKey['license_key'] = $licenseKey;
+        $sent = MailHelper::sendLicenseKeyEmail($orderWithKey, $licenseKey);
+        if ($sent) {
+            $up = $db->prepare("UPDATE software_orders SET email_sent_at = NOW() WHERE id = ?");
+            $up->execute([$orderId]);
+            error_log("[PaymentApiController] Đã gửi License Key qua Email tới: {$recipientEmail} cho đơn hàng {$order['order_code']}");
+        } else {
+            error_log("[PaymentApiController] Gửi License Key qua Email thất bại tới: {$recipientEmail}");
+        }
+        return $sent;
     }
 }
