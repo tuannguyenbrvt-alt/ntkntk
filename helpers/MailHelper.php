@@ -299,6 +299,20 @@ class MailHelper {
         $machineId = htmlspecialchars($order['machine_id'] ?? 'ANY-DEVICE');
         $amountFormatted = number_format((int)($order['amount'] ?? 0), 0, ',', '.') . ' VNĐ';
 
+        $extraGroupNote = '';
+        $prodCode = $order['product_code'] ?? '';
+        if ($prodCode === 'SP04_GROUP5' || $prodCode === 'SP04_GROUP10') {
+            $totalSeats = ($prodCode === 'SP04_GROUP5') ? 5 : 10;
+            $remaining = $totalSeats - 1;
+            $extraGroupNote = "
+            <div style='background:#fef3c7;border:1px solid #f59e0b;border-radius:10px;padding:16px 20px;margin-bottom:25px;font-size:14px;color:#92400e;line-height:1.6;'>
+                <strong style='font-size:15px;color:#b45309;'>🏫 Lưu ý dành cho gói Tổ Bộ Môn / Nhà Trường ({$totalSeats} máy):</strong><br>
+                Mã License Key ở trên được cấp sẵn cho máy tính đầu tiên (Machine ID: <code>{$machineId}</code>).<br>
+                Để nhận thêm <strong>{$remaining} mã bản quyền còn lại</strong> cho các giáo viên khác trong trường/tổ, Quý Thầy/Cô chỉ cần chụp/gửi danh sách Machine ID qua Zalo <strong style='color:#0369a1;'>0979 875 712</strong> (Thầy Tuấn) hoặc phản hồi trực tiếp email này. Hệ thống sẽ cấp bổ sung ngay lập tức!
+            </div>
+            ";
+        }
+
         $subject = "🔑 [Bản Quyền Vĩnh Viễn] Khóa License Key đơn hàng {$orderCode} - " . (defined('APP_NAME') ? APP_NAME : 'NTKNTK');
 
         $body = self::wrapTemplate("
@@ -309,6 +323,8 @@ class MailHelper {
                 <h2 style='color:#0f172a;margin:12px 0 6px;font-size:22px;'>Khóa Bản Quyền Vĩnh Viễn Của Bạn</h2>
                 <p style='color:#64748b;margin:0;font-size:14px;'>Cảm ơn bạn đã tin tưởng và ủng hộ giải pháp phần mềm tại <strong>" . (defined('APP_NAME') ? APP_NAME : 'NTKNTK') . "</strong>!</p>
             </div>
+
+            {$extraGroupNote}
 
             <!-- THÔNG TIN ĐƠN HÀNG -->
             <div style='background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:16px 20px;margin-bottom:25px;font-size:14px;color:#334155;'>
