@@ -46,6 +46,64 @@ class PaymentApiController extends Controller {
         ],
     ];
 
+    private static $UPDATE_CATALOG = [
+        'SP04' => [
+            'name' => 'Trợ Lý Soạn Giảng AI',
+            'latest_version' => '2.0.1',
+            'release_date' => '2026-11-07',
+            'download_url' => 'https://drive.google.com/file/d/1lhrOruTe0Btcbn_SApsXbjS8KDMnTP-f/view?usp=sharing',
+            'info_url' => 'https://ntkntk.com/post?slug=tro-ly-soan-giang-ai-powerpoint-giao-an-chuan-5512',
+            'title' => 'Bản cập nhật Trợ Lý Soạn Giảng AI 2.0.1',
+            'highlights' => [
+                'Tích hợp tính năng Tự động kiểm tra bản cập nhật mới (Auto-Update Checker).',
+                'Bảo vệ bản quyền đa tầng: Tự động ghi nhớ và giữ nguyên License Key cũ khi nâng cấp.',
+                'Nâng cấp phân hệ Ra đề thi 2.0: Lập ma trận, bản đặc tả và đề thi đa mã đề chuẩn Bộ GD&ĐT.',
+                'Cải thiện hiệu suất xuất file Word 5512/2345 và trình chiếu PowerPoint.'
+            ],
+            'mandatory' => false
+        ],
+        'SP01' => [
+            'name' => 'Web Trợ Giảng & Thi Trắc Nghiệm LAN',
+            'latest_version' => '1.0.0',
+            'release_date' => '2026-10-15',
+            'download_url' => 'https://drive.google.com/file/d/1np5GPg7BiQpQfy42NsXDi-ZI0dbncsf-/view?usp=sharing',
+            'info_url' => 'https://ntkntk.com/post?slug=phan-mem',
+            'title' => 'Bản phát hành Web Trợ Giảng LAN v1.0',
+            'highlights' => ['Hỗ trợ mạng LAN nội bộ không cần Internet.'],
+            'mandatory' => false
+        ],
+        'SP02' => [
+            'name' => 'Game Luyện Gõ Bàn Phím LAN',
+            'latest_version' => '1.0.0',
+            'release_date' => '2026-10-15',
+            'download_url' => 'https://drive.google.com/file/d/1HvaA3OmcoI-TWW-nWP-nQ0JYUsSJTdEQ/view?usp=sharing',
+            'info_url' => 'https://ntkntk.com/post?slug=phan-mem',
+            'title' => 'Bản phát hành Game Luyện Gõ Phím LAN v1.0',
+            'highlights' => ['Chống rớt điểm khi F5, bảng xếp hạng trực tiếp máy chiếu.'],
+            'mandatory' => false
+        ],
+        'COMBO_EDU' => [
+            'name' => 'Combo Phòng Máy LAN 2 Trong 1',
+            'latest_version' => '1.0.0',
+            'release_date' => '2026-10-15',
+            'download_url' => 'https://drive.google.com/file/d/1_PObVdtmjT8d88Nqs9dAOVqwEbanuPp-/view?usp=sharing',
+            'info_url' => 'https://ntkntk.com/post?slug=phan-mem',
+            'title' => 'Bản phát hành Combo Phòng Máy LAN v1.0',
+            'highlights' => ['Khởi động cùng lúc cả 2 cổng LAN cho 40-60 máy trạm.'],
+            'mandatory' => false
+        ],
+        'SP03' => [
+            'name' => 'SmartWarehouse Mini LAN',
+            'latest_version' => '1.0.0',
+            'release_date' => '2026-10-25',
+            'download_url' => 'https://drive.google.com/file/d/1_JNCrwv4BQH8ayIvRTg-fJ0C0my1TfeX/view?usp=sharing',
+            'info_url' => 'https://ntkntk.com/post?slug=phan-mem',
+            'title' => 'Bản phát hành SmartWarehouse Mini LAN v1.0',
+            'highlights' => ['Quản lý kho hàng và công nợ vĩnh viễn không thuê bao.'],
+            'mandatory' => false
+        ]
+    ];
+
     /**
      * POST /api/payment/create-order
      * Tạo đơn hàng mới và trả về thông tin VietQR thanh toán
@@ -466,5 +524,41 @@ class PaymentApiController extends Controller {
             error_log("[PaymentApiController] Gửi License Key qua Email thất bại tới: {$recipientEmail}");
         }
         return $sent;
+    }
+
+    /**
+     * GET /api/software/check-update?product=SP04&version=2.0.0
+     * Trả về thông tin phiên bản mới nhất và so sánh phiên bản (Auto-Update Checker)
+     */
+    public function checkSoftwareUpdate() {
+        header('Content-Type: application/json; charset=utf-8');
+        header('Access-Control-Allow-Origin: *');
+
+        $product = strtoupper(trim($_GET['product'] ?? 'SP04'));
+        $clientVersion = trim($_GET['version'] ?? '1.0.0');
+
+        if (!isset(self::$UPDATE_CATALOG[$product])) {
+            $product = 'SP04';
+        }
+
+        $info = self::$UPDATE_CATALOG[$product];
+        $latestVersion = $info['latest_version'];
+        $hasUpdate = version_compare($latestVersion, $clientVersion, '>');
+
+        echo json_encode([
+            'status' => 'success',
+            'product_code' => $product,
+            'product_name' => $info['name'],
+            'client_version' => $clientVersion,
+            'latest_version' => $latestVersion,
+            'has_update' => $hasUpdate,
+            'release_date' => $info['release_date'],
+            'title' => $info['title'],
+            'highlights' => $info['highlights'],
+            'download_url' => $info['download_url'],
+            'info_url' => $info['info_url'],
+            'mandatory' => (bool)($info['mandatory'] ?? false),
+            'checked_at' => date('Y-m-d H:i:s')
+        ], JSON_UNESCAPED_UNICODE);
     }
 }
